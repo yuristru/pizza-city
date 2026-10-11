@@ -8,7 +8,7 @@ import {renderServiceUI} from './pizza-service-ui.js?v=20261011m';
 import {showPizza} from './pizza-editor.js?v=20261011m';
 import {app,root,state,loadAssets,updateMoney,restaurantName} from './pizza-core.js?v=20261011m';
 import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261011m';
-import {showRestaurant,tickRestaurant,resizeRestaurant,resetRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView,toggleMove} from './pizza-restaurant.js?v=20261011m';
+import {showRestaurant,tickRestaurant,resizeRestaurant,resetRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView,toggleMove} from './pizza-restaurant.js?v=20261011m1';
 
 import {furnitureIcon} from './pizza-sprites.js?v=20261011m';
 

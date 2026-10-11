@@ -321,7 +321,7 @@ export function showRestaurant(id){
     }
     if(passageCell(x,y))g.poly([p.x,p.y-9,p.x+20,p.y,p.x,p.y+9,p.x-20,p.y]).fill({color:0xd8bd86,alpha:.7});
     if(entrance)g.poly([p.x-9,p.y+1,p.x,p.y-4,p.x+9,p.y+1,p.x+3,p.y+1,p.x+3,p.y+6,p.x-3,p.y+6,p.x-3,p.y+1]).fill(0x776c42);
-    if(kitchen)for(const [dx,dy,a,b]of [[0,-1,[p.x-RTW/2,p.y],[p.x,p.y-RTH/2]],[1,0,[p.x,p.y-RTH/2],[p.x+RTW/2,p.y]],[0,1,[p.x+RTW/2,p.y],[p.x,p.y+RTH/2]],[-1,0,[p.x,p.y+RTH/2],[p.x-RTW/2,p.y]]])if(!kitchenCell(x+dx,y+dy))g.moveTo(...a).lineTo(...b).stroke({color:0x4f907a,width:3});
+    if(kitchen)for(const [dx,dy,a,b]of [[-1,0,[p.x-RTW/2,p.y],[p.x,p.y-RTH/2]],[0,-1,[p.x,p.y-RTH/2],[p.x+RTW/2,p.y]],[1,0,[p.x+RTW/2,p.y],[p.x,p.y+RTH/2]],[0,1,[p.x,p.y+RTH/2],[p.x-RTW/2,p.y]]])if(!kitchenCell(x+dx,y+dy))g.moveTo(...a).lineTo(...b).stroke({color:0x4f907a,width:3});
     g.label=`floor-${x}-${y}`;g.eventMode='static';g.cursor='pointer';g.on('pointertap',()=>{if(state.deleteMode&&!panMode&&!blockTap)removeAt(x,y);});floor.addChild(g);
   }
   plan.decor.forEach(item=>placed(item,false));kitchenWalls();
