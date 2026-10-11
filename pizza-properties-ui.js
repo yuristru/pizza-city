@@ -1,7 +1,7 @@
-import {restaurantPlan} from './pizza-floorplans.js?v=20261011l';
-import {state,saveLayout,updateMoney,notify,ensureRestaurants} from './pizza-core.js?v=20261011l';
-import {money} from './pizza-catalog.js?v=20261011l';
-import {PROPERTIES,PROPERTY_SIZES,property,buyProperty,propertyPurchaseIssue} from './pizza-properties.js?v=20261011l';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261011m';
+import {state,saveLayout,updateMoney,notify,ensureRestaurants} from './pizza-core.js?v=20261011m';
+import {money} from './pizza-catalog.js?v=20261011m';
+import {PROPERTIES,PROPERTY_SIZES,property,buyProperty,propertyPurchaseIssue} from './pizza-properties.js?v=20261011m';
 const el=id=>document.getElementById(id);
 let selected=null,filter='small';
 function render(){
@@ -24,6 +24,13 @@ function render(){
   el('propertyPrice').textContent=money(p.price);el('propertyBuy').disabled=!!issue;el('propertyBuy').textContent=isOwned?'Bereits gekauft':'Standort kaufen';
   el('propertyStatus').textContent=isOwned?'Dein Restaurant. Einrichtung und Gäste werden separat gespeichert.':issue||'Einmaliger Kaufpreis. Keine automatische Abbuchung.';
   el('propertyOpen').hidden=!isOwned;
+  const fc=el('propertyFloorplan'),fx=fc.getContext('2d'),scale=Math.min(260/plan.w,180/plan.h);fx.clearRect(0,0,280,200);
+  const tiles=new Set((ensureRestaurants()[p.id]?.kitchenTiles||[]).map(t=>`${t.x},${t.y}`));
+  for(const c of plan.cells){fx.fillStyle=tiles.has(`${c.x},${c.y}`)?'#7d9c90':'#e8cdaa';fx.fillRect(10+c.x*scale,10+c.y*scale,scale-1,scale-1);}
+  fx.strokeStyle='#775134';fx.lineWidth=2;
+  for(const c of plan.cells)for(const [dx,dy]of [[1,0],[0,1],[-1,0],[0,-1]])if(!plan.cells.some(n=>n.x===c.x+dx&&n.y===c.y+dy)){const x=10+(c.x+(dx===1?1:0))*scale,y=10+(c.y+(dy===1?1:0))*scale;fx.beginPath();fx.moveTo(x,y);fx.lineTo(x+(dx===0?scale:0),y+(dy===0?scale:0));fx.stroke();}
+  const k=plan.kitchen;if(k.kind!=='island'){fx.strokeRect(10+k.x*scale,10+k.y*scale,k.w*scale,k.h*scale);const d=k.door,right=d.side==='north'||d.side==='south',x=10+(k.x+(right?d.offset:d.side==='east'?k.w:0))*scale,y=10+(k.y+(right?(d.side==='south'?k.h:0):d.offset))*scale;fx.strokeStyle='#4f907a';fx.lineWidth=5;fx.beginPath();fx.moveTo(x,y);fx.lineTo(x+(right?scale:0),y+(right?0:scale));fx.stroke();}
+  fx.fillStyle='#a43e2f';fx.fillRect(10+plan.entrance.x*scale,10+plan.entrance.y*scale,scale,scale);
   const canvas=el('propertyPreview'),ctx=canvas.getContext('2d');ctx.clearRect(0,0,180,180);ctx.imageSmoothingEnabled=false;
   const image=(state.cityArt[p.art]?.[p.sprite]||state.cityArt.buildings?.[0])?.texture.source.resource;
   if(image){const scale=Math.min(160/image.width,170/image.height);ctx.drawImage(image,Math.round((180-image.width*scale)/2),Math.round(175-image.height*scale),Math.round(image.width*scale),Math.round(image.height*scale));}

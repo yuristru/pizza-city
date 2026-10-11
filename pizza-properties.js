@@ -1,4 +1,4 @@
-import {restaurantPlan} from './pizza-floorplans.js?v=20261011l';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261011m';
 export const PROPERTY_SIZES={
   small:{name:'Klein',badge:'S',area:80,color:0x66834b},
   medium:{name:'Mittel',badge:'M',area:160,color:0xc09242},
@@ -25,7 +25,7 @@ export function propertyPurchaseIssue(id,owned,balance){
   const p=property(id);
   if(!p)return 'Dieser Standort existiert nicht.';
   if(owned.includes(id))return 'Dieser Standort gehört dir bereits.';
-  if(!Number.isInteger(balance)||balance<p.price)return 'Nicht genügend Geld für diesen Standort.';
+  if(!Number.isFinite(balance)||balance<p.price)return 'Nicht genügend Geld für diesen Standort.';
   return null;
 }
 export function buyProperty(id,owned,balance){

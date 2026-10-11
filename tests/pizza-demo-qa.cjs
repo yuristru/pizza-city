@@ -92,7 +92,7 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined,args:process.env.PIZZA_BROWSER_ARGS?JSON.parse(process.env.PIZZA_BROWSER_ARGS):['--no-sandbox','--disable-dev-shm-usage','--enable-unsafe-swiftshader']});
     const context=await browser.newContext({viewport:{width:393,height:852},hasTouch:true,deviceScaleFactor:2});
     const external=[],errors=[];
-    await context.route('**/*',route=>{if(route.request().url().startsWith(base+'/'))return route.continue();external.push(route.request().url());return route.abort();});
+    await context.route('**/*',route=>{if(route.request().url().startsWith(base+'/pizza.js?'))return route.fulfill({contentType:'text/javascript',body:fs.readFileSync(path.join(root,'pizza.js'),'utf8').replace('state.ready=true;','state.speed=0;state.ready=true;')});if(route.request().url().startsWith(base+'/'))return route.continue();external.push(route.request().url());return route.abort();});
     const page=await context.newPage();page.on('pageerror',error=>errors.push(error.message));
     await loaded(page,url);assert.equal((await snapshot(page)).assets.length,0);assert.equal((await snapshot(page)).worldChildren,1);
     const cityArt=await page.evaluate(async modulePath=>{
@@ -326,9 +326,9 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     await page.evaluate(()=>localStorage.setItem('pizza-city-layout-v1','{"version":1,"items":[{"type":"broken","x":1,"y":1,"r":0}]}'));
     await loaded(page,url);assert.deepEqual((await snapshot(page)).items,model.DEFAULT_LAYOUT);
     await page.evaluate(()=>localStorage.setItem('pizza-city-layout-v1','{"version":1,"items":[]}'));
-    await loaded(page,url);assert.equal((await snapshot(page)).items.length,0);
+    await loaded(page,url);assert.equal((await snapshot(page)).items.filter(i=>!['oven','bar','fridge'].includes(i.type)).length,0);
     await page.evaluate(()=>localStorage.setItem('pizza-city-layout-v1',JSON.stringify({version:1,items:[{type:'table',x:2,y:3,r:0},{type:'chair',x:1,y:3,r:0}]})));
-    await loaded(page,url);assert.deepEqual((await snapshot(page)).items,[{type:'table',seats:4,x:2,y:3,r:0}]);
+    await loaded(page,url);assert.deepEqual((await snapshot(page)).items.filter(i=>!['oven','bar','fridge'].includes(i.type)),[{type:'table',seats:4,x:2,y:3,r:0}]);
     const storagePage=await context.newPage();storagePage.on('pageerror',error=>errors.push(error.message));
     await storagePage.addInitScript(()=>Object.defineProperty(window,'localStorage',{get(){throw new DOMException('Unavailable','SecurityError');}}));
     await loaded(storagePage,url);await storagePage.click('#restaurantBtn');await selectTool(storagePage,'plant');await placeCell(storagePage,0,3);assert.equal((await snapshot(storagePage)).items.length,model.DEFAULT_LAYOUT.length+1);await storagePage.close();
@@ -340,7 +340,7 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
       await page.unroute(pattern);
     }
     await page.route('**/assets/pizza/restaurant/*.png',route=>route.fulfill({status:404,body:'missing'}));
-    await loaded(page,url);await page.click('#restaurantBtn');await selectTool(page,'oven');await placeCell(page,0,3);
+    await loaded(page,url);await page.click('#restaurantBtn');await selectTool(page,'oven');await placeCell(page,8,1);
     await capture(page,'restaurant-art-fallback.png');await page.click('#undoBtn');await page.unroute('**/assets/pizza/restaurant/*.png');
     await page.route('**/assets/pizza/city/*.png',route=>route.fulfill({status:404,body:'missing'}));
     await loaded(page,url);assert.equal((await snapshot(page)).assets.length,7);

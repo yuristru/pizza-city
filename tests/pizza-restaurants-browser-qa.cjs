@@ -59,7 +59,7 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
  try{
   const page=await browser.newPage({viewport:{width:393,height:852}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
   const base=`http://127.0.0.1:${server.address().port}`,url=base+'/pizza.html';
-  await page.route('**/pizza.js?*',r=>r.fulfill({contentType:'text/javascript',body:source.replace('state.ready=true;','app.ticker.stop();state.ready=true;')}));
+  await page.route('**/pizza.js?*',r=>r.fulfill({contentType:'text/javascript',body:source.replace('state.ready=true;','app.ticker.stop();state.speed=0;state.ready=true;')}));
   await page.addInitScript(saved=>{if(!localStorage.getItem('pizza-city-layout-v1'))localStorage.setItem('pizza-city-layout-v1',JSON.stringify(saved));},{version:5,items:copyLayout(),finishes:{floor:'stone',renovation:0},service:freshService(),ownedProperties:['san-marco','via-roma'],balanceCents:14836000,gameMinutes:690,citySeed:94117});
   await loaded(page,url);await page.click('[data-speed="0"]');await page.click('#restaurantBtn');
   const profiles=()=>page.evaluate(async p=>{const {state,ensureRestaurants}=await import(p);return {id:state.activeRestaurantId,balance:state.balance,profiles:JSON.parse(JSON.stringify(ensureRestaurants()))};},corePath);

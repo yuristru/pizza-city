@@ -147,3 +147,13 @@ noscript{position:fixed;inset:0;z-index:99;display:grid;place-items:center;backg
 @media(max-height:640px) and (max-width:499px){#restaurantSelect{height:21px}#restaurantServiceStatus{display:none}}
 
 #kitchenDialog{width:min(420px,calc(100vw - 20px));max-height:80vh;overflow:auto;background:#ead6b0;color:#3a2518;border:3px solid #806044;border-radius:6px;padding:14px}#kitchenDialog::backdrop{background:#171416bb}#kitchenDialog p,#kitchenChecklist{font-size:12px;line-height:1.6}#kitchenChecklist{padding-left:20px}#kitchenChecklist li{margin:8px 0}#restaurantServiceStatus{cursor:pointer;pointer-events:auto}#restaurantServiceStatus:focus-visible{outline:2px solid #8d4c2d}
+
+.floorplanPreview{margin:12px 0}.floorplanPreview canvas{max-width:100%;height:auto}.floorplanPreview figcaption{font-size:12px}.toolactions button[aria-pressed="true"]{background:#79917b}
+
+#businessDialog{width:min(940px,calc(100% - 24px));max-height:85dvh;overflow:auto;box-sizing:border-box;background:#f0dfbf;color:#3a2b1f;border:3px solid #775438;border-radius:10px;padding:18px}#businessDialog::backdrop{background:#171416a8}.staffRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}.staffRow span{flex:1;min-width:180px}#businessDialog button{padding:8px;border:1px solid #886647;border-radius:5px;background:#ead0a2;color:#3a2b1f;cursor:pointer}#businessDialog button:disabled{opacity:.5}.financeScroll{overflow:auto}.financeTable{border-collapse:collapse;width:100%;font-size:13px}.financeTable th,.financeTable td{padding:8px;border-bottom:1px solid #c5aa81;text-align:right;white-space:nowrap}.financeTable th:first-child{text-align:left}#businessDialog p{font-size:13px;line-height:1.5}
+.toolactions{grid-template-columns:repeat(5,minmax(0,1fr))}.categorybtn{padding:0 3px}
+@media(max-height:540px) and (min-width:500px){.toolactions{grid-template-columns:repeat(3,minmax(0,1fr))}}
+#propertyFloorplan{position:static;inset:auto;width:280px;height:auto;max-width:100%;margin:auto;pointer-events:none}
+.toolactions button{white-space:normal;overflow-wrap:anywhere;line-height:1.3}
+
+@media(max-width:600px){.staffRow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.staffRow span{grid-column:1/-1;min-width:0}}

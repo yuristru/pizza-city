@@ -1,19 +1,20 @@
-import {mountKitchenUI,renderKitchenUI} from './pizza-kitchen-ui.js?v=20261011l';
-import {restaurantPlan} from './pizza-floorplans.js?v=20261011l';
-import {mountProperties} from './pizza-properties-ui.js?v=20261011l';
-import {mountMenu} from './pizza-menu-ui.js?v=20261011l';
-import {tickService} from './pizza-service-runtime.js?v=20261011l';
-import {renderServiceUI} from './pizza-service-ui.js?v=20261011l';
-import {showPizza} from './pizza-editor.js?v=20261011l';
-import {app,root,state,loadAssets,updateMoney,restaurantName} from './pizza-core.js?v=20261011l';
-import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261011l';
-import {showRestaurant,tickRestaurant,resizeRestaurant,resetRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView} from './pizza-restaurant.js?v=20261011l';
+import {mountBusinessUI,renderBusinessUI} from './pizza-business-ui.js?v=20261011m';
+import {mountKitchenUI,renderKitchenUI} from './pizza-kitchen-ui.js?v=20261011m';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261011m';
+import {mountProperties} from './pizza-properties-ui.js?v=20261011m';
+import {mountMenu} from './pizza-menu-ui.js?v=20261011m';
+import {tickService} from './pizza-service-runtime.js?v=20261011m';
+import {renderServiceUI} from './pizza-service-ui.js?v=20261011m';
+import {showPizza} from './pizza-editor.js?v=20261011m';
+import {app,root,state,loadAssets,updateMoney,restaurantName} from './pizza-core.js?v=20261011m';
+import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261011m';
+import {showRestaurant,tickRestaurant,resizeRestaurant,resetRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView,toggleMove} from './pizza-restaurant.js?v=20261011m';
 
-import {furnitureIcon} from './pizza-sprites.js?v=20261011l';
+import {furnitureIcon} from './pizza-sprites.js?v=20261011m';
 
 const rotateBtn=document.querySelector('#rotateBtn'),deleteBtn=document.querySelector('#deleteBtn');
-import {mountCatalog,renderCatalog,showCatalogSizes} from './pizza-catalog-ui.js?v=20261011l';
-mountProperties();mountKitchenUI();
+import {mountCatalog,renderCatalog,showCatalogSizes} from './pizza-catalog-ui.js?v=20261011m';
+mountProperties();mountKitchenUI();mountBusinessUI();
 mountMenu();
 mountCatalog(()=>{if(restaurantView().panMode)toggleRestaurantPan();cancelPlacement();syncEditUI();});
 state.navigate=(where,id)=>where==='restaurant'?showRestaurant(id):showCity();
@@ -33,13 +34,15 @@ function syncEditUI(){
   rotateBtn.setAttribute('aria-label',`Möbelstück um 90 Grad drehen. Aktuell ${state.rotation*90} Grad.`);
   deleteBtn.classList.toggle('active',state.deleteMode);deleteBtn.setAttribute('aria-pressed',String(state.deleteMode));
   rotateBtn.disabled=['floor','renovation','kitchenFloor'].includes(state.selectedTool);
+  document.querySelector('#moveBtn').setAttribute('aria-pressed',String(!!state.moveMode));
   renderCatalog();renderServiceUI();renderKitchenUI();
   document.querySelector('#undoBtn').disabled=!state.history.length;
   updatePlacementPreview();resizeRestaurant();
 }
 state.onEditChange=syncEditUI;
 rotateBtn.onclick=()=>{state.rotation=(state.rotation+1)%4;state.deleteMode=false;syncEditUI();};
-deleteBtn.onclick=()=>{state.deleteMode=!state.deleteMode;cancelPlacement();syncEditUI();};
+document.querySelector('#moveBtn').onclick=toggleMove;
+deleteBtn.onclick=()=>{state.moveMode=false;state.deleteMode=!state.deleteMode;cancelPlacement();syncEditUI();};
 document.querySelector('#resetBtn').onclick=()=>{showCatalogSizes();resetRestaurant();};
 document.querySelector('#undoBtn').onclick=undoRestaurant;
 document.querySelector('#placeBtn').onclick=confirmPlacement;
@@ -83,7 +86,7 @@ app.ticker.add(ticker=>{
   const seconds=Math.min(ticker.deltaMS,50)*state.speed/1000;
   state.gameMinutes+=seconds/5;updateClock();if(seconds>0)tickService(seconds);
   if(state.scene==='city'&&dt>0) tickCity(dt);else if(state.scene==='restaurant')tickRestaurant(dt);
-  renderServiceUI();renderKitchenUI();
+  renderServiceUI();renderKitchenUI();renderBusinessUI();
 });
 
 let resizeFrame;

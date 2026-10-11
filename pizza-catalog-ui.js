@@ -1,6 +1,6 @@
-import {state} from './pizza-core.js?v=20261011l';
-import {PRODUCTS,ROOM_PRODUCTS,CATEGORIES,product,roomProduct,itemPrice,money} from './pizza-catalog.js?v=20261011l';
-import {furnitureIcon} from './pizza-sprites.js?v=20261011l';
+import {state} from './pizza-core.js?v=20261011m';
+import {PRODUCTS,ROOM_PRODUCTS,CATEGORIES,product,roomProduct,itemPrice,money} from './pizza-catalog.js?v=20261011m';
+import {furnitureIcon} from './pizza-sprites.js?v=20261011m';
 let qualityStep=false,onChoose=()=>{};
 function choose(p,seats){state.selectedTool=p.type;state.selectedVariant=p.id;if(seats)state.selectedSeats=seats;state.deleteMode=false;onChoose();}
 export function mountCatalog(callback){

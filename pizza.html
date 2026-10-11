@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#dec9a5">
   <title>Pizza City · Mamma Mia</title>
-  <link rel="stylesheet" href="pizza.css?v=20261011l">
+  <link rel="stylesheet" href="pizza.css?v=20261011m">
 </head>
 <body>
 <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -49,6 +49,7 @@
     <div id="propertyDetail" hidden>
       <button id="propertyBack" type="button">‹ Alle Standorte</button>
       <canvas id="propertyPreview" width="180" height="180" aria-label="Gebäudevorschau"></canvas>
+      <figure class="floorplanPreview"><canvas id="propertyFloorplan" width="280" height="200" aria-label="Grundriss mit Türen und Küchenboden"></canvas><figcaption>Grundriss · Rot: Eingang · Grün: Tür / Küchenboden · 1 Feld = 1 m²</figcaption></figure>
       <h3 id="propertyName"></h3><p id="propertyInfo"></p>
       <p id="propertyDescription">Unmöblierte Restaurantimmobilie. Der Kauf sichert dir diesen Standort.</p>
       <strong id="propertyPrice"></strong><p id="propertyStatus" role="status"></p>
@@ -63,14 +64,21 @@
     <p id="menuStatus" role="status" aria-live="polite"></p>
     <div id="menuEmpty" class="menuEmpty"><strong>Deine erste Pizza auf der Karte</strong><p>Gestalte eine Pizza, speichere dein Rezept und wähle es hier aus.</p><button id="menuCreate" type="button">Pizza gestalten</button></div>
     <div id="menuCards" class="menuCards"></div>
-    <p class="menuFootnote">Diese Speisekarte gilt für alle deine Restaurants. Deckungsbeitrag = Verkaufspreis minus Zutatenkosten. Personal, Miete und weitere Betriebskosten sind noch nicht enthalten.</p>
+    <p class="menuFootnote">Diese Speisekarte gilt für alle deine Restaurants. Deckungsbeitrag = Verkaufspreis minus Zutatenkosten. Personal, Gebäude und Strom werden zusätzlich in der Filialübersicht abgerechnet.</p>
+  </dialog>
+  <dialog id="businessDialog" aria-labelledby="businessTitle">
+    <header class="propertyHeader"><h2 id="businessTitle">Personal und Filialen</h2><button id="businessClose" type="button" aria-label="Betrieb schließen">×</button></header>
+    <div id="staffControls"></div><p id="businessRates"></p>
+    <h3>Filialvergleich seit Spielbeginn</h3><p id="financeSummary"></p>
+    <div class="financeScroll"><table class="financeTable"><thead><tr><th>Restaurant</th><th>Umsatz</th><th>Zutaten</th><th>Personal</th><th>Gebäude</th><th>Strom</th><th>Gewinn</th><th>Auslastung</th><th>Bewertung</th><th>Wartezeit</th><th>Bedient / verloren</th><th>Offene Kosten</th></tr></thead><tbody id="branchRows"></tbody></table></div>
+    <p>Auslastung zählt belegte Sitzplätze über die gesamte Spielzeit. Offene Kosten werden aus dem nächsten Guthaben beglichen. Standort, Preise, Auswahl, Einrichtung und Bewertungen bestimmen die Nachfrage. Lange Wartezeiten kosten Gäste und Sterne.</p>
   </dialog>
   <dialog id="kitchenDialog" aria-labelledby="kitchenTitle">
     <header class="propertyHeader"><h2 id="kitchenTitle">Küche einrichten</h2><button id="kitchenClose" type="button" aria-label="Küchenprüfung schließen">×</button></header>
-    <p>Verlege unter <strong>Ausbau → Küchenplatten</strong> einzelne Platten. Du kannst die Küche im Gastraum oder in einem Nebenraum bauen.</p>
+    <p>Verlege unter <strong>Ausbau → Küchenplatten</strong> Platten. Ziehe über die Fläche, um mehrere Platten gemeinsam zu kaufen. Du kannst die Küche im Gastraum oder in einem Nebenraum bauen.</p>
     <ul id="kitchenChecklist"></ul>
-    <p>Ofen, Tresen und Kühlschrank müssen vollständig auf derselben zusammenhängenden Küchenfläche stehen. Zum Öffnen brauchst du außerdem erreichbare Tische und eine aktive Speisekarte.</p>
-    <p>Mit „Verkaufen“ kannst du Geräte verkaufen und leere Küchenplatten entfernen. Rückgängig stellt deine letzte Änderung wieder her.</p>
+    <p>Ofen, Tresen und Kühlschrank müssen vollständig auf derselben zusammenhängenden Küchenfläche stehen. Zum Öffnen brauchst du außerdem erreichbare Tische, eine aktive Speisekarte und je einen Koch und eine Servicekraft unter „Personal“. Geräte brauchen freie Nachbarfelder und Arbeitswege.</p>
+    <p>Mit „Verschieben“ kannst du vorhandene Möbel ohne Neukauf umstellen. Mit „Verkaufen“ kannst du Geräte verkaufen und leere Küchenplatten entfernen. Rückgängig stellt deine letzte Änderung wieder her.</p>
   </dialog>
   <div id="restaurantHead" class="ui restaurantHead" hidden>
     <svg class="restaurantBadge" aria-hidden="true"><use href="#icon-pizza"/></svg><div class="restaurantName"><select id="restaurantSelect" aria-label="Restaurant wechseln"><option value="mamma-mia">Mamma Mia</option></select><span id="restaurantServiceStatus" role="button" tabindex="0" aria-label="Küche und Betriebsstatus prüfen">Speisekarte noch leer</span></div><div class="stars" aria-label="Vier von fünf Sternen">★★★★☆</div><button type="button" class="restaurantMenuButton" data-open-menu aria-label="Speisekarte öffnen" title="Speisekarte"><svg aria-hidden="true"><use href="#icon-menu"/></svg></button>
@@ -92,6 +100,7 @@
     <div id="catalogOptions" class="catalogOptions" aria-label="Möbel auswählen"></div>
     <div class="toolactions">
       <button type="button" id="rotateBtn">Drehen 0°</button>
+      <button type="button" id="moveBtn" aria-pressed="false">Verschieben</button>
       <button type="button" id="deleteBtn" aria-pressed="false">Verkaufen</button>
       <button type="button" id="undoBtn" disabled>Rückgängig</button>
       <button type="button" id="resetBtn">Zurücksetzen</button>
@@ -125,15 +134,15 @@
     <button type="button" id="cityBtn" class="navbtn active" aria-pressed="true"><svg aria-hidden="true"><use href="#icon-city"/></svg>Stadt</button>
     <button type="button" id="restaurantBtn" class="navbtn" aria-pressed="false"><svg aria-hidden="true"><use href="#icon-cutlery"/></svg>Restaurant</button>
     <button type="button" id="pizzaBtn" class="navbtn" aria-pressed="false"><svg aria-hidden="true"><use href="#icon-pizza"/></svg>Pizza</button>
-    <button type="button" class="navbtn" disabled title="In dieser Demo noch nicht verfügbar"><svg aria-hidden="true"><use href="#icon-people"/></svg>Personal</button>
+    <button type="button" id="staffBtn" class="navbtn"><svg aria-hidden="true"><use href="#icon-people"/></svg>Personal</button>
     <button type="button" class="navbtn" disabled title="In dieser Demo noch nicht verfügbar"><svg aria-hidden="true"><use href="#icon-megaphone"/></svg>Werbung</button>
-    <button type="button" class="navbtn" disabled title="In dieser Demo noch nicht verfügbar"><svg aria-hidden="true"><use href="#icon-coins"/></svg>Finanzen</button>
+    <button type="button" id="financeBtn" class="navbtn"><svg aria-hidden="true"><use href="#icon-coins"/></svg>Finanzen</button>
   </nav>
   <div id="credit" class="credit" aria-hidden="true">Pizza City</div>
 </div>
 <noscript>Bitte JavaScript aktivieren, um die Pizza-Demo zu starten.</noscript>
 <script type="module">
-  import('./pizza.js?v=20261011l').catch(error=>{
+  import('./pizza.js?v=20261011m').catch(error=>{
     console.error('Pizza demo could not start',error);
     const loading=document.querySelector('#loading');loading.hidden=false;loading.replaceChildren();
     const message=document.createElement('p');message.textContent='Die Demo konnte nicht starten. Bitte erneut laden.';

@@ -1,13 +1,13 @@
-import {profilePlan} from './pizza-kitchen.js?v=20261011l';
-import {restaurantPlan,DEFAULT_PLAN,withKitchen} from './pizza-floorplans.js?v=20261011l';
-import {DEFAULT_CITY_SEED} from './pizza-city-layout.js?v=20261011l';
-import {restoreProperties,propertySpend} from './pizza-properties.js?v=20261011l';
+import {profilePlan} from './pizza-kitchen.js?v=20261011m';
+import {restaurantPlan,DEFAULT_PLAN,withKitchen} from './pizza-floorplans.js?v=20261011m';
+import {DEFAULT_CITY_SEED} from './pizza-city-layout.js?v=20261011m';
+import {restoreProperties,propertySpend} from './pizza-properties.js?v=20261011m';
 import {Application,Container,Graphics,Sprite,Texture,Text,Rectangle} from './assets/pizza/vendor/pixi-8.22.0.mjs';
-import {copyLayout,upgradeLayout} from './pizza-layout.js?v=20261011l';
-import {START_MONEY,money,defaultFinishes,restoreFinishes} from './pizza-catalog.js?v=20261011l';
-import {freshService,restoreService} from './pizza-service.js?v=20261011l';
-import {MAIN_RESTAURANT,freshRestaurant,restoreRestaurants} from './pizza-restaurant-profiles.js?v=20261011l';
-import {property} from './pizza-properties.js?v=20261011l';
+import {copyLayout,upgradeLayout} from './pizza-layout.js?v=20261011m';
+import {START_MONEY,money,defaultFinishes,restoreFinishes} from './pizza-catalog.js?v=20261011m';
+import {freshService,restoreService} from './pizza-service.js?v=20261011m';
+import {MAIN_RESTAURANT,freshRestaurant,restoreRestaurants} from './pizza-restaurant-profiles.js?v=20261011m';
+import {property} from './pizza-properties.js?v=20261011m';
 export {Container,Graphics,Sprite,Texture,Text,Rectangle};
 
 export const root=document.querySelector('#app');
@@ -28,14 +28,14 @@ function restore(){
     const items=upgradeLayout(saved?.items,saved?.version,saved?.version===8?withKitchen(restaurantPlan(saved.activeRestaurantId),saved.kitchenTiles||[]):saved?.version===7?restaurantPlan(saved.activeRestaurantId):DEFAULT_PLAN);
     const current=[5,6,7,8].includes(saved?.version)&&Number.isSafeInteger(saved.balanceCents)&&saved.balanceCents>=0&&saved.balanceCents<=1e12;
     const owned=restoreProperties(saved?.ownedProperties),ownedProperties=current||propertySpend(owned)<=START_MONEY?owned:[];
-    if(items) return {items,ownedProperties,service:current?restoreService(saved.service,saved.version===8?withKitchen(restaurantPlan(saved.activeRestaurantId),saved.kitchenTiles||[]):saved.version===7?restaurantPlan(saved.activeRestaurantId):DEFAULT_PLAN):freshService(),gameMinutes:current&&Number.isFinite(saved.gameMinutes)&&saved.gameMinutes>=0&&saved.gameMinutes<=1e10?saved.gameMinutes:11*60+30,citySeed:Number.isInteger(saved.citySeed)&&saved.citySeed>=0&&saved.citySeed<=0xffffffff?saved.citySeed:DEFAULT_CITY_SEED,finishes:saved.version>=4?restoreFinishes(saved.finishes):defaultFinishes(),balance:current?saved.balanceCents/100:saved.version>=3&&Number.isInteger(saved.balance)&&saved.balance>=0&&saved.balance<=START_MONEY?Math.min(saved.balance,START_MONEY-propertySpend(ownedProperties)):START_MONEY-propertySpend(ownedProperties)};
+    if(items) return {hasLegacy:true,items,ownedProperties,service:current?restoreService(saved.service,saved.version===8?withKitchen(restaurantPlan(saved.activeRestaurantId),saved.kitchenTiles||[]):saved.version===7?restaurantPlan(saved.activeRestaurantId):DEFAULT_PLAN):freshService(),gameMinutes:current&&Number.isFinite(saved.gameMinutes)&&saved.gameMinutes>=0&&saved.gameMinutes<=1e10?saved.gameMinutes:11*60+30,citySeed:Number.isInteger(saved.citySeed)&&saved.citySeed>=0&&saved.citySeed<=0xffffffff?saved.citySeed:DEFAULT_CITY_SEED,finishes:saved.version>=4?restoreFinishes(saved.finishes):defaultFinishes(),balance:current?saved.balanceCents/100:saved.version>=3&&Number.isInteger(saved.balance)&&saved.balance>=0&&saved.balance<=START_MONEY?Math.min(saved.balance,START_MONEY-propertySpend(ownedProperties)):START_MONEY-propertySpend(ownedProperties)};
   }catch{}
   return {items:copyLayout(),ownedProperties:[],service:freshService(),gameMinutes:11*60+30,citySeed:DEFAULT_CITY_SEED,finishes:defaultFinishes(),balance:START_MONEY};
 }
 const restored=restore();
 let savedProfiles=null;
 try{const saved=JSON.parse(localStorage.getItem(SAVE_KEY));if([6,7,8].includes(saved?.version))savedProfiles=saved;}catch{}
-const legacy={items:restored.items,finishes:restored.finishes,service:restored.service,investmentCents:Math.max(0,Math.round((START_MONEY-propertySpend(restored.ownedProperties)-restored.balance)*100)+restored.service.netCents),history:[]};
+const legacy=restored.hasLegacy?{items:restored.items,finishes:restored.finishes,service:restored.service,investmentCents:Math.max(0,Math.round((START_MONEY-propertySpend(restored.ownedProperties)-restored.balance)*100)+restored.service.netCents),history:[]}:null;
 const restaurants=restoreRestaurants(savedProfiles?.restaurants,restored.ownedProperties,savedProfiles?null:legacy);
 const activeRestaurantId=Object.hasOwn(restaurants,savedProfiles?.activeRestaurantId)?savedProfiles.activeRestaurantId:MAIN_RESTAURANT;
 const active=restaurants[activeRestaurantId];
@@ -60,7 +60,7 @@ export function activateRestaurant(id){
   if(id!==MAIN_RESTAURANT&&!state.ownedProperties.includes(id))return false;
   ensureRestaurants();const profile=state.restaurants[id];state.activeRestaurantId=id;
   state.kitchenTiles=profile.kitchenTiles||[];state.restaurantState=profile.items;state.finishes=profile.finishes;state.service=profile.service;state.history=profile.history;
-  state.pendingPlacement=null;state.rotation=0;state.deleteMode=false;return true;
+  state.pendingPlacement=null;state.rotation=0;state.deleteMode=false;state.moveMode=false;return true;
 }
 export function sealRestaurantEdit(){
   const profile=captureRestaurant(),edit=state.history.at(-1);
@@ -79,7 +79,7 @@ export function clearWorld(){
 
 export function sceneUI(scene){
   const restaurant=scene==='restaurant';
-  for(const id of ['propertyDialog','menuDialog','kitchenDialog']){const dialog=document.getElementById(id);if(dialog?.open)dialog.close();}
+  for(const id of ['propertyDialog','menuDialog','kitchenDialog','businessDialog']){const dialog=document.getElementById(id);if(dialog?.open)dialog.close();}
   root.dataset.scene=scene;
   document.querySelector('#pizzaEditor').hidden=scene!=='pizza';
   document.querySelector('#tools').hidden=!restaurant;
@@ -122,7 +122,7 @@ export function notify(message){
 }
 
 export function saveLayout(quiet=false){
-  const profiles=ensureRestaurants(),savedRestaurants=Object.fromEntries(Object.entries(profiles).map(([id,p])=>[id,{items:p.items,finishes:p.finishes,service:p.service,investmentCents:p.investmentCents,floorPlanVersion:1,kitchenVersion:1,kitchenTiles:p.kitchenTiles}]));
+  const profiles=ensureRestaurants(),savedRestaurants=Object.fromEntries(Object.entries(profiles).map(([id,p])=>[id,{business:p.business,items:p.items,finishes:p.finishes,service:p.service,investmentCents:p.investmentCents,floorPlanVersion:1,kitchenVersion:1,kitchenTiles:p.kitchenTiles}]));
   try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:8,kitchenTiles:state.kitchenTiles,activeRestaurantId:state.activeRestaurantId,restaurants:savedRestaurants,items:state.restaurantState,balance:state.balance,balanceCents:Math.round(state.balance*100),service:state.service,gameMinutes:state.gameMinutes,finishes:state.finishes,ownedProperties:state.ownedProperties,citySeed:state.citySeed}));return true;}
   catch{if(!quiet)notify('Einrichtung bleibt in dieser Sitzung erhalten.');return false;}
 }
@@ -161,9 +161,9 @@ async function loadCityAtlas(){
 }
 
 export async function loadAssets(){
-  const {loadCityArt}=await import('./pizza-city-art.js?v=20261011l');
-  const {loadRestaurantArt}=await import('./pizza-restaurant-art.js?v=20261011l');
-  const {loadIngredientArt}=await import('./pizza-ingredient-art.js?v=20261011l');
+  const {loadCityArt}=await import('./pizza-city-art.js?v=20261011m');
+  const {loadRestaurantArt}=await import('./pizza-restaurant-art.js?v=20261011m');
+  const {loadIngredientArt}=await import('./pizza-ingredient-art.js?v=20261011m');
   await Promise.all([loadCityArt(),loadRestaurantArt(),loadIngredientArt()]);
   if(!state.cityArt.buildings) await loadCityAtlas();
   loading.hidden=true;

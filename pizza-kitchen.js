@@ -1,5 +1,6 @@
-import {roomCell,roomStep,withKitchen,restaurantPlan} from './pizza-floorplans.js?v=20261011l';
-import {occupiedCells,decorCell} from './pizza-layout.js?v=20261011l';
+import {kitchenWorkflow} from './pizza-business.js?v=20261011m';
+import {roomCell,roomStep,withKitchen,restaurantPlan} from './pizza-floorplans.js?v=20261011m';
+import {occupiedCells,decorCell,placementIssue} from './pizza-layout.js?v=20261011m';
 export const KITCHEN_TYPES=['oven','bar','fridge'];
 export const KITCHEN_TILE_PRICE=50;
 export function restoreKitchenTiles(raw,p){
@@ -32,7 +33,7 @@ export function kitchenReadiness(tiles,items,p){
     if(!best||present.length>best.present.length)best={cells,present};
   }
   const missing=KITCHEN_TYPES.filter(type=>!best?.present.includes(type)),names={oven:'Ofen',bar:'Tresen',fridge:'Kühlschrank'};
-  return {ready:!!best&&!missing.length,largest:groups[0]?.length||0,missing,issue:!best?'Küchenboden: mindestens 9 zusammenhängende Platten, mindestens 3 breit oder hoch.':missing.length?'Küche fehlt: '+missing.map(type=>names[type]).join(', ')+'.':null};
+  return {ready:!!best&&!missing.length,cells:best?.cells||[],largest:groups[0]?.length||0,missing,issue:!best?'Küchenboden: mindestens 9 zusammenhängende Platten, mindestens 3 breit oder hoch.':missing.length?'Küche fehlt: '+missing.map(type=>names[type]).join(', ')+'.':null};
 }
 export function kitchenTileIssue(cell,tiles,items,p){
   if(!cell||!roomCell(cell.x,cell.y,p))return 'Die Küchenplatte muss im Raum liegen.';
@@ -46,7 +47,14 @@ export function kitchenTileIssue(cell,tiles,items,p){
 export function legacyKitchen(p){
   const tiles=p.cells.filter(t=>t.x>=p.kitchen.x&&t.y>=p.kitchen.y&&t.x<p.kitchen.x+p.kitchen.w&&t.y<p.kitchen.y+p.kitchen.h).map(t=>({...t,paid:0}));
   const k=p.kitchen,items=[{type:'fridge',x:k.x,y:k.y,r:0},{type:'oven',x:k.x+1,y:k.y,r:0},{type:'bar',x:k.x,y:k.y+k.h-1,r:0}];
+  const plan=withKitchen(p,tiles);
+  if(!kitchenWorkflow(items,plan,tiles)){const candidates=tiles.flatMap(c=>[0,1].map(r=>({...items[2],x:c.x,y:c.y,r})));const bar=candidates.find(b=>!placementIssue(b,items.slice(0,2),plan)&&kitchenWorkflow([...items.slice(0,2),b],plan,tiles));if(bar)items[2]=bar;}
   return {tiles,items};
 }
 const cache=new WeakMap();
 export function profilePlan(id,profile){const old=cache.get(profile);if(old?.tiles===profile.kitchenTiles&&old.id===id)return old.plan;const plan=withKitchen(restaurantPlan(id),profile.kitchenTiles||[]);cache.set(profile,{id,tiles:profile.kitchenTiles,plan});return plan;}
+
+export function kitchenWorkFlow(tiles,items,p){
+  for(const cells of kitchenComponents(tiles,p)){const ready=kitchenReadiness(cells,items,p);if(ready.ready){const flow=kitchenWorkflow(items,p,cells);if(flow)return flow;}}
+  return null;
+}
