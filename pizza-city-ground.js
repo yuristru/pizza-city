@@ -1,14 +1,13 @@
 import {Sprite,Texture,CITY_N,hash} from './pizza-core.js?v=20261011f';
 
 // One texture pixel per world pixel matches the city sprites; bake once per map.
-export function cityGround({road,roadCell,water,bridge,park,fountainCell},seed){
+export function cityGround({road,water,bridge,park,fountainCell,streets,links,nodes},seed){
   const min=-8,max=CITY_N+7,left=(min-max)*32-32,top=min*32-16;
   const canvas=document.createElement('canvas');
   canvas.width=(max-min)*64+64;canvas.height=(max-min)*32+32;
   const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
   const random=(x,y,s=0)=>hash(x,y,(seed+s)>>>0);
   const point=(x,y)=>[(x-y)*32-left,(x+y)*16-top];
-  const mod=n=>((n%8)+8)%8;
   const stats={asphalt:0,crossings:0,manholes:0,curbs:0};
   function polygon(points,color,worn=0){
     const ys=points.map(p=>p[1]),start=Math.ceil(Math.min(...ys)-.5),end=Math.ceil(Math.max(...ys)-.5);
@@ -49,17 +48,6 @@ export function cityGround({road,roadCell,water,bridge,park,fountainCell},seed){
       if(random(x*3+a,y*3+b,351)>.9)line(point(px+.09,py+.08),point(px+.21,py+.1),'#9e947f');
     }
   }
-  function asphalt(x,y){
-    stats.asphalt++;quad(x-.5,y-.5,1,1,'#484d4b');
-    const colors=['#505652','#424945','#575c55','#454b47'];
-    for(let n=0;n<72;n++){
-      const p=point(x-.46+random(x,y,n*3+10)*.92,y-.46+random(x,y,n*3+11)*.92);
-      pixel(p[0],p[1],colors[Math.floor(random(x,y,n*3+12)*colors.length)]);
-    }
-    if(random(x,y,90)>.87){
-      const p=point(x-.15,y-.1);line([p[0]-8,p[1]-4],[p[0]+2,p[1]],'#3b423f');line([p[0]+2,p[1]],[p[0]+8,p[1]-2],'#414844');
-    }
-  }
   function waterTile(x,y){
     quad(x-.5,y-.5,1,1,'#397b8d');
     for(let n=0;n<24;n++){
@@ -69,50 +57,48 @@ export function cityGround({road,roadCell,water,bridge,park,fountainCell},seed){
   }
   for(let y=min;y<=max;y++)for(let x=min;x<=max;x++){
     if(water(x,y)&&!bridge(x,y))waterTile(x,y);
-    else if(bridge(x,y))stone(x,y);
-    else if(road(x,y))asphalt(x,y);
-    else if(park(x,y)&&!fountainCell(x,y)&&!road(x-1,y)&&!road(x+1,y)&&!road(x,y-1)&&!road(x,y+1)){
+    else if(park(x,y)&&!fountainCell(x,y)&&!road(x,y,.5)){
       quad(x-.5,y-.5,1,1,'#788851');
       for(let n=0;n<60;n++){const p=point(x-.45+random(x,y,n+170)*.9,y-.45+random(y,x,n+190)*.9);pixel(p[0],p[1],n%2?'#87995c':'#677a49');}
     }else stone(x,y);
   }
-  // Small stone blocks form a continuous curb around every city block.
+  function ribbon(s,width,color){
+    if(s.axis===0)quad(s.from,s.center-width/2,s.to-s.from,width,color);
+    else quad(s.center-width/2,s.from,width,s.to-s.from,color);
+  }
+  // Streets are continuous fractional-width ribbons, independent of tile size.
+  for(const s of streets){ribbon(s,s.width+.56,'#b9ab91');ribbon(s,s.width+.08,'#e0d0ae');stats.curbs++;}
+  for(const s of streets)ribbon(s,s.width,'#484d4b');
   for(let y=min;y<=max;y++)for(let x=min;x<=max;x++){
-    if(road(x,y)||water(x,y))continue;
-    for(const [dx,dy]of [[-1,0],[1,0],[0,-1],[0,1]]){
-      if(!road(x+dx,y+dy))continue;stats.curbs++;
-      for(let n=0;n<4;n++){
-        const px=x+(dx<0?-.5:dx>0?.4:-.5+n*.25),py=y+(dy<0?-.5:dy>0?.4:-.5+n*.25);
-        quad(px,py,dx?.1:.23,dy?.1:.23,n%2?'#d4c5a5':'#c5b695');
-        line(point(px,py+(dy?.1:.23)),point(px+(dx?.1:.23),py+(dy?.1:.23)),'#a4977c');
-        line(point(px,py),point(px+(dx?.1:.23),py),'#ede0c3');
-      }
+    if(!road(x,y,.5))continue;stats.asphalt++;
+    for(let n=0;n<60;n++){
+      const gx=x-.5+random(x,y,n*3+10),gy=y-.5+random(x,y,n*3+11);
+      if(!road(gx,gy))continue;
+      const p=point(gx,gy);pixel(p[0],p[1],['#505652','#424945','#575c55','#454b47'][n%4]);
     }
   }
-  // Markings are world-plane rectangles, rasterized on the same pixel lattice.
-  for(let y=min;y<=max;y++)for(let x=min;x<=max;x++){
-    if(!road(x,y)||water(x,y))continue;
-    const ix=roadCell(x),iy=roadCell(y);if(ix&&iy)continue;
-    if(ix&&mod(x)===0){
-      if(y%3===0)quad(x+.46,y-.32,.08,.64,'#b7baa5',.08);
-      if([2,7].includes(mod(y))){stats.crossings++;for(let n=0;n<5;n++)quad(x-.37+n*.37,y-.38,.19,.76,'#e5dcc4',.045);}
+  for(const s of streets){
+    // Only the main boulevard has a center line; residential lanes stay quiet.
+    if(s.width>1)for(let t=s.from+.5;t<s.to;t+=2){
+      if(s.axis===0)quad(t,s.center-.025,.6,.05,'#b7baa5',.08);
+      else quad(s.center-.025,t,.05,.6,'#b7baa5',.08);
     }
-    if(iy&&mod(y)===0){
-      if(x%3===0)quad(x-.32,y+.46,.64,.08,'#b7baa5',.08);
-      if([2,7].includes(mod(x))){stats.crossings++;for(let n=0;n<5;n++)quad(x-.38,y-.37+n*.37,.76,.19,'#e5dcc4',.045);}
-    }
-    if(random(x,y,240)>.985&&![2,7].includes(ix?mod(y):mod(x))){
-      stats.manholes++;const p=point(x,y);
-      for(let dy=-5;dy<=5;dy++)for(let dx=-10;dx<=10;dx++){
-        const radius=dx*dx/100+dy*dy/25;if(radius<=1)pixel(p[0]+dx,p[1]+dy,radius>.72?'#777b6b':dy%2?'#333c39':'#454f48');
-      }
-      pixel(p[0]-4,p[1]-4,'#9b9c86',6);pixel(p[0]-2,p[1]+4,'#303935',5);
+    if(s.axis===1)for(const y of [s.from+.9,s.to-.9]){
+      stats.crossings++;
+      for(let n=0;n<4;n++)quad(s.center-s.width/2+.04+n*s.width/4,y-.13,s.width/7,.26,'#e5dcc4',.045);
     }
   }
-  // The bridge deck shares the paving raster; raised railings stay in the object layer.
-  for(const y of [16,24]){
-    quad(23.5,y-.5,3,2,'#a99e85');
-    for(let x=24;x<=26;x++)for(let gy=y;gy<=y+1;gy++)stone(x,gy);
+  for(const [i,link]of links.entries()){
+    if(i%5)continue;const a=nodes[link.a],b=nodes[link.b],gx=(a.x+b.x)/2,gy=(a.y+b.y)/2;
+    if(water(gx,gy))continue;stats.manholes++;const p=point(gx,gy);
+    for(let dy=-3;dy<=3;dy++)for(let dx=-6;dx<=6;dx++){
+      const radius=dx*dx/36+dy*dy/9;if(radius<=1)pixel(p[0]+dx,p[1]+dy,radius>.65?'#777b6b':dy%2?'#333c39':'#454f48');
+    }
+    pixel(p[0]-3,p[1]-2,'#9b9c86',4);
+  }
+  for(const s of streets.filter(s=>s.axis===0&&s.center>=12)){
+    quad(26.15,s.center-s.width/2-.28,2.2,s.width+.56,'#bbae94');
+    for(let n=0;n<12;n++)line(point(26.15+n*.18,s.center-s.width/2-.28),point(26.15+n*.18,s.center+s.width/2+.28),'#a39780');
   }
   const texture=Texture.from(canvas);texture.source.scaleMode='nearest';
   const sprite=new Sprite(texture);sprite.position.set(left,top);sprite.scale.set(1);sprite.label='city-ground';sprite.pixelScale=1;sprite.groundDetails=stats;

@@ -4,7 +4,7 @@ import {tickService} from './pizza-service-runtime.js?v=20261011f';
 import {renderServiceUI} from './pizza-service-ui.js?v=20261011f';
 import {showPizza} from './pizza-editor.js?v=20261011f';
 import {app,root,state,loadAssets,updateMoney} from './pizza-core.js?v=20261011f';
-import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261011f';
+import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261011g';
 import {showRestaurant,tickRestaurant,resizeRestaurant,resetRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView} from './pizza-restaurant.js?v=20261011f';
 
 import {furnitureIcon} from './pizza-sprites.js?v=20261011f';

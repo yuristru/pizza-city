@@ -1,5 +1,5 @@
-import {cityGround} from './pizza-city-ground.js?v=20261011f';
-import {districtOrder,nextCitySeed} from './pizza-city-layout.js?v=20261011f';
+import {cityGround} from './pizza-city-ground.js?v=20261011g';
+import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261011g';
 import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261011f';
 import {openProperty} from './pizza-properties-ui.js?v=20261011f';
 import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261011f';
@@ -14,15 +14,16 @@ function sourceBlock(bx,by){
   const source=districts[by*3+bx];return [source%3,Math.floor(source/3)];
 }
 const DEFAULT_VIEW={x:0,y:432,zoom:.88};
-function roadCell(value){const m=((value%8)+8)%8;return m<2;}
-function road(x,y){return roadCell(x)||roadCell(y);}
-function water(x,y){return x>=24&&x<26&&y>=12;}
-function bridge(x,y){return water(x,y)&&roadCell(y);}
+let layout=cityLayout();
+const road=(x,y,pad=0)=>layout.road(x,y,pad);
+const water=(x,y)=>layout.water(x,y);
+const bridge=(x,y)=>layout.bridge(x,y);
 function park(x,y){
-  const bx=Math.floor((x-2)/8),by=Math.floor((y-2)/8),[sx,sy]=sourceBlock(bx,by),lx=x-(2+bx*8),ly=y-(2+by*8);
-  return sx===2&&sy===2&&lx>=0&&lx<6&&ly>=0&&ly<6&&!(lx<3&&ly>2);
+  const b=layout.blocks.find(b=>x>=b.x0&&x<=b.x1&&y>=b.y0&&y<=b.y1);
+  if(!b)return false;const [sx,sy]=sourceBlock(b.bx,b.by);
+  return sx===2&&sy===2&&x>b.x0+2.6;
 }
-function fountainCell(x,y){const lx=((x-2)%8+8)%8,ly=((y-2)%8+8)%8;return lx>=3&&lx<=4&&ly>=3&&ly<=4;}
+function fountainCell(x,y){return layout.blocks.some(b=>{const [sx,sy]=sourceBlock(b.bx,b.by);return sx===2&&sy===2&&Math.abs(x-(b.x1-1.5))<1&&Math.abs(y-(b.y1-1.8))<1;});}
 function place(layer,object,x,y){const p=iso(x,y);object.position.set(p.x,p.y);object.zIndex=p.y;layer.addChild(object);return object;}
 
 function fallbackTree(){const g=new Graphics();g.ellipse(0,0,12,4).fill({color:0,alpha:.16});g.rect(-2,-20,4,20).fill(0x78553a);g.poly([-17,-23,-15,-41,-7,-52,8,-54,18,-43,20,-27,7,-19]).fill(0x426641);g.poly([-15,-33,-10,-47,2,-51,12,-39,1,-27]).fill(0x6a8b4d);return g;}
@@ -34,21 +35,19 @@ function patioTable(){const g=citySprite('props',7)||new Graphics().poly([-13,-1
 function fountain(){return citySprite('props',4)||new Graphics().ellipse(0,-5,36,18).fill(0xb4b096).ellipse(0,-6,30,13).fill(0x598d9e).rect(-3,-25,6,21).fill(0xcac2a8);}
 
 function bridges(objects){
-  for(const y of [16,24]){
-    for(const edge of [y-.52,y+1.52]){
-      const wall=new Graphics(),a=iso(23.5,edge),b=iso(26.5,edge);
-      wall.poly([0,-9,b.x-a.x,b.y-a.y-9,b.x-a.x,b.y-a.y,0,0]).fill(0x8c836c).stroke({color:0xd6cbb0,width:2});
-      for(let n=0;n<=6;n++){const px=n*16,py=n*8;wall.rect(px-2,py-14,4,8).fill(0xbeb397);}
-      wall.position.set(a.x,a.y);wall.zIndex=(a.y+b.y)/2;wall.label='city-bridge';objects.addChild(wall);
-    }
+  for(const s of layout.streets.filter(s=>s.axis===0&&s.center>=12))for(const edge of [s.center-s.width/2-.27,s.center+s.width/2+.27]){
+    const wall=new Graphics(),a=iso(26.15,edge),b=iso(28.35,edge);
+    wall.poly([0,-8,b.x-a.x,b.y-a.y-8,b.x-a.x,b.y-a.y,0,0]).fill(0x8c836c).stroke({color:0xd6cbb0,width:1});
+    for(let n=0;n<=5;n++){const px=n*14.08,py=n*7.04;wall.rect(px-1,py-12,3,7).fill(0xbeb397);}
+    wall.position.set(a.x,a.y);wall.zIndex=(a.y+b.y)/2;wall.label='city-bridge';objects.addChild(wall);
   }
 }
 function waterfront(objects){
-  for(let y=12;y<34;y+=1.5){
-    if(roadCell(y)||roadCell(y+.5))continue;
-    const g=new Graphics();g.poly([0,-5,-40,15,-40,21,0,1]).fill(0x807b69).stroke({color:0xcac4ab,width:1});
-    g.rect(-2,-14,4,12).fill(0x55594b);g.poly([-39,5,0,-14]).stroke({color:0x4e5549,width:2});
-    place(objects,g,23.55,y+.1);
+  for(let y=12;y<34;y+=1.3){
+    if(layout.horizontal(y,.8))continue;
+    const g=new Graphics();g.poly([0,-4,-28,10,-28,15,0,1]).fill(0x807b69).stroke({color:0xcac4ab,width:1});
+    g.rect(-1,-12,3,10).fill(0x55594b);g.poly([-27,2,0,-12]).stroke({color:0x4e5549,width:1});
+    place(objects,g,26.35,y+.1);
   }
 }
 
@@ -101,45 +100,52 @@ function refreshPropertyMarkers(){
   }
 }
 
-function decorateCorners(objects,ox,oy){
-  [[.1,.1],[5.3,.1],[.1,5.3],[5.3,5.3]].forEach(([x,y],i)=>place(objects,i%2?planter():lamp(),ox+x,oy+y));
-}
-function block(objects,labels,bx,by){
-  const ox=2+bx*8,oy=2+by*8;
+function block(objects,labels,b){
+  let {bx,by,x0,x1,y0,y1}=b;const w=x1-x0,h=y1-y0;
   [bx,by]=sourceBlock(bx,by);
+  const put=(object,x,y)=>place(objects,object,x0+x,y0+y);
+  // The canal edge is a promenade, not another copy of a residential square.
+  if(b.bx===3){
+    for(let y=1;y<h;y+=2)put(tree(3,.75),1,y);
+    put(bench(),.7,h*.65);return;
+  }
   if(bx===0&&by===0){
-    landmark(objects,labels,ox+3.4,oy+5.2,0);
-    [[.1,3.9],[5.3,2.0],[5.2,5.3]].forEach(([x,y],i)=>place(objects,tree(i===1?3:2),ox+x,oy+y));
-    decorateCorners(objects,ox,oy);return;
+    landmark(objects,labels,x0+w*.55,y0+h-.4,0);
+    put(tree(2,.85),.3,h*.45);put(tree(3,.8),w-.3,h*.5);put(lamp(),w-.25,.3);return;
   }
   if(bx===1&&by===0){
-    landmark(objects,labels,ox+2.7,oy+5.4,1);
-    [[.1,1.1],[5.2,1.6],[5.3,5.2]].forEach(([x,y])=>place(objects,tree(2,.9),ox+x,oy+y));
-    decorateCorners(objects,ox,oy);return;
+    landmark(objects,labels,x0+w*.48,y0+h-.5,1);
+    put(tree(2,.85),.3,1);put(tree(2,.8),w-.2,h-.4);return;
   }
   if(bx===2&&by===2){
-    place(objects,fountain(),ox+4.0,oy+4.0);
-    building(objects,labels,ox+2.2,oy+4.6,6,'Donatello');
-    [[.2,.8],[2.4,.4],[5.3,1.3],[5.2,5.2]].forEach(([x,y],i)=>place(objects,tree(i===1?3:i%3,.86),ox+x,oy+y));
-    [[3.0,5.3],[5.4,3.0],[1.0,2.7]].forEach(([x,y])=>place(objects,bench(),ox+x,oy+y));
-    decorateCorners(objects,ox,oy);return;
+    put(fountain(),w-1.5,h-1.8);
+    building(objects,labels,x0+2.4,y0+h-1.15,6,'Donatello');
+    [[.25,.8],[w*.55,.5],[w-.35,1.5],[w-.4,h-.5]].forEach(([x,y],i)=>put(tree(i%4,.8),x,y));
+    put(bench(),w-1.4,h-.35);put(bench(),w-.3,h-2.5);return;
   }
   const pool=[0,1,2,3,7].map(index=>({kind:'buildings',index}));
   for(let i=8;i<(state.cityArt.buildings?.length||8);i++)pool.push({kind:'buildings',index:i});
   for(let i=0;i<(state.cityArt.buildingTypes?.length||0);i++)pool.push({kind:'buildingTypes',index:i});
   function ordinary(slot,x,y){
     const site=PROPERTIES.find(p=>p.bx===bx&&p.by===by&&p.slot===slot);
-    if(site){propertyBuilding(objects,labels,x,y,site);return;}
+    if(site){propertyBuilding(objects,labels,x0+x,y0+y,site);return;}
     const {kind,index}=pool[Math.floor(cityHash(bx*4+slot,by)*pool.length)];
-    building(objects,labels,x,y,index,null,false,kind);
+    building(objects,labels,x0+x,y0+y,index,null,false,kind);
   }
-  ordinary(0,ox+2.35,oy+2.35);ordinary(1,ox+5.2,oy+2.35);
-  if(bx===1&&by===1)building(objects,labels,ox+2.5,oy+4.6,4,'Mamma Mia',true);
-  else if(bx===2&&by===1)building(objects,labels,ox+2.2,oy+4.6,5,"Luigi's");
-  else{ordinary(2,ox+2.35,oy+5.2);if((bx+by)%2===0)ordinary(3,ox+5.2,oy+5.2);}
-  if(bx!==1||by!==1)place(objects,tree(Math.floor(cityHash(bx,by,3)*4),.8),ox+5.25,oy+5.25);
-  else place(objects,tree(3,.86),ox+5.2,oy+5.1);
-  decorateCorners(objects,ox,oy);
+  const form=Math.floor(cityHash(bx,by,71)*4),left=2.25,right=w-.55,back=2.4,front=h-.7;
+  // Alternating setbacks, long rows and courtyards break the repeated four-house pattern.
+  ordinary(0,left,back+(form===1?.55:0));ordinary(1,right,back+(form===2?.6:0));
+  if(bx===1&&by===1)building(objects,labels,x0+2.5,y0+h-1.1,4,'Mamma Mia',true);
+  else if(bx===2&&by===1)building(objects,labels,x0+2.35,y0+h-1.1,5,"Luigi's");
+  else ordinary(2,left+(form===2?.35:0),front);
+  const hasFrontProperty=PROPERTIES.some(p=>p.bx===bx&&p.by===by&&p.slot===3);
+  if(form!==1||hasFrontProperty)ordinary(3,right,front-(form===3?.45:0));
+  if(h>6.8&&form!==2){ordinary(4,left,back+(front-back)/2);if(w>7.5)ordinary(5,right,back+(front-back)/2);}
+  else if(w>7.5&&form===2)ordinary(4,(left+right)/2,back+.15);
+  if(form===1){put(tree(3,.82),right,front-.4);put(bench(),right-.5,front+.2);}
+  else put(tree(Math.floor(cityHash(bx,by,3)*4),.76),w-.18,h-.15);
+  put(lamp(),.25,h-.15);
+  if(form===2)put(planter(),w*.5,h*.5);
 }
 
 let viewOffset=0;
@@ -199,28 +205,24 @@ function bindGestures(){
 
 export function showCity(){
   if(state.scene==='city') return;
-  districts=districtOrder(state.citySeed);
+  districts=districtOrder(state.citySeed);layout=cityLayout(state.citySeed);state.cityLayout=layout;
   clearWorld();state.scene='city';sceneUI('city');
   state.restaurantSign=null;
   state.camera=new Container();world.addChild(state.camera);
-  const ground=cityGround({road,roadCell,water,bridge,park,fountainCell},state.citySeed),markings=new Container(),objects=new Container(),labels=new Container();
+  const ground=cityGround({...layout,park,fountainCell},state.citySeed),markings=new Container(),objects=new Container(),labels=new Container();
   ground.label='city-ground';objects.label='city-objects';objects.sortableChildren=true;labels.sortableChildren=true;
   state.camera.addChild(ground,markings,objects,labels);
   bridges(objects);waterfront(objects);
-  for(let by=-1;by<4;by++) for(let bx=-1;bx<4;bx++) block(objects,labels,bx,by);
-  [[7,4],[18,6],[7,13],[18,12],[7,21],[15,22],[22,15]].forEach(([x,y],i)=>place(objects,tree(i%4,.78),x,y));
-  const lanes=[.12,1.12,8.12,9.12,16.12,17.12,24.12,25.12];
-  for(let i=0;i<16;i++){
-    const axis=Math.floor(i/8),dir=i%2?-1:1;if(axis===1&&i%8>=6)continue;
-    const g=carSprite(i,axis,dir);objects.addChild(g);
-    state.movers.push({kind:'car',g,axis,lane:lanes[i%8],t:cityHash(i,8)*CITY_N,dir,speed:.43+(i%4)*.065});
-  }
-  const sidewalks=[2.12,7.12,10.12,15.12,18.12,23.12];
-  for(let i=0;i<24;i++){
-    const axis=i%2,dir=i%4<2?1:-1,lane=sidewalks[i%6];
-    const g=personSprite(i%4,axis===0?(dir>0?0:2):(dir>0?1:3));g.scale.set(.33);g.label='city-pedestrian';objects.addChild(g);
-    const limit=axis===0&&lane>=12?23.4:CITY_N-.2;
-    state.movers.push({kind:'person',g,axis,lane,t:cityHash(i,9)*limit,dir,limit,speed:.095+(i%5)*.011});
+  for(const b of layout.blocks)block(objects,labels,b);
+  for(let i=0;i<40;i++){
+    const kind=i<16?'car':'person',link=layout.links[Math.floor(cityHash(i,8)*layout.links.length)];
+    const from=i%2?link.a:link.b,to=i%2?link.b:link.a;
+    const a=layout.nodes[from],b=layout.nodes[to],length=Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
+    const actor={kind,from,to,progress:cityHash(i,9)*length,offset:kind==='car'?.16:.67,variant:i,speed:kind==='car'?.43+(i%4)*.065:.095+(i%5)*.011};
+    advanceStreetActor(actor,layout,0,()=>cityHash(i,10));
+    actor.g=kind==='car'?carSprite(i,actor.axis,actor.dir):personSprite(i%4,actor.axis===0?(actor.dir>0?0:2):(actor.dir>0?1:3));
+    if(kind==='person')actor.g.scale.set(.33);actor.g.label=kind==='car'?'city-car':'city-pedestrian';
+    objects.addChild(actor.g);state.movers.push(actor);
   }
   state.onPropertyChange=refreshPropertyMarkers;
   resizeCity();bindGestures();tickCity(0);
@@ -235,10 +237,13 @@ export function randomizeCity(){
 
 export function tickCity(dt){
   for(const mover of state.movers){
-    mover.t+=mover.speed*dt*.035*mover.dir;
-    const limit=mover.limit||CITY_N-.2;
-    mover.t=((mover.t+.4)%limit+limit)%limit-.4;
-    const p=iso(mover.axis===0?mover.t:mover.lane,mover.axis===0?mover.lane:mover.t);
+    const previous=mover.axis+':'+mover.dir;
+    advanceStreetActor(mover,layout,mover.speed*dt*.035,()=>cityHash(mover.variant,Math.floor(state.gameMinutes*17),mover.to));
+    if(previous!==mover.axis+':'+mover.dir){
+      const next=mover.kind==='car'?carSprite(mover.variant,mover.axis,mover.dir):personSprite(mover.variant%4,mover.axis===0?(mover.dir>0?0:2):(mover.dir>0?1:3));
+      mover.g.texture=next.texture;next.destroy();
+    }
+    const p=iso(mover.x,mover.y);
     mover.g.position.set(Math.round(p.x),Math.round(p.y));mover.g.zIndex=p.y;
   }
 }

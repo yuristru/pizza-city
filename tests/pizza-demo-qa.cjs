@@ -104,15 +104,16 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     },corePath);
     assert.deepEqual(cityArt.atlases,{buildings:16,buildingTypes:8,landmarks:2,props:8});assert(cityArt.buildings>=30);
     assert(cityArt.variants.filter(i=>i>=8).length>=6);
-    assert(cityArt.ground.sprite);assert.equal(cityArt.ground.pixelScale,1);assert.equal(cityArt.ground.sampling,'nearest');assert(cityArt.ground.details.asphalt>500&&cityArt.ground.details.crossings>0&&cityArt.ground.details.curbs>0&&cityArt.ground.details.manholes>0);
+    assert(cityArt.ground.sprite);assert.equal(cityArt.ground.pixelScale,1);assert.equal(cityArt.ground.sampling,'nearest');assert(cityArt.ground.details.asphalt>200&&cityArt.ground.details.crossings>0&&cityArt.ground.details.curbs>0&&cityArt.ground.details.manholes>0);
     assert.equal(cityArt.projected.length,17);assert(cityArt.projected.every(a=>a.projection&&a.anchor.x>0&&a.anchor.x<1&&a.anchor.y>0&&a.anchor.y<=1));
     assert.equal(cityArt.properties.length,9);assert.equal(new Set(cityArt.properties).size,9);
     assert(cityArt.types.length>=4);
     assert.equal(cityArt.landmarks.length,2);assert(cityArt.landmarks.every(item=>item.sprite));
     assert(cityArt.traffic.every(item=>item.sprite&&item.scaleX>0&&item.scaleY>0),'Directional traffic must remain upright flat sprites.');
     assert.equal(cityArt.terraces.length,6);
-    const roadCell=value=>{const cell=Math.round(value),m=((cell%8)+8)%8;return m<2;};
-    assert(cityArt.terraces.every(item=>item.sprite&&!roadCell(item.x)&&!roadCell(item.y)),'Terraces must stay off the carriageway.');
+    const {cityLayout}=await import(pathToFileURL(path.join(root,'pizza-city-layout.js')));
+    const initialLayout=cityLayout();
+    assert(cityArt.terraces.every(item=>item.sprite&&!initialLayout.road(item.x,item.y)),'Terraces must stay off the carriageway.');
     console.log('City art passed: sixteen house variants, eight building types, nine properties, two landmarks, eight props, upright 2D traffic and six terrace sprites off the roads.');
     await page.click('#propertiesBtn');
     assert.equal(await page.locator('[data-property]').count(),3);
@@ -166,10 +167,10 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     await page.click('[data-speed="6"]');const fastest=await snapshot(page);await advance();const fastestDelta=(await snapshot(page)).minutes-fastest.minutes;
     assert(normalDelta>0);assert(Math.abs(fastDelta/normalDelta-3)<.001);assert(Math.abs(fastestDelta/normalDelta-6)<.001);await page.click('[data-speed="0"]');
     for(const mover of (await snapshot(page)).movers){
-      const x=mover.axis===0?mover.t:mover.lane,y=mover.axis===0?mover.lane:mover.t;
+      const {x,y}=mover;
       assert(Math.abs(mover.z-(x+y)*16)<1e-8,'Traffic depth must use its ground position.');
-      const inCanal=x>=23.5&&x<25.5&&y>=11.5;
-      assert(!inCanal||(mover.kind==='car'&&roadCell(y)),'Traffic must cross the canal only on bridges.');
+      const inCanal=initialLayout.water(x,y);
+      assert(!inCanal||initialLayout.bridge(x,y),'Traffic must cross the canal only on bridges.');
     }
     console.log('Time and depth passed: real pause, normal/3x/6x speed, live clock, traffic depth and safe canal crossings.');
     await page.evaluate(async modulePath=>{const {app}=await import(modulePath);app.ticker.maxFPS=0;app.ticker.stop();},corePath);
