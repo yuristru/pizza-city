@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PizzaCity · Stadtgefüge im Test</title>
+  <link rel="stylesheet" href="./pizza-city-study.css">
+</head>
+<body>
+  <header><a href="./pizza.html">PIZZACITY <span>/ Werkstatt</span></a><a href="https://github.com/yuristru/pizza-city/blob/main/docs/CITY-STRUCTURE-AUDIT.md">Analyse lesen ↗</a></header>
+  <main>
+    <div class="intro"><div><p class="eyebrow">STADTSTUDIE 01 · ECHTE SPIELASSETS</p><h1>Aus Häusern wird Stadt.</h1><p>Drei Anordnungen. Dieselben Sprites und derselbe Pixi-Renderer wie im Spiel.<br>Ein begrenzter Anschlusstest, noch kein neuer Stadtgenerator.</p></div><span class="stamp">2:1<br><small>FESTE ACHSEN</small></span></div>
+    <nav class="modes" aria-label="Testanordnung">
+      <button data-mode="loose" aria-pressed="true"><b>01</b><span>Freistehend<small>Der Abstand als Ausgangspunkt</small></span></button>
+      <button data-mode="joined" aria-pressed="false"><b>02</b><span>Kante an Kante<small>Was der Bestand wirklich verträgt</small></span></button>
+      <button data-mode="court" aria-pressed="false"><b>03</b><span>Hofgruppe<small>Zusammenhang und Überdeckung</small></span></button>
+    </nav>
+    <section class="workspace">
+      <div class="scene"><div class="scene-heading"><span id="sceneTitle">Einzelhäuser mit Zwischenräumen</span><span id="zoomValue">Maßstab</span></div><div id="app"><p id="loading">Stadtbausteine werden geladen …</p></div><div class="legend"><span><i class="cyan"></i>Sockel / geplante Grundfläche</span><span><i class="gold"></i>Anschlusskante</span><span><i class="pink"></i>Diagnosefigur</span></div></div>
+      <aside>
+        <p class="eyebrow">BEOBACHTUNG</p><h2 id="findingTitle">Viele Häuser, wenig Straßenfront.</h2><p id="finding"></p>
+        <div class="metrics"><div><strong id="facadeWidth"></strong><span>Fassadenabstand · Rastereinheiten</span></div><div><strong id="buildingCount"></strong><span>Gebäudesprites im Abschnitt</span></div></div>
+        <label class="slider">Fahrbahn <output id="roadValue"></output><input id="roadWidth" type="range" min="0.75" max="2" step="0.05" value="0.85"></label>
+        <label class="slider">Rücksprung je Straßenseite <output id="setbackValue"></output><input id="setback" type="range" min="0" max="1.5" step="0.05" value="0.65"></label>
+        <p class="fine">Der Fassadenabstand enthält Fahrbahn + zweimal 0,28 Gehweg + beide Rücksprünge. Rastereinheiten sind keine festgelegten Meter.</p>
+        <div class="toggles"><label><input id="footprints" type="checkbox" checked> Grundflächen und Anschlüsse</label><label><input id="xray" type="checkbox"> Gebäude transparent</label></div>
+        <label class="slider">Figur entlang der Prüflinie <output id="probeValue"></output><input id="probe" type="range" min="0" max="100" step="1" value="45"></label>
+        <p id="probeNote" class="fine"></p>
+        <div class="selection" id="selection" aria-live="polite">Ein Haus antippen, um seine Rolle und Auswahlfläche zu prüfen.</div>
+      </aside>
+    </section>
+    <section class="takeaways"><article><span>01 / STRASSENRAUM</span><h3>Breite entsteht zwischen Fassaden.</h3><p>Die Fahrbahn allein erklärt den offenen Eindruck nicht. Rücksprünge und unbebaute Randflächen zählen mit.</p></article><article><span>02 / ANSCHLUSS</span><h3>Ein gemeinsamer Sockel reicht nicht.</h3><p>Im zweiten Test treffen gemessene Sockelkanten aufeinander. Dächer, Markisen und Seitenwände bleiben unverändert und müssen separat beurteilt werden.</p></article><article><span>03 / HOF & TIEFE</span><h3>Ein großes Sprite ist noch kein Blocksystem.</h3><p>Die Hofgruppe hat eine durchgehende Dachform. Die Diagnosefigur prüft, wo die heutige Sortierung nach einem einzigen Bodenpunkt an ihre Grenze kommt.</p></article></section>
+    <footer>Keine Änderungen an Spielständen. Die Flächen der Bestandshäuser sind aus gemessenen Sockelkanten angenähert; sichtbare Vorsprünge zählen nicht automatisch dazu.</footer>
+  </main>
+  <script type="module" src="./pizza-city-study.js?v=1"></script>
+</body>
+</html>

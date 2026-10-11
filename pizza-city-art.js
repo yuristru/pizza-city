@@ -3,7 +3,7 @@ import {Sprite,Texture,state} from './pizza-core.js?v=20261011h';
 
 // Atlas coordinates isolate complete flat drawings, including their ground contact.
 // Rasterize once at the city's pixel scale instead of scaling high-resolution art per frame.
-const ATLASES=[
+export const ATLASES=[
   {key:'buildings',url:'italian-buildings-v2.png',frames:[
     [43,52,315,460,116],[412,45,336,473,124],[795,92,340,420,116],[1206,40,287,478,106],
     [23,546,355,399,124],[414,557,345,401,124],[798,551,348,404,124],[1175,539,336,416,118]
