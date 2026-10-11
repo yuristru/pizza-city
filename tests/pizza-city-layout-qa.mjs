@@ -28,3 +28,6 @@ for(const seed of [0,1,42,0xffffffff,DEFAULT_CITY_SEED]){
 }
 console.log('City generation passed: unique district permutation, reproducibility, repeated seed protection and unsigned wrap.');
 console.log('Street layout passed: narrower roads, varied blocks, T-junctions, connected routes and safe canal crossings.');
+
+// Keep the footprint geometry checks in the existing city QA entry point.
+await import('./pizza-city-footprints-qa.mjs');
