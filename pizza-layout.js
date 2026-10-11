@@ -1,13 +1,13 @@
-import {product,itemPrice} from './pizza-catalog.js?v=20261011j';
-export const ROOM = {w:12,h:10};
-export const KITCHEN = {x:8,y:0,w:4,h:4};
-export const KITCHEN_DOOR = {x:9,y:4};
-export const ENTRANCE = {x:ROOM.w-1,y:ROOM.h-1};
-export function kitchenCell(x,y){return x>=KITCHEN.x&&x<KITCHEN.x+KITCHEN.w&&y>=KITCHEN.y&&y<KITCHEN.y+KITCHEN.h;}
-export function passageCell(x,y){return x===KITCHEN_DOOR.x&&y===KITCHEN_DOOR.y;}
-export const FIXED_DECOR = [{type:"wine",x:0,y:0,r:0},{type:"jukebox",x:0,y:1,r:0}];
-export function decorCell(x,y){return FIXED_DECOR.some(item=>occupiedCells(item).includes(`${x},${y}`));}
-export function guestCell(x,y){return x>=0&&y>=0&&x<ROOM.w&&y<ROOM.h&&!kitchenCell(x,y)&&!decorCell(x,y);}
+import {product,itemPrice} from './pizza-catalog.js?v=20261011k';
+import {DEFAULT_PLAN,roomCell,kitchenCell,passageCell} from './pizza-floorplans.js?v=20261011k';
+export {roomCell,kitchenCell,passageCell};
+export const ROOM={w:DEFAULT_PLAN.w,h:DEFAULT_PLAN.h};
+export const KITCHEN=DEFAULT_PLAN.kitchen;
+export const KITCHEN_DOOR=DEFAULT_PLAN.approach;
+export const ENTRANCE=DEFAULT_PLAN.entrance;
+export const FIXED_DECOR=DEFAULT_PLAN.decor;
+export function decorCell(x,y,p=DEFAULT_PLAN){return p.decor.some(item=>occupiedCells(item).includes(`${x},${y}`));}
+export function guestCell(x,y,p=DEFAULT_PLAN){return roomCell(x,y,p)&&!kitchenCell(x,y,p)&&!decorCell(x,y,p);}
 export const GRID = {width:64,height:32};
 
 export function project(x,y){return {x:(x-y)*GRID.width/2,y:(x+y)*GRID.height/2};}
@@ -49,7 +49,7 @@ export function occupiedCells(item){
   return cells;
 }
 
-export function placementIssue(item,layout=[]){
+export function placementIssue(item,layout=[],plan=DEFAULT_PLAN){
   if(!item||!TOOL_TYPES.includes(item.type)||![item.x,item.y,item.r].every(Number.isInteger)||item.r<0||item.r>3) return 'Ungültige Einrichtung.';
   if(item.type==='table'&&!TABLE_SEATS.includes(item.seats))return 'Bitte einen Tisch für 2, 4, 6 oder 8 Personen wählen.';
   if(item.variant!==undefined&&!product(item))return 'Ungültige Möbelvariante.';
@@ -57,11 +57,11 @@ export function placementIssue(item,layout=[]){
   const cells=occupiedCells(item);
   for(const cell of cells){
     const [x,y]=cell.split(',').map(Number);
-    if(x<0||y<0||x>=ROOM.w||y>=ROOM.h) return 'Das Möbelstück passt hier nicht in den Raum.';
-    if(decorCell(x,y)) return 'Die feste Wanddekoration bleibt frei.';
-    if(kitchenCell(x,y)) return 'Die separate Küche bleibt frei.';
-    if(passageCell(x,y)) return 'Bitte den Küchendurchgang frei lassen.';
-    if(x===ROOM.w-1&&y===ROOM.h-1) return 'Bitte den Eingang frei lassen.';
+    if(!roomCell(x,y,plan)) return 'Das Möbelstück passt hier nicht in den Raum.';
+    if(decorCell(x,y,plan)) return 'Die feste Wanddekoration bleibt frei.';
+    if(kitchenCell(x,y,plan)) return 'Die feste Küche bleibt frei.';
+    if(passageCell(x,y,plan)) return 'Bitte den Küchendurchgang frei lassen.';
+    if(x===plan.entrance.x&&y===plan.entrance.y) return 'Bitte den Eingang frei lassen.';
   }
   const used=new Set(layout.flatMap(occupiedCells));
   if(cells.some(cell=>used.has(cell))) return 'Hier steht bereits ein Möbelstück.';
@@ -69,11 +69,11 @@ export function placementIssue(item,layout=[]){
 }
 
 // Reject an invalid save as a whole instead of restoring a partially broken room.
-export function validLayout(value){
-  if(!Array.isArray(value)||value.length>ROOM.w*ROOM.h) return false;
+export function validLayout(value,plan=DEFAULT_PLAN){
+  if(!Array.isArray(value)||value.length>plan.area) return false;
   const accepted=[];
   for(const item of value){
-    if(placementIssue(item,accepted)) return false;
+    if(placementIssue(item,accepted,plan)) return false;
     accepted.push(item);
   }
   return true;
@@ -83,8 +83,8 @@ export function copyLayout(layout=DEFAULT_LAYOUT){
   return layout.map(({type,seats,x,y,r,variant,paid})=>({...((type==='table')?{type,seats,x,y,r}:{type,x,y,r}),...(variant!==undefined?{variant}:{}),...(paid!==undefined?{paid}:{})}));
 }
 
-export function upgradeLayout(value,version){
-  if(!Array.isArray(value)||![1,2,3,4,5,6].includes(version))return null;
+export function upgradeLayout(value,version,plan=DEFAULT_PLAN){
+  if(!Array.isArray(value)||![1,2,3,4,5,6,7].includes(version))return null;
   const items=version===1?value.filter(item=>item?.type!=='chair').map(item=>item?.type==='table'?{...item,seats:4}:item):value;
-  return validLayout(items)?copyLayout(items):null;
+  return validLayout(items,plan)?copyLayout(items):null;
 }

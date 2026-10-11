@@ -1,23 +1,24 @@
-import {mountProperties} from './pizza-properties-ui.js?v=20261011j';
-import {mountMenu} from './pizza-menu-ui.js?v=20261011j';
-import {tickService} from './pizza-service-runtime.js?v=20261011j';
-import {renderServiceUI} from './pizza-service-ui.js?v=20261011j';
-import {showPizza} from './pizza-editor.js?v=20261011j';
-import {app,root,state,loadAssets,updateMoney,restaurantName} from './pizza-core.js?v=20261011j';
-import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261011j';
-import {showRestaurant,tickRestaurant,resizeRestaurant,resetRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView} from './pizza-restaurant.js?v=20261011j';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261011k';
+import {mountProperties} from './pizza-properties-ui.js?v=20261011k';
+import {mountMenu} from './pizza-menu-ui.js?v=20261011k';
+import {tickService} from './pizza-service-runtime.js?v=20261011k';
+import {renderServiceUI} from './pizza-service-ui.js?v=20261011k';
+import {showPizza} from './pizza-editor.js?v=20261011k';
+import {app,root,state,loadAssets,updateMoney,restaurantName} from './pizza-core.js?v=20261011k';
+import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261011k';
+import {showRestaurant,tickRestaurant,resizeRestaurant,resetRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView} from './pizza-restaurant.js?v=20261011k';
 
-import {furnitureIcon} from './pizza-sprites.js?v=20261011j';
+import {furnitureIcon} from './pizza-sprites.js?v=20261011k';
 
 const rotateBtn=document.querySelector('#rotateBtn'),deleteBtn=document.querySelector('#deleteBtn');
-import {mountCatalog,renderCatalog,showCatalogSizes} from './pizza-catalog-ui.js?v=20261011j';
+import {mountCatalog,renderCatalog,showCatalogSizes} from './pizza-catalog-ui.js?v=20261011k';
 mountProperties();
 mountMenu();
 mountCatalog(()=>{if(restaurantView().panMode)toggleRestaurantPan();cancelPlacement();syncEditUI();});
 state.navigate=(where,id)=>where==='restaurant'?showRestaurant(id):showCity();
 function renderRestaurantPicker(){
   const picker=document.getElementById('restaurantSelect');
-  picker.replaceChildren(...['mamma-mia',...state.ownedProperties].map(id=>new Option(restaurantName(id),id)));
+  picker.replaceChildren(...['mamma-mia',...state.ownedProperties].map(id=>new Option(restaurantName(id)+' · '+restaurantPlan(id).area+' m²',id)));
   picker.value=state.activeRestaurantId;
 }
 document.getElementById('restaurantSelect').onchange=event=>showRestaurant(event.target.value);

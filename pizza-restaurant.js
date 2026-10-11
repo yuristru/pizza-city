@@ -1,12 +1,16 @@
-import {itemPrice,product,money,ROOM_PRODUCTS,roomProduct,roomPurchaseIssue,defaultFinishes} from './pizza-catalog.js?v=20261011j';
-import {app,world,state,Container,Graphics,Rectangle,clearWorld,sceneUI,sceneViewport,rememberEdit,saveLayout,updateMoney,notify,hash,activateRestaurant,captureRestaurant,sealRestaurantEdit} from './pizza-core.js?v=20261011j';
-import {ROOM,GRID,KITCHEN,KITCHEN_DOOR,FIXED_DECOR,kitchenCell,passageCell,guestCell,project,gridCell,dimensions,occupiedCells,placementIssue,copyLayout} from './pizza-layout.js?v=20261011j';
-import {furnitureSprite,personSprite} from './pizza-sprites.js?v=20261011j';
-import {syncServiceGuests} from './pizza-service-ui.js?v=20261011j';
-import {servicePlacementIssue,tableKey} from './pizza-service.js?v=20261011j';
+import {DEFAULT_PLAN,restaurantPlan,boundaryEdges,roomCell} from './pizza-floorplans.js?v=20261011k';
+import {itemPrice,product,money,ROOM_PRODUCTS,roomProduct,roomPurchaseIssue,defaultFinishes} from './pizza-catalog.js?v=20261011k';
+import {app,world,state,Container,Graphics,Rectangle,clearWorld,sceneUI,sceneViewport,rememberEdit,saveLayout,updateMoney,notify,hash,activateRestaurant,captureRestaurant,sealRestaurantEdit} from './pizza-core.js?v=20261011k';
+import {GRID,kitchenCell as isKitchenCell,passageCell as isPassageCell,project,gridCell,dimensions,occupiedCells,placementIssue as checkPlacement,copyLayout} from './pizza-layout.js?v=20261011k';
+import {furnitureSprite,personSprite} from './pizza-sprites.js?v=20261011k';
+import {syncServiceGuests} from './pizza-service-ui.js?v=20261011k';
+import {servicePlacementIssue,tableKey,serviceLayoutIssue} from './pizza-service.js?v=20261011k';
 
 const RTW=GRID.width,RTH=GRID.height,WALL_HEIGHT=96;
 const TOOL_NAMES={table:'Tisch',oven:'Ofen',bar:'Theke',plant:'Pflanze',jukebox:'Musikautomat',arcade:'Spielautomat'};
+let plan=DEFAULT_PLAN,ROOM=DEFAULT_PLAN;
+const kitchenCell=(x,y)=>isKitchenCell(x,y,plan),passageCell=(x,y)=>isPassageCell(x,y,plan);
+const placementIssue=(item,items)=>checkPlacement(item,items,plan);
 let roomLayer,roomMask,objects,preview,hoverCell=null,dragPointer=null;
 const view={zoom:1,x:0,y:0},pointers=new Map();
 let panMode=false,pinching=false,blockTap=false;
@@ -50,31 +54,43 @@ function placed(item,interactive=true,ghost=false){
 }
 
 function fixedKitchen(){
-  [{type:'fridge',x:8,y:0,r:0},{type:'oven',x:9,y:0,r:0},{type:'sink',x:11,y:0,r:1},
-    {type:'prep',x:10,y:2,r:0},{type:'prep',x:8,y:2,r:1}].forEach(item=>placed(item,false));
-  FIXED_DECOR.forEach(item=>placed(item,false));
-  const chef=person(0),p=project(9,2);chef.label='kitchen-chef';chef.position.set(p.x,p.y);chef.zIndex=p.y+.5;objects.addChild(chef);
+  const k=plan.kitchen;
+  [{type:'fridge',x:k.x,y:k.y,r:0},{type:'oven',x:k.x+1,y:k.y,r:0},{type:'sink',x:k.x+k.w-1,y:k.y,r:1},
+    {type:'prep',x:k.x,y:k.y+k.h-1,r:0},{type:'prep',x:k.x+k.w-1,y:k.y+1,r:1},
+    ...(k.w>=5?[{type:'oven',x:k.x+2,y:k.y,r:0},{type:'prep',x:k.x+2,y:k.y+k.h-1,r:0}]:[]),
+    ...(k.h>=5?[{type:'prep',x:k.x+k.w-1,y:k.y+3,r:1}]:[])].forEach(item=>placed(item,false));
+  plan.decor.forEach(item=>placed(item,false));
+  const chef=person(0),p=project(k.x+1,k.y+1);chef.label='kitchen-chef';chef.position.set(p.x,p.y);chef.zIndex=p.y+.5;objects.addChild(chef);
 }
 
-function partition(x,y,right,length,height){
+function partition(x,y,right,length,height,label='kitchen-partition'){
   const start=project(x,y),end=project(x+(right?length:0),y+(right?0:length)),g=new Graphics();
-  g.label='kitchen-partition';g.eventMode='none';g.zIndex=Math.max(start.y,end.y)+.1;
+  g.label=label;g.eventMode='none';g.zIndex=Math.max(start.y,end.y)+.1;
   g.poly([start.x,start.y,end.x,end.y,end.x,end.y-height,start.x,start.y-height]).fill(0xdbcaab).stroke({color:0x8b6845,width:1});
   g.poly([start.x,start.y,end.x,end.y,end.x,end.y-24,start.x,start.y-24]).fill(0x865732);
   for(let i=0;i<length;i++){
     const p=project(x+(right?i:0),y+(right?0:i));
     g.moveTo(p.x,p.y).lineTo(p.x,p.y-24).stroke({color:0xba8851,width:1});
   }
-  g.moveTo(start.x,start.y-height).lineTo(end.x,end.y-height).stroke({color:0xb77b46,width:4});objects.addChild(g);
+  g.moveTo(start.x,start.y-height).lineTo(end.x,end.y-height).stroke({color:0xb77b46,width:4});objects.addChild(g);return g;
 }
 function kitchenWalls(){
-  partition(7.5,-.5,false,4,42);
-  partition(7.5,3.5,true,1,48);partition(9.5,3.5,true,2,48);
-  // The missing one-cell wall segment is the door, aligned with the reserved approach.
-  const a=project(8.5,3.5),b=project(9.5,3.5),g=new Graphics();
-  g.label='kitchen-door';g.eventMode='none';g.zIndex=b.y+.2;
-  for(const p of [a,b])g.moveTo(p.x,p.y).lineTo(p.x,p.y-60).stroke({color:0x875a35,width:3});
-  g.moveTo(a.x,a.y-60).lineTo(b.x,b.y-60).stroke({color:0xb17b46,width:4});objects.addChild(g);
+  const k=plan.kitchen;
+  for(const side of ['north','west','south','east']){
+    const right=side==='north'||side==='south',length=right?k.w:k.h;
+    for(let i=0;i<length;i++){
+      const x=right?k.x+i:k.x+(side==='east'?k.w:0),y=right?k.y+(side==='south'?k.h:0):k.y+i;
+      const neighbor={x:right?x:x+(side==='west'?-1:0),y:right?y+(side==='north'?-1:0):y};
+      if(!roomCell(neighbor.x,neighbor.y,plan))continue;
+      const opening=k.kind==='island'?side==='south'&&i===1:k.door?.side===side&&k.door.offset===i;
+      if(!opening){partition(x-.5,y-.5,right,1,k.kind==='island'?24:48);continue;}
+      if(k.kind==='island')continue;
+      const a=project(x-.5,y-.5),b=project(x-.5+(right?1:0),y-.5+(right?0:1)),g=new Graphics();
+      g.label='kitchen-door';g.eventMode='none';g.zIndex=Math.max(a.y,b.y)+.2;
+      for(const p of [a,b])g.moveTo(p.x,p.y).lineTo(p.x,p.y-60).stroke({color:0x875a35,width:3});
+      g.moveTo(a.x,a.y-60).lineTo(b.x,b.y-60).stroke({color:0xb17b46,width:4});objects.addChild(g);
+    }
+  }
 }
 
 function person(index){
@@ -117,7 +133,7 @@ function buyFinish(){
 export function confirmPlacement(){
   if(state.scene==='restaurant'&&!state.deleteMode&&['floor','renovation'].includes(state.selectedTool)){buyFinish();return;}
   if(state.scene!=='restaurant'||state.deleteMode||!state.pendingPlacement)return;
-  const item=chosenItem(state.pendingPlacement),issue=placementIssue(item,state.restaurantState)||servicePlacementIssue(item,state.service);
+  const item=chosenItem(state.pendingPlacement),issue=placementIssue(item,state.restaurantState)||servicePlacementIssue(item,state.service)||serviceLayoutIssue([...state.restaurantState,item],plan);
   if(issue){notify(issue);return;}
   const price=itemPrice(item);if(state.balance<price){notify('Nicht genügend Geld.');return;}
   rememberEdit();state.balance-=price;item.paid=price;state.restaurantState.push(item);finishEdit(item.type==='table'?`${item.seats}er-Tisch mit Stühlen platziert.`:`${TOOL_NAMES[item.type]} platziert.`);
@@ -144,7 +160,7 @@ export function updatePlacementPreview(){
     const button=document.querySelector('#placeBtn');button.hidden=false;button.disabled=!!issue||panMode;
     document.querySelector('#cancelBtn').hidden=true;return;
   }
-  const cell=state.pendingPlacement||hoverCell,item=cell?chosenItem(cell):null,issue=item?(placementIssue(item,state.restaurantState)||servicePlacementIssue(item,state.service)||(state.balance<itemPrice(item)?'Nicht genügend Geld.':null)):null;
+  const cell=state.pendingPlacement||hoverCell,item=cell?chosenItem(cell):null,issue=item?(placementIssue(item,state.restaurantState)||servicePlacementIssue(item,state.service)||serviceLayoutIssue([...state.restaurantState,item],plan)||(state.balance<itemPrice(item)?'Nicht genügend Geld.':null)):null;
   const title=panMode?'Ansicht verschieben':state.deleteMode?'Möbel verkaufen':`${state.selectedTool==='table'?state.selectedSeats+'er-Tisch mit Stühlen':TOOL_NAMES[state.selectedTool]} · ${state.rotation*90}°`;
   document.querySelector('#placementTitle').textContent=title;
   document.querySelector('#placementStatus').textContent=panMode?'Zum Einrichten den Hand-Modus ausschalten.':state.deleteMode?'Antippen: 50 % des Kaufpreises zurück.':issue||(state.pendingPlacement?'Position gewählt. Mit Setzen bestätigen.':'Auf das Raster tippen oder ziehen.');
@@ -161,7 +177,7 @@ export function updatePlacementPreview(){
 }
 
 function cellAt(global){return gridCell(roomLayer.toLocal(global));}
-function inRoom(cell){return cell.x>=0&&cell.y>=0&&cell.x<ROOM.w&&cell.y<ROOM.h;}
+function inRoom(cell){return roomCell(cell.x,cell.y,plan);}
 function movePointer(event){
   const previous=pointers.get(event.pointerId);
   if(previous){
@@ -213,43 +229,6 @@ function wallWindow(layer,x,y,right=true){
   layer.addChild(flowers);
 }
 
-function wallDetails(layer){
-  for(const right of [true,false]){
-    const length=right?ROOM.w:ROOM.h;
-    for(let i=0;i<length;i++){
-      wallPanel(layer,right?i-.5:-.5,right?-.5:i-.5,right,.025,2,30,0xbd8950);
-      wallPanel(layer,right?i-.5:-.5,right?-.5:i-.5,right,1,30,33,0xb88852);
-      const p=project(right?i:-.5,right?-.5:i),g=new Graphics();
-      for(let n=0;n<(state.finishes.renovation?0:14);n++){
-        const t=.1+hash(i,n,right?41:73)*.8,z=37+hash(n,i,91)*48;
-        const v=project(right?i-.5+t:-.5,right?-.5:i-.5+t);
-        g.rect(Math.round(v.x),Math.round(v.y-z),n%3===0?2:1,1).fill({color:n%2?0xe9d2aa:0x997954,alpha:.25});
-      }
-      g.rect(p.x,p.y-90,2,1).fill({color:0xf2dec0,alpha:.4});layer.addChild(g);
-    }
-    for(const i of [1,3.8,6,8.4,10.8]){
-      if(i>length-.6)continue;
-      const p=project(right?i:-.5,right?-.5:i),g=new Graphics();
-      for(let n=0;n<(state.finishes.renovation?0:14);n++){
-        const t=.1+hash(i,n,right?41:73)*.8,z=37+hash(n,i,91)*48;
-        const v=project(right?i-.5+t:-.5,right?-.5:i-.5+t);
-        g.rect(Math.round(v.x),Math.round(v.y-z),n%3===0?2:1,1).fill({color:n%2?0xe9d2aa:0x997954,alpha:.25});
-      }
-      g.circle(p.x,p.y-62,8).fill({color:0xf8c264,alpha:.12});
-      g.rect(p.x-2,p.y-67,4,11).fill(0x644831);
-      g.rect(p.x-2,p.y-65,4,6).fill(0xf4c264);layer.addChild(g);
-    }
-  }
-  wallPanel(layer,-.5,.45,false,.55,53,73,0xb58847);
-  wallPanel(layer,-.5,.51,false,.43,56,70,0x61764a);
-  wallPanel(layer,6.2,-.5,true,1,51,56,0x855530);
-  for(let i=0;i<5;i++){
-    const p=project(6.25+i*.18,-.5),g=new Graphics();
-    g.rect(p.x-2,p.y-65,3,9).fill(i%2?0x64733c:0x893f2c);
-    g.rect(p.x-1,p.y-68,1,3).fill(0x543d2b);layer.addChild(g);
-  }
-}
-
 export function resizeRestaurant(){
   if(state.scene!=='restaurant'||!roomLayer||roomLayer.destroyed)return;
   const area=sceneViewport(true),minX=-ROOM.h*RTW/2,maxX=ROOM.w*RTW/2,minY=-RTH/2-WALL_HEIGHT,maxY=(ROOM.w+ROOM.h-1)*RTH/2;
@@ -266,6 +245,7 @@ export function showRestaurant(id){
   id=typeof id==='string'?id:state.activeRestaurantId;
   if(state.scene==='restaurant'&&id===state.activeRestaurantId)return;
   if(!activateRestaurant(id)){notify('Diesen Standort musst du zuerst kaufen.');return;}
+  plan=restaurantPlan(state.activeRestaurantId);ROOM=plan;
   document.dispatchEvent(new Event('restaurants-changed'));saveLayout(true);
   clearWorld();state.scene='restaurant';sceneUI('restaurant');
   roomLayer=new Container();state.restaurantCamera=roomLayer;roomLayer.label='restaurant-room';world.addChild(roomLayer);
@@ -274,23 +254,33 @@ export function showRestaurant(id){
   const wall=new Graphics(),floor=new Container();objects=new Container();preview=new Container();
   objects.label='restaurant-objects';objects.sortableChildren=true;preview.label='placement-preview';preview.eventMode='none';hoverCell=null;dragPointer=null;
   const palette=ROOM_PRODUCTS.find(p=>p.level===state.finishes.renovation)?.colors||[0xcbb28b,0xb59670,0x8a5b3d,0x774b36];
-  const a=project(-.5,-.5),b=project(ROOM.w-.5,-.5),c=project(-.5,ROOM.h-.5);
-  wall.poly([a.x,a.y,b.x,b.y,b.x,b.y-WALL_HEIGHT,a.x,a.y-WALL_HEIGHT]).fill(palette[0]).stroke({color:0x745038,width:2});
-  wall.poly([a.x,a.y,c.x,c.y,c.x,c.y-WALL_HEIGHT,a.x,a.y-WALL_HEIGHT]).fill(palette[1]).stroke({color:0x745038,width:2});
-  wall.poly([a.x,a.y-32,b.x,b.y-32,b.x,b.y,a.x,a.y]).fill(palette[2]);
-  wall.poly([a.x,a.y-32,c.x,c.y-32,c.x,c.y,a.x,a.y]).fill(palette[3]);
-  roomLayer.addChild(wall);wallWindow(roomLayer,2,-.5);wallWindow(roomLayer,5,-.5);wallWindow(roomLayer,-.5,2,false);wallWindow(roomLayer,-.5,4.5,false);wallWindow(roomLayer,-.5,7.5,false);wallWindow(roomLayer,10,-.5);
-  wallDetails(roomLayer);
-  for(const right of [true,false])for(let i=0;i<(right?ROOM.w:ROOM.h);i++){
-    const p=project(right?i-.5:-.5,right?-.5:i-.5),q=project(right?i+.5:-.5,right?-.5:i+.5),cap=new Graphics();
-    cap.moveTo(p.x,p.y-WALL_HEIGHT).lineTo(q.x,q.y-WALL_HEIGHT).stroke({color:i%2?0xa65735:0xbf7042,width:2});roomLayer.addChild(cap);
+  const edges=boundaryEdges(plan);
+  wall.eventMode='none';
+  for(const edge of edges){
+    if(!['north','west'].includes(edge.side))continue;
+    const right=edge.side==='north',x=edge.x-.5,y=edge.y-.5,a=project(x,y),b=project(x+(right?1:0),y+(right?0:1));
+    wall.poly([a.x,a.y,b.x,b.y,b.x,b.y-WALL_HEIGHT,a.x,a.y-WALL_HEIGHT]).fill(palette[right?0:1]).stroke({color:0x745038,width:1});
+    wall.poly([a.x,a.y-32,b.x,b.y-32,b.x,b.y,a.x,a.y]).fill(palette[right?2:3]);
+    wall.moveTo(a.x,a.y-WALL_HEIGHT).lineTo(b.x,b.y-WALL_HEIGHT).stroke({color:0xb16b42,width:2});
+    wall.moveTo(a.x,a.y-32).lineTo(b.x,b.y-32).stroke({color:0xbd8950,width:2});
+    for(let n=0;n<(state.finishes.renovation?0:10);n++){
+      const t=.1+hash(edge.x,n,edge.y+41)*.8,z=37+hash(n,edge.x,91)*48,v=project(x+(right?t:0),y+(right?0:t));
+      wall.rect(Math.round(v.x),Math.round(v.y-z),n%3===0?2:1,1).fill({color:n%2?0xe9d2aa:0x997954,alpha:.25});
+    }
+  }
+  roomLayer.addChild(wall);
+  for(const edge of edges){
+    const right=edge.side==='north';if(!right&&edge.side!=='west')continue;
+    const coordinate=right?edge.x:edge.y;
+    if(coordinate%4!==2||!edges.some(e=>e.side===edge.side&&e.x===edge.x+(right?1:0)&&e.y===edge.y+(right?0:1)))continue;
+    wallWindow(roomLayer,edge.x-.5,edge.y-.5,right);
   }
   roomLayer.addChild(floor,objects,preview);
   floor.label='restaurant-floor';floor.finish=state.finishes.floor;wall.label='restaurant-walls';wall.renovation=state.finishes.renovation;
   const floorColors=ROOM_PRODUCTS.find(p=>p.id===state.finishes.floor).colors;
-  for(let y=0;y<ROOM.h;y++)for(let x=0;x<ROOM.w;x++){
-    const p=project(x,y),kitchen=kitchenCell(x,y),entrance=x===ROOM.w-1&&y===ROOM.h-1,g=new Graphics();
-    const rug=(x===ROOM.w-2&&y===ROOM.h-1)||(x===ROOM.w-1&&y===ROOM.h-2);
+  for(const {x,y}of plan.cells){
+    const p=project(x,y),kitchen=kitchenCell(x,y),entrance=x===plan.entrance.x&&y===plan.entrance.y,g=new Graphics();
+    const rug=(x===plan.entrance.x-1&&y===plan.entrance.y)||(x===plan.entrance.x&&y===plan.entrance.y-1);
     const color=rug?0x934a36:entrance?0xd1bc8a:kitchen?((x+y)%2?0x999c91:0xb6b5a5):floorColors[(x+y)%2];
     tile(g,x,y,color);
     // A light, continuous 2:1 grid stays readable underneath the preview.
@@ -308,8 +298,11 @@ export function showRestaurant(id){
   }
   fixedKitchen();kitchenWalls();
   // Low cutaway edges give the building a facade while leaving the floor visible.
-  partition(ROOM.w-.5,-.5,false,ROOM.h,9);
-  partition(-.5,ROOM.h-.5,true,ROOM.w-1,9);
+  for(const {x,y,side}of edges){
+    if(side==='east')partition(x+.5,y-.5,false,1,9,'outer-cutaway');
+    if(side==='south'&&(x!==plan.entrance.x||y!==plan.entrance.y))partition(x-.5,y+.5,true,1,9,'outer-cutaway');
+  }
+  roomLayer.floorPlanId=plan.id;roomLayer.area=plan.area;
   renderFurniture();resizeRestaurant();updatePlacementPreview();
   app.stage.on('globalpointermove',movePointer);
   app.stage.on('pointerdown',event=>{

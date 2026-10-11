@@ -1,3 +1,4 @@
+import {restaurantPlan} from './pizza-floorplans.js?v=20261011k';
 export const PROPERTY_SIZES={
   small:{name:'Klein',badge:'S',area:80,color:0x66834b},
   medium:{name:'Mittel',badge:'M',area:160,color:0xc09242},
@@ -13,7 +14,7 @@ export const PROPERTIES=[
   {id:'bottega',name:'La Bottega',district:'Südviertel',size:'small',price:38000,bx:0,by:2,slot:1,art:'buildingTypes',sprite:3},
   {id:'lungofiume',name:'Lungofiume',district:'Am Fluss',size:'medium',price:84000,bx:1,by:2,slot:0,art:'buildings',sprite:12},
   {id:'teatro',name:'Il Teatro',district:'Ostviertel',size:'large',price:156000,bx:2,by:1,slot:0,art:'buildingTypes',sprite:6}
-];
+].map(p=>({...p,area:restaurantPlan(p.id).area}));
 export function property(id){return PROPERTIES.find(p=>p.id===id)||null;}
 export function restoreProperties(value){
   if(!Array.isArray(value)||value.length>PROPERTIES.length||new Set(value).size!==value.length||value.some(id=>!property(id)))return [];

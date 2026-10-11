@@ -1,8 +1,8 @@
-import {state,Container,ensureRestaurants} from './pizza-core.js?v=20261011j';
-import {project,dimensions} from './pizza-layout.js?v=20261011j';
-import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261011j';
-import {routePosition,guestSeat} from './pizza-service.js?v=20261011j';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261011j';
+import {state,Container,ensureRestaurants} from './pizza-core.js?v=20261011k';
+import {project,dimensions} from './pizza-layout.js?v=20261011k';
+import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261011k';
+import {routePosition,guestSeat} from './pizza-service.js?v=20261011k';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261011k';
 
 const maps=new WeakMap(),banners=new Map();
 export function syncServiceGuests(objects){
