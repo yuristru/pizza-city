@@ -22,8 +22,21 @@ export const FLOORPLANS={
 export const DEFAULT_PLAN=FLOORPLANS['mamma-mia'];
 export function restaurantPlan(id){return FLOORPLANS[id]||DEFAULT_PLAN;}
 export function roomCell(x,y,p=DEFAULT_PLAN){return p.keys.has(`${x},${y}`);}
-export function kitchenCell(x,y,p=DEFAULT_PLAN){const k=p.kitchen;return x>=k.x&&y>=k.y&&x<k.x+k.w&&y<k.y+k.h;}
+export function kitchenCell(x,y,p=DEFAULT_PLAN){if(p.kitchenKeys)return p.kitchenKeys.has(`${x},${y}`);const k=p.kitchen;return x>=k.x&&y>=k.y&&x<k.x+k.w&&y<k.y+k.h;}
 export function passageCell(x,y,p=DEFAULT_PLAN){return p.approach?.x===x&&p.approach?.y===y;}
 export function boundaryEdges(p=DEFAULT_PLAN){
   const edges=[];for(const {x,y}of p.cells)for(const [side,dx,dy]of [['north',0,-1],['west',-1,0],['south',0,1],['east',1,0]])if(!roomCell(x+dx,y+dy,p))edges.push({x,y,side});return edges;
+}
+
+// Kitchen flooring belongs to the restaurant, while the rooms and doors belong to the building.
+export function withKitchen(p,tiles=[]){return {...p,kitchenKeys:new Set(tiles.map(t=>`${t.x},${t.y}`)),kitchenArea:tiles.length,diningArea:p.area-tiles.length};}
+export function roomStep(a,b,p=DEFAULT_PLAN){
+  if(Math.abs(a.x-b.x)+Math.abs(a.y-b.y)!==1)return false;
+  const k=p.kitchen;
+  if(k.kind==='island')return true;
+  const inside=q=>q.x>=k.x&&q.y>=k.y&&q.x<k.x+k.w&&q.y<k.y+k.h;
+  if(inside(a)===inside(b))return true;
+  const inner=inside(a)?a:b,outer=inside(a)?b:a;
+  if(!k.door)return false;
+  return p.approach?.x===outer.x&&p.approach?.y===outer.y&&(k.door.side==='south'?inner.x===k.x+k.door.offset&&inner.y===k.y+k.h-1:k.door.side==='west'?inner.x===k.x&&inner.y===k.y+k.door.offset:k.door.side==='east'?inner.x===k.x+k.w-1&&inner.y===k.y+k.door.offset:inner.x===k.x+k.door.offset&&inner.y===k.y);
 }

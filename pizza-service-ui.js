@@ -1,8 +1,9 @@
-import {state,Container,ensureRestaurants} from './pizza-core.js?v=20261011k';
-import {project,dimensions} from './pizza-layout.js?v=20261011k';
-import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261011k';
-import {routePosition,guestSeat} from './pizza-service.js?v=20261011k';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261011k';
+import {kitchenReadiness} from './pizza-kitchen.js?v=20261011l';
+import {state,Container,ensureRestaurants,activePlan} from './pizza-core.js?v=20261011l';
+import {project,dimensions} from './pizza-layout.js?v=20261011l';
+import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261011l';
+import {routePosition,guestSeat} from './pizza-service.js?v=20261011l';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261011l';
 
 const maps=new WeakMap(),banners=new Map();
 export function syncServiceGuests(objects){
@@ -28,7 +29,8 @@ export function syncServiceGuests(objects){
 export function renderServiceUI(){
   const groups=state.service.groups,active=serviceMenu().some(item=>item.active),status=document.getElementById('restaurantServiceStatus');
   const seated=groups.filter(g=>g.phase==='waiting'||g.phase==='eating').length,total=groups.reduce((sum,g)=>sum+g.size,0);
-  const text=groups.length?total+(total===1?' Gast · ':' Gäste · ')+seated+(seated===1?' Tisch belegt':' Tische belegt'):active?'Geöffnet · Gäste kommen':'Speisekarte noch leer';if(status.textContent!==text)status.textContent=text;
+  const readiness=kitchenReadiness(state.kitchenTiles,state.restaurantState,activePlan());status.title=readiness.issue||'Küche betriebsbereit';status.dataset.kitchenReady=String(readiness.ready);
+  const text=groups.length?total+(total===1?' Gast · ':' Gäste · ')+seated+(seated===1?' Tisch belegt':' Tische belegt'):!readiness.ready?'Geschlossen · '+readiness.issue:active?'Geöffnet · Gäste kommen':'Speisekarte noch leer';if(status.textContent!==text)status.textContent=text;
   const host=document.getElementById('incomeBanners'),wanted=new Set();
   for(const [restaurantId,profile]of Object.entries(ensureRestaurants()))for(const [index,payment]of profile.service.payments.entries()){
     const key=restaurantId+':'+payment.id;wanted.add(key);let b=banners.get(key);if(!b){b=document.createElement('div');b.className='incomeBanner';b.dataset.paymentId=String(payment.id);b.dataset.restaurantId=restaurantId;b.dataset.amountCents=String(payment.amount);b.textContent='+'+(payment.amount/100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' DM';host.append(b);banners.set(key,b);}

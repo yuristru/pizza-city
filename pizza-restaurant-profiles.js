@@ -1,15 +1,17 @@
-import {restaurantPlan,DEFAULT_PLAN} from './pizza-floorplans.js?v=20261011k';
-import {copyLayout,validLayout,placementIssue} from './pizza-layout.js?v=20261011k';
-import {defaultFinishes,restoreFinishes} from './pizza-catalog.js?v=20261011k';
-import {freshService,restoreService,rehomeService,tableKey,serviceLayoutIssue} from './pizza-service.js?v=20261011k';
+import {restoreKitchenTiles,legacyKitchen,KITCHEN_TYPES} from './pizza-kitchen.js?v=20261011l';
+import {restaurantPlan,DEFAULT_PLAN,withKitchen} from './pizza-floorplans.js?v=20261011l';
+import {copyLayout,validLayout,placementIssue} from './pizza-layout.js?v=20261011l';
+import {defaultFinishes,restoreFinishes} from './pizza-catalog.js?v=20261011l';
+import {freshService,restoreService,rehomeService,tableKey,serviceLayoutIssue} from './pizza-service.js?v=20261011l';
 
 export const MAIN_RESTAURANT='mamma-mia';
-export function freshRestaurant(id){return {items:id===MAIN_RESTAURANT?copyLayout():[],finishes:defaultFinishes(),service:freshService(),investmentCents:0,floorPlanVersion:1,history:[]};}
+export function freshRestaurant(id){return {items:id===MAIN_RESTAURANT?copyLayout():[],finishes:defaultFinishes(),service:freshService(),investmentCents:0,floorPlanVersion:1,kitchenVersion:1,kitchenTiles:[],history:[]};}
 export function restoreRestaurants(raw,owned,legacy){
   const profiles={};
   for(const id of [MAIN_RESTAURANT,...owned]){
-    const saved=raw?.[id],fallback=id===MAIN_RESTAURANT&&legacy?legacy:freshRestaurant(id);
-    const plan=restaurantPlan(id),oldPlan=saved?.floorPlanVersion===1?plan:DEFAULT_PLAN;
+    const saved=raw?.[id]||(id===MAIN_RESTAURANT&&legacy?{...legacy,floorPlanVersion:1}:null),fallback=freshRestaurant(id);
+    const building=restaurantPlan(id),kitchenTiles=saved?.kitchenVersion===1?restoreKitchenTiles(saved.kitchenTiles,building):legacyKitchen(building).tiles;
+    const plan=saved?.kitchenVersion===1?withKitchen(building,kitchenTiles):building,oldPlan=saved?.floorPlanVersion===1?plan:DEFAULT_PLAN;
     if(!saved||!validLayout(saved.items,oldPlan)){profiles[id]=fallback;continue;}
     let items=copyLayout(saved.items),refund=0,moved=new Map();
     if(saved.floorPlanVersion!==1){
@@ -24,8 +26,16 @@ export function restoreRestaurants(raw,owned,legacy){
       }
       items=placed;
     }
+    const activePlan=withKitchen(building,kitchenTiles);
+    if(saved.kitchenVersion!==1){
+      const devices=items.filter(item=>KITCHEN_TYPES.includes(item.type));items=items.filter(item=>!KITCHEN_TYPES.includes(item.type));
+      for(const device of [...devices,...legacyKitchen(building).items.filter(item=>!devices.some(d=>d.type===item.type))]){
+        const position=[device,...kitchenTiles].find(pos=>!placementIssue({...device,x:pos.x,y:pos.y},items,activePlan));
+        if(position)items.push({...device,x:position.x,y:position.y});else refund+=device.paid||0;
+      }
+    }
     const investment=Number.isSafeInteger(saved.investmentCents)&&saved.investmentCents>=0&&saved.investmentCents<=1e12?saved.investmentCents:0;
-    profiles[id]={items,finishes:restoreFinishes(saved.finishes),service:saved.floorPlanVersion===1||id===MAIN_RESTAURANT?restoreService(saved.service,plan):rehomeService(saved.service,items,moved,plan),investmentCents:Math.max(0,investment-refund*100),floorPlanVersion:1,migrationRefundCents:refund*100,history:[]};
+    profiles[id]={items,finishes:restoreFinishes(saved.finishes),service:saved.floorPlanVersion===1||id===MAIN_RESTAURANT?restoreService(saved.service,activePlan):rehomeService(saved.service,items,moved,activePlan),investmentCents:Math.max(0,investment-refund*100),floorPlanVersion:1,kitchenVersion:1,kitchenTiles,migrationRefundCents:refund*100,history:[]};
   }
   return profiles;
 }

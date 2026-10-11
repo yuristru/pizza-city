@@ -1,13 +1,14 @@
-import {DEFAULT_PLAN,restaurantPlan,boundaryEdges,roomCell} from './pizza-floorplans.js?v=20261011k';
-import {itemPrice,product,money,ROOM_PRODUCTS,roomProduct,roomPurchaseIssue,defaultFinishes} from './pizza-catalog.js?v=20261011k';
-import {app,world,state,Container,Graphics,Rectangle,clearWorld,sceneUI,sceneViewport,rememberEdit,saveLayout,updateMoney,notify,hash,activateRestaurant,captureRestaurant,sealRestaurantEdit} from './pizza-core.js?v=20261011k';
-import {GRID,kitchenCell as isKitchenCell,passageCell as isPassageCell,project,gridCell,dimensions,occupiedCells,placementIssue as checkPlacement,copyLayout} from './pizza-layout.js?v=20261011k';
-import {furnitureSprite,personSprite} from './pizza-sprites.js?v=20261011k';
-import {syncServiceGuests} from './pizza-service-ui.js?v=20261011k';
-import {servicePlacementIssue,tableKey,serviceLayoutIssue} from './pizza-service.js?v=20261011k';
+import {kitchenTileIssue,kitchenReadiness,KITCHEN_TYPES,KITCHEN_TILE_PRICE} from './pizza-kitchen.js?v=20261011l';
+import {DEFAULT_PLAN,boundaryEdges,roomCell} from './pizza-floorplans.js?v=20261011l';
+import {itemPrice,product,money,ROOM_PRODUCTS,roomProduct,roomPurchaseIssue,defaultFinishes} from './pizza-catalog.js?v=20261011l';
+import {app,world,state,Container,Graphics,Rectangle,clearWorld,sceneUI,sceneViewport,rememberEdit,saveLayout,updateMoney,notify,hash,activateRestaurant,captureRestaurant,sealRestaurantEdit,activePlan} from './pizza-core.js?v=20261011l';
+import {GRID,kitchenCell as isKitchenCell,passageCell as isPassageCell,project,gridCell,dimensions,occupiedCells,placementIssue as checkPlacement,copyLayout} from './pizza-layout.js?v=20261011l';
+import {furnitureSprite,personSprite} from './pizza-sprites.js?v=20261011l';
+import {syncServiceGuests} from './pizza-service-ui.js?v=20261011l';
+import {servicePlacementIssue,tableKey,serviceLayoutIssue} from './pizza-service.js?v=20261011l';
 
 const RTW=GRID.width,RTH=GRID.height,WALL_HEIGHT=96;
-const TOOL_NAMES={table:'Tisch',oven:'Ofen',bar:'Theke',plant:'Pflanze',jukebox:'Musikautomat',arcade:'Spielautomat'};
+const TOOL_NAMES={table:'Tisch',fridge:'Kühlschrank',oven:'Ofen',bar:'Tresen',plant:'Pflanze',jukebox:'Musikautomat',arcade:'Spielautomat'};
 let plan=DEFAULT_PLAN,ROOM=DEFAULT_PLAN;
 const kitchenCell=(x,y)=>isKitchenCell(x,y,plan),passageCell=(x,y)=>isPassageCell(x,y,plan);
 const placementIssue=(item,items)=>checkPlacement(item,items,plan);
@@ -53,14 +54,11 @@ function placed(item,interactive=true,ghost=false){
   objects.addChild(group);return group;
 }
 
-function fixedKitchen(){
-  const k=plan.kitchen;
-  [{type:'fridge',x:k.x,y:k.y,r:0},{type:'oven',x:k.x+1,y:k.y,r:0},{type:'sink',x:k.x+k.w-1,y:k.y,r:1},
-    {type:'prep',x:k.x,y:k.y+k.h-1,r:0},{type:'prep',x:k.x+k.w-1,y:k.y+1,r:1},
-    ...(k.w>=5?[{type:'oven',x:k.x+2,y:k.y,r:0},{type:'prep',x:k.x+2,y:k.y+k.h-1,r:0}]:[]),
-    ...(k.h>=5?[{type:'prep',x:k.x+k.w-1,y:k.y+3,r:1}]:[])].forEach(item=>placed(item,false));
-  plan.decor.forEach(item=>placed(item,false));
-  const chef=person(0),p=project(k.x+1,k.y+1);chef.label='kitchen-chef';chef.position.set(p.x,p.y);chef.zIndex=p.y+.5;objects.addChild(chef);
+function kitchenChef(){
+  for(const child of objects.children.slice())if(child.label==='kitchen-chef')child.destroy({children:true});
+  if(!kitchenReadiness(state.kitchenTiles,state.restaurantState,plan).ready)return;
+  const used=new Set(state.restaurantState.flatMap(occupiedCells)),cell=state.kitchenTiles.find(t=>!used.has(`${t.x},${t.y}`));if(!cell)return;
+  const chef=person(0),p=project(cell.x,cell.y);chef.label='kitchen-chef';chef.position.set(p.x,p.y);chef.zIndex=p.y+.5;objects.addChild(chef);
 }
 
 function partition(x,y,right,length,height,label='kitchen-partition'){
@@ -75,7 +73,7 @@ function partition(x,y,right,length,height,label='kitchen-partition'){
   g.moveTo(start.x,start.y-height).lineTo(end.x,end.y-height).stroke({color:0xb77b46,width:4});objects.addChild(g);return g;
 }
 function kitchenWalls(){
-  const k=plan.kitchen;
+  const k=plan.kitchen;if(k.kind==='island')return;
   for(const side of ['north','west','south','east']){
     const right=side==='north'||side==='south',length=right?k.w:k.h;
     for(let i=0;i<length;i++){
@@ -99,7 +97,7 @@ function person(index){
 
 function renderFurniture(){
   for(const child of objects.children.slice())if(child.label==='placed-furniture'){objects.removeChild(child);child.destroy({children:true});}
-  state.restaurantState.forEach(item=>placed(item));syncServiceGuests(objects);state.onEditChange?.();
+  state.restaurantState.forEach(item=>placed(item));kitchenChef();syncServiceGuests(objects);state.onEditChange?.();
 }
 
 function finishEdit(message){
@@ -111,8 +109,14 @@ function finishEdit(message){
 
 function removeAt(x,y){
   const index=state.restaurantState.findIndex(item=>occupiedCells(item).includes(`${x},${y}`));
-  if(index<0){notify(kitchenCell(x,y)?'Die feste Küche bleibt erhalten.':'Hier steht kein Möbelstück.');return;}
+  if(index<0||state.selectedTool==='kitchenFloor'){
+    const tileIndex=state.kitchenTiles.findIndex(t=>t.x===x&&t.y===y);
+    if(tileIndex<0){notify('Hier steht kein Möbelstück und liegt keine Küchenplatte.');return;}
+    if(index>=0){notify('Zuerst das Gerät auf dieser Küchenplatte entfernen.');return;}
+    rememberEdit();const refund=Math.floor((state.kitchenTiles[tileIndex].paid||0)/2);state.kitchenTiles=state.kitchenTiles.filter((_,i)=>i!==tileIndex);state.balance+=refund;rebuildSurfaces();finishEdit('Küchenplatte entfernt: '+money(refund)+'.');return;
+  }
   const item=state.restaurantState[index];
+  if(KITCHEN_TYPES.includes(item.type)&&state.service.groups.some(g=>g.phase!=='paying')){notify('Küchengeräte können entfernt werden, sobald alle Gäste gegangen sind.');return;}
   if(item.type==='table'&&state.service.groups.some(g=>!['leaving','paying'].includes(g.phase)&&tableKey(g.table)===tableKey(item))){notify('Dieser Tisch ist gerade für Gäste reserviert.');return;}
   rememberEdit();const refund=Math.floor((state.restaurantState[index].paid||0)/2);state.restaurantState.splice(index,1);state.balance+=refund;finishEdit('Möbel verkauft: '+money(refund)+'.');
 }
@@ -133,6 +137,10 @@ function buyFinish(){
 export function confirmPlacement(){
   if(state.scene==='restaurant'&&!state.deleteMode&&['floor','renovation'].includes(state.selectedTool)){buyFinish();return;}
   if(state.scene!=='restaurant'||state.deleteMode||!state.pendingPlacement)return;
+  if(state.selectedTool==='kitchenFloor'){
+    const cell=state.pendingPlacement,issue=kitchenTilePlacementIssue(cell);if(issue){notify(issue);return;}
+    rememberEdit();state.balance-=KITCHEN_TILE_PRICE;state.kitchenTiles=[...state.kitchenTiles,{...cell,paid:KITCHEN_TILE_PRICE}];rebuildSurfaces();finishEdit('Küchenplatte verlegt.');return;
+  }
   const item=chosenItem(state.pendingPlacement),issue=placementIssue(item,state.restaurantState)||servicePlacementIssue(item,state.service)||serviceLayoutIssue([...state.restaurantState,item],plan);
   if(issue){notify(issue);return;}
   const price=itemPrice(item);if(state.balance<price){notify('Nicht genügend Geld.');return;}
@@ -148,28 +156,41 @@ function tile(graphics,x,y,color,alpha=1,width=1){
   graphics.poly([p.x,p.y-RTH/2,p.x+RTW/2,p.y,p.x,p.y+RTH/2,p.x-RTW/2,p.y]).fill({color,alpha}).stroke({color,width});
 }
 
+function kitchenTilePlacementIssue(cell){
+  const issue=kitchenTileIssue(cell,state.kitchenTiles,state.restaurantState,plan);if(issue)return issue;
+  const next={...plan,kitchenKeys:new Set([...plan.kitchenKeys,`${cell.x},${cell.y}`])};
+  return servicePlacementIssue({type:'plant',...cell,r:0},state.service)||serviceLayoutIssue(state.restaurantState,next)||(state.balance<KITCHEN_TILE_PRICE?'Nicht genügend Geld.':null);
+}
+
 export function updatePlacementPreview(){
   if(state.scene!=='restaurant'||!preview||preview.destroyed)return;
   for(const child of objects.children)if(child.label==='placed-furniture')child.eventMode=state.deleteMode&&!panMode?'static':'none';
   preview.removeChildren().forEach(child=>child.destroy({children:true}));
   const finish=roomProduct({type:state.selectedTool,variant:state.selectedVariant});
-  if(finish&&!state.deleteMode){
+  if(finish&&finish.type!=='kitchenFloor'&&!state.deleteMode){
     const issue=roomPurchaseIssue(finish,state.finishes,state.balance);
     document.querySelector('#placementTitle').textContent=finish.type==='floor'?'Boden: '+finish.name:'Renovierung: '+finish.name;
     document.querySelector('#placementStatus').textContent=money(finish.price)+' · '+(issue||(finish.type==='floor'?'Boden im gesamten Gastraum ersetzen.':'Wände und Holzverkleidung erneuern.'));
     const button=document.querySelector('#placeBtn');button.hidden=false;button.disabled=!!issue||panMode;
     document.querySelector('#cancelBtn').hidden=true;return;
   }
+  if(state.selectedTool==='kitchenFloor'&&!state.deleteMode){
+    const cell=state.pendingPlacement||hoverCell,issue=cell?kitchenTilePlacementIssue(cell):null,check=kitchenReadiness(state.kitchenTiles,state.restaurantState,plan);
+    document.querySelector('#placementTitle').textContent='Küchenboden selbst verlegen';
+    document.querySelector('#placementStatus').textContent=money(KITCHEN_TILE_PRICE)+' / Platte · '+(issue||check.largest+' zusammenhängend · min. 9, min. 3 breit oder hoch');
+    const button=document.querySelector('#placeBtn');button.hidden=false;button.disabled=!state.pendingPlacement||!!issue||panMode;document.querySelector('#cancelBtn').hidden=!state.pendingPlacement;
+    if(cell&&!panMode){const g=new Graphics();tile(g,cell.x,cell.y,issue?0xd96549:0x90bd70,.6,2);preview.addChild(g);}return;
+  }
   const cell=state.pendingPlacement||hoverCell,item=cell?chosenItem(cell):null,issue=item?(placementIssue(item,state.restaurantState)||servicePlacementIssue(item,state.service)||serviceLayoutIssue([...state.restaurantState,item],plan)||(state.balance<itemPrice(item)?'Nicht genügend Geld.':null)):null;
-  const title=panMode?'Ansicht verschieben':state.deleteMode?'Möbel verkaufen':`${state.selectedTool==='table'?state.selectedSeats+'er-Tisch mit Stühlen':TOOL_NAMES[state.selectedTool]} · ${state.rotation*90}°`;
+  const title=panMode?'Ansicht verschieben':state.deleteMode?'Möbel / Küchenplatten entfernen':`${state.selectedTool==='table'?state.selectedSeats+'er-Tisch mit Stühlen':TOOL_NAMES[state.selectedTool]} · ${state.rotation*90}°`;
   document.querySelector('#placementTitle').textContent=title;
-  document.querySelector('#placementStatus').textContent=panMode?'Zum Einrichten den Hand-Modus ausschalten.':state.deleteMode?'Antippen: 50 % des Kaufpreises zurück.':issue||(state.pendingPlacement?'Position gewählt. Mit Setzen bestätigen.':'Auf das Raster tippen oder ziehen.');
+  document.querySelector('#placementStatus').textContent=panMode?'Zum Einrichten den Hand-Modus ausschalten.':state.deleteMode?'Antippen: 50 % des Kaufpreises zurück.':issue||(state.pendingPlacement?'Position gewählt. Mit Setzen bestätigen.':KITCHEN_TYPES.includes(state.selectedTool)?(kitchenReadiness(state.kitchenTiles,state.restaurantState,plan).issue||'Auf Küchenplatten platzieren.'):'Auf das Raster tippen oder ziehen.');
   const button=document.querySelector('#placeBtn');button.hidden=state.deleteMode;button.disabled=!state.pendingPlacement||!!issue;
   document.querySelector('#cancelBtn').hidden=!state.pendingPlacement;
   if(!state.deleteMode&&!panMode)document.querySelector('#placementStatus').textContent=money(itemPrice(chosenItem({x:0,y:0})))+' · '+document.querySelector('#placementStatus').textContent;
   if(!cell||panMode)return;
   let target=item;
-  if(state.deleteMode){target=state.restaurantState.find(value=>occupiedCells(value).includes(`${cell.x},${cell.y}`));if(!target)return;}
+  if(state.deleteMode){target=state.restaurantState.find(value=>occupiedCells(value).includes(`${cell.x},${cell.y}`));if(!target&&kitchenCell(cell.x,cell.y))target={type:'plant',...cell,r:0};if(!target)return;}
   const invalid=state.deleteMode||!!issue,color=invalid?0xd96549:0x90bd70,g=new Graphics();
   for(const key of occupiedCells(target)){const [x,y]=key.split(',').map(Number);tile(g,x,y,color,.35,2);}
   preview.addChild(g);
@@ -245,7 +266,7 @@ export function showRestaurant(id){
   id=typeof id==='string'?id:state.activeRestaurantId;
   if(state.scene==='restaurant'&&id===state.activeRestaurantId)return;
   if(!activateRestaurant(id)){notify('Diesen Standort musst du zuerst kaufen.');return;}
-  plan=restaurantPlan(state.activeRestaurantId);ROOM=plan;
+  plan=activePlan();ROOM=plan;
   document.dispatchEvent(new Event('restaurants-changed'));saveLayout(true);
   clearWorld();state.scene='restaurant';sceneUI('restaurant');
   roomLayer=new Container();state.restaurantCamera=roomLayer;roomLayer.label='restaurant-room';world.addChild(roomLayer);
@@ -296,7 +317,7 @@ export function showRestaurant(id){
     if(entrance)g.poly([p.x-9,p.y+1,p.x,p.y-4,p.x+9,p.y+1,p.x+3,p.y+1,p.x+3,p.y+6,p.x-3,p.y+6,p.x-3,p.y+1]).fill(0x776c42);
     g.label=`floor-${x}-${y}`;g.eventMode='static';g.cursor='pointer';g.on('pointertap',()=>{if(state.deleteMode&&!panMode&&!blockTap)removeAt(x,y);});floor.addChild(g);
   }
-  fixedKitchen();kitchenWalls();
+  plan.decor.forEach(item=>placed(item,false));kitchenWalls();
   // Low cutaway edges give the building a facade while leaving the floor visible.
   for(const {x,y,side}of edges){
     if(side==='east')partition(x+.5,y-.5,false,1,9,'outer-cutaway');
@@ -329,13 +350,13 @@ export function undoRestaurant(){
   if(!state.history.length)return;
   const edit=state.history.at(-1),refund=edit.refundCents||0;
   if(Math.round(state.balance*100)+refund<0){notify('Für das Rückgängigmachen fehlt Geld.');return;}
-  state.history.pop();state.restaurantState=edit.items;state.balance=(Math.round(state.balance*100)+refund)/100;state.finishes=edit.finishes;captureRestaurant().investmentCents=edit.investmentCents||0;rebuildSurfaces();finishEdit('Letzte Änderung rückgängig gemacht.');
+  state.history.pop();state.kitchenTiles=edit.kitchenTiles||[];state.restaurantState=edit.items;state.balance=(Math.round(state.balance*100)+refund)/100;state.finishes=edit.finishes;captureRestaurant().investmentCents=edit.investmentCents||0;rebuildSurfaces();finishEdit('Letzte Änderung rückgängig gemacht.');
 }
 
 export function resetRestaurant(){
   if(state.service.groups.length){notify('Die Einrichtung kann zurückgesetzt werden, sobald alle Gäste gegangen sind.');return;}
   const initial=state.activeRestaurantId==='mamma-mia'?copyLayout():[],initialBalance=state.balance+captureRestaurant().investmentCents/100;
-  if(JSON.stringify(initial)!==JSON.stringify(state.restaurantState)||state.balance!==initialBalance||JSON.stringify(state.finishes)!==JSON.stringify(defaultFinishes())){rememberEdit();state.restaurantState=initial;state.balance=initialBalance;state.finishes=defaultFinishes();rebuildSurfaces();}
+  if(state.kitchenTiles.length||JSON.stringify(initial)!==JSON.stringify(state.restaurantState)||state.balance!==initialBalance||JSON.stringify(state.finishes)!==JSON.stringify(defaultFinishes())){rememberEdit();state.kitchenTiles=[];state.restaurantState=initial;state.balance=initialBalance;state.finishes=defaultFinishes();rebuildSurfaces();}
   state.rotation=0;state.selectedTool='table';state.selectedSeats=4;state.selectedVariant='wood';state.deleteMode=false;
   finishEdit('Start-Einrichtung wiederhergestellt.');
 }

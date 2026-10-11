@@ -1,6 +1,6 @@
-import {state} from './pizza-core.js?v=20261011k';
-import {PRODUCTS,ROOM_PRODUCTS,CATEGORIES,product,roomProduct,itemPrice,money} from './pizza-catalog.js?v=20261011k';
-import {furnitureIcon} from './pizza-sprites.js?v=20261011k';
+import {state} from './pizza-core.js?v=20261011l';
+import {PRODUCTS,ROOM_PRODUCTS,CATEGORIES,product,roomProduct,itemPrice,money} from './pizza-catalog.js?v=20261011l';
+import {furnitureIcon} from './pizza-sprites.js?v=20261011l';
 let qualityStep=false,onChoose=()=>{};
 function choose(p,seats){state.selectedTool=p.type;state.selectedVariant=p.id;if(seats)state.selectedSeats=seats;state.deleteMode=false;onChoose();}
 export function mountCatalog(callback){
@@ -34,12 +34,13 @@ export function renderCatalog(){
       const active=p.type===state.selectedTool&&p.id===state.selectedVariant;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));
       const swatch=document.createElement('b');swatch.className='finishSwatch';swatch.style.setProperty('--finish-a','#'+p.colors[0].toString(16).padStart(6,'0'));swatch.style.setProperty('--finish-b','#'+p.colors[1].toString(16).padStart(6,'0'));swatch.classList.toggle('wallSwatch',p.type==='renovation');
       const name=document.createElement('span');name.textContent=p.name;
-      const cost=document.createElement('small');cost.textContent=(p.type==='floor'?state.finishes.floor===p.id:p.level<=state.finishes.renovation)?'Aktuell / erledigt':money(p.price);
+      const cost=document.createElement('small');cost.textContent=p.type==='kitchenFloor'?money(p.price)+' / Platte':(p.type==='floor'?state.finishes.floor===p.id:p.level<=state.finishes.renovation)?'Aktuell / erledigt':money(p.price);
       button.append(swatch,name,cost);button.setAttribute('aria-label',p.name+', '+money(p.price));button.onclick=()=>choose(p);options.append(button);
     }
-    document.querySelector('#catalogPath').textContent='Ausbau › Böden und Renovierung';
+    document.querySelector('#catalogPath').textContent='Ausbau › Küchenplatten, Böden, Wände';
   }else if(category==='table'&&!qualityStep)for(const seats of [2,4,6,8])options.append(card(selected,seats));
   else for(const p of PRODUCTS.filter(p=>p.category===category))options.append(card(p,undefined,category==='table'));
+  if(category==='oven'||category==='finish'){const button=document.createElement('button');button.type='button';button.className='toolbtn catalogCard';button.dataset.kitchenCheck='true';button.textContent='Küche prüfen';button.onclick=()=>document.dispatchEvent(new Event('kitchen-check'));options.append(button);}
   options.scrollLeft=scroll;
 }
 

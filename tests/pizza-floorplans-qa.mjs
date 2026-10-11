@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {FLOORPLANS,roomCell,kitchenCell,boundaryEdges,restaurantPlan} from '../pizza-floorplans.js';
+import {FLOORPLANS,roomCell,kitchenCell,boundaryEdges,restaurantPlan,withKitchen} from '../pizza-floorplans.js';
 import {placementIssue,validLayout,guestCell,DEFAULT_LAYOUT} from '../pizza-layout.js';
 import {freshService,advanceService,servicePath,restoreService} from '../pizza-service.js';
 import {restoreRestaurants} from '../pizza-restaurant-profiles.js';
@@ -31,14 +31,14 @@ for(const p of PROPERTIES)assert.equal(p.area,restaurantPlan(p.id).area);
 const old=DEFAULT_LAYOUT.map(item=>({...item}));
 const raw=Object.fromEntries(PROPERTIES.map(p=>[p.id,{items:old,service:freshService(),investmentCents:0}]));
 const restored=restoreRestaurants(raw,PROPERTIES.map(p=>p.id),null);
-for(const p of PROPERTIES){assert(validLayout(restored[p.id].items,restaurantPlan(p.id)));assert.equal(restored[p.id].items.length,old.length);assert.equal(restored[p.id].floorPlanVersion,1);}
+for(const p of PROPERTIES){assert(validLayout(restored[p.id].items,withKitchen(restaurantPlan(p.id),restored[p.id].kitchenTiles)));assert.equal(restored[p.id].items.filter(i=>!'oven bar fridge'.split(' ').includes(i.type)).length,old.length);assert.equal(restored[p.id].floorPlanVersion,1);}
 const roundtrip=restoreRestaurants(restored,PROPERTIES.map(p=>p.id),null);
 for(const p of PROPERTIES)assert.deepEqual(roundtrip[p.id].items,restored[p.id].items);
 console.log('Floor plans passed: exact areas, connected guest paths, fixed kitchens/doors, completed meals, v6 relocation and stable reload.');
 
 const dense=[];for(const {x,y}of restaurantPlan('mamma-mia').cells){const item={type:'plant',x,y,r:0};item.paid=itemPrice(item);if(!placementIssue(item,dense))dense.push(item);}
 const originalValue=dense.reduce((sum,item)=>sum+item.paid,0),migrated=restoreRestaurants({'san-marco':{items:dense,service:freshService(),investmentCents:originalValue*100}},['san-marco'],null)['san-marco'];
-assert(migrated.migrationRefundCents>0);assert.equal(migrated.items.reduce((sum,item)=>sum+item.paid*100,0)+migrated.migrationRefundCents,originalValue*100);
+assert(migrated.migrationRefundCents>0);assert.equal(migrated.items.reduce((sum,item)=>sum+(item.paid||0)*100,0)+migrated.migrationRefundCents,originalValue*100);
 assert.equal(restoreRestaurants({'san-marco':migrated},['san-marco'],null)['san-marco'].migrationRefundCents,0);
 console.log('Dense old room migration passed: retained furniture plus full purchase refunds, applied only once.');
 

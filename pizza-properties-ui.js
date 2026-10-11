@@ -1,7 +1,7 @@
-import {restaurantPlan} from './pizza-floorplans.js?v=20261011k';
-import {state,saveLayout,updateMoney,notify} from './pizza-core.js?v=20261011k';
-import {money} from './pizza-catalog.js?v=20261011k';
-import {PROPERTIES,PROPERTY_SIZES,property,buyProperty,propertyPurchaseIssue} from './pizza-properties.js?v=20261011k';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261011l';
+import {state,saveLayout,updateMoney,notify,ensureRestaurants} from './pizza-core.js?v=20261011l';
+import {money} from './pizza-catalog.js?v=20261011l';
+import {PROPERTIES,PROPERTY_SIZES,property,buyProperty,propertyPurchaseIssue} from './pizza-properties.js?v=20261011l';
 const el=id=>document.getElementById(id);
 let selected=null,filter='small';
 function render(){
@@ -20,7 +20,7 @@ function render(){
   }
   const p=property(selected),size=PROPERTY_SIZES[p.size],isOwned=owned.includes(p.id),issue=propertyPurchaseIssue(p.id,owned,state.balance);
   el('propertyName').textContent=p.name;el('propertyInfo').textContent=`${p.district} · ${size.name} · ${p.area} m²`;
-  const plan=restaurantPlan(p.id);el('propertyDescription').textContent=plan.name+' · Gastraum '+plan.diningArea+' m² · Küche '+plan.kitchenArea+' m².';
+  const plan=restaurantPlan(p.id);el('propertyDescription').textContent=(plan.kitchen.kind==='annex'?'Gastraum mit Nebenraum und Verbindungstür. ':plan.kitchen.kind==='room'?'Gastraum mit abgetrenntem Nebenraum. ':'Offener Gastraum. ')+(isOwned?'Küchenboden: '+(ensureRestaurants()[p.id]?.kitchenTiles.length||0)+' m².':'Küche frei planen: Platten und Geräte selbst platzieren.');
   el('propertyPrice').textContent=money(p.price);el('propertyBuy').disabled=!!issue;el('propertyBuy').textContent=isOwned?'Bereits gekauft':'Standort kaufen';
   el('propertyStatus').textContent=isOwned?'Dein Restaurant. Einrichtung und Gäste werden separat gespeichert.':issue||'Einmaliger Kaufpreis. Keine automatische Abbuchung.';
   el('propertyOpen').hidden=!isOwned;

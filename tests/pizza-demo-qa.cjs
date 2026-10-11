@@ -206,7 +206,7 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
 
     // Room finishes are whole-room purchases, with no grid placement.
     const finishBudget=(await snapshot(page)).balance,finishItems=(await snapshot(page)).items;
-    await page.click('[data-category="finish"]');assert.equal(await page.locator('[data-finish]').count(),7);
+    await page.click('[data-category="finish"]');assert.equal(await page.locator('[data-finish]').count(),8);
     assert(!await page.locator('#placeBtn').isEnabled());
     for(const [id,price]of [['stone',3200],['checker',4200],['parquet',5600]]){
       await page.click(`[data-finish="${id}"]`);const before=(await snapshot(page)).balance;
@@ -244,7 +244,7 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     await page.click('#resetBtn');
     const budget=(await snapshot(page)).balance;
     await page.evaluate(async source=>{const {state,updateMoney}=await import(source);state.balance=0;updateMoney();},corePath);
-    await selectTool(page,'oven');await tapCell(page,6,0);assert.equal(await page.locator('#placeBtn').isEnabled(),false);assert.match(await page.locator('#placementStatus').innerText(),/Nicht genügend/);
+    await selectTool(page,'plant');await tapCell(page,6,0);assert.equal(await page.locator('#placeBtn').isEnabled(),false);assert.match(await page.locator('#placementStatus').innerText(),/Nicht genügend/);
     await page.evaluate(async ({source,budget})=>{const {state,updateMoney}=await import(source);state.balance=budget;updateMoney();},{source:corePath,budget});
     await page.click('#resetBtn');
     // Each capacity is one sprite and one placement, including its chairs.
@@ -270,12 +270,13 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
     assert.deepEqual((await snapshot(page)).pending,{x:0,y:3});assert.equal((await snapshot(page)).items.length,model.DEFAULT_LAYOUT.length);await page.click('#placeBtn');
     let current=await snapshot(page);assert(current.items.some(item=>item.type==='plant'&&item.x===0&&item.y===3));
-    const count=current.items.length;await tapCell(page,8,1);assert.equal((await snapshot(page)).items.length,count);assert.equal(await page.locator('#placeBtn').isEnabled(),false);assert.match(await page.locator('#placementStatus').innerText(),/Küche/);
+    const count=current.items.length;await tapCell(page,8,1);assert.equal((await snapshot(page)).items.length,count);assert.equal(await page.locator('#placeBtn').isEnabled(),true);await page.click('#cancelBtn');
     await selectTool(page,'table',4);await placeCell(page,5,2);current=await snapshot(page);assert.equal(current.items.length,count+1);
     await tapCell(page,6,2);assert.equal((await snapshot(page)).items.length,count+1);assert.equal(await page.locator('#placeBtn').isEnabled(),false);assert.match(await page.locator('#placementStatus').innerText(),/bereits/);
+    await page.click('[data-category="finish"]');await page.click('[data-finish="kitchen-tiles"]');for(let y=0;y<3;y++)for(let x=8;x<11;x++)await placeCell(page,x,y);
     await selectTool(page,'bar');await page.click('#rotateBtn');assert.equal((await snapshot(page)).rotation,1);
     await tapCell(page,11,8);assert.equal((await snapshot(page)).items.length,count+1);assert.equal(await page.locator('#placeBtn').isEnabled(),false);assert.match(await page.locator('#placementStatus').innerText(),/Eingang/);
-    await placeCell(page,7,4);assert((await snapshot(page)).items.some(item=>item.type==='bar'&&item.x===7&&item.y===4&&item.r===1));
+    await placeCell(page,9,1);assert((await snapshot(page)).items.some(item=>item.type==='bar'&&item.x===9&&item.y===1&&item.r===1));
     await capture(page,'custom-furniture.png');
     await page.click('#deleteBtn');assert.equal(await page.locator('.toolbtn.active').count(),0);
     const chairPoint=await page.evaluate(async modulePath=>{

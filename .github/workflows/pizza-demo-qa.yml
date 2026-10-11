@@ -18,6 +18,8 @@ on:
       - 'tests/pizza-city-study-qa.cjs'
       - 'tests/pizza-city-mix-qa.cjs'
       - 'tests/pizza-restaurants-browser-qa.cjs'
+      - 'tests/pizza-kitchen-qa.mjs'
+      - 'tests/pizza-kitchen-browser-qa.cjs'
       - 'tests/pizza-floorplans-qa.mjs'
       - 'tests/pizza-floorplans-browser-qa.cjs'
       - 'tests/pizza-isometric-art-qa.mjs'
@@ -45,6 +47,8 @@ jobs:
           node tests/pizza-service-qa.mjs
           node tests/pizza-service-browser-qa.cjs
           node tests/pizza-restaurants-browser-qa.cjs
+          node tests/pizza-kitchen-qa.mjs
+          node tests/pizza-kitchen-browser-qa.cjs
           node tests/pizza-floorplans-qa.mjs
           node tests/pizza-floorplans-browser-qa.cjs
           node tests/pizza-properties-qa.mjs

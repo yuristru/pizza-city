@@ -9,6 +9,7 @@ const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+deco
   try{
     browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined,args:process.env.PIZZA_BROWSER_ARGS?JSON.parse(process.env.PIZZA_BROWSER_ARGS):['--no-sandbox','--disable-dev-shm-usage','--enable-unsafe-swiftshader']});
     const context=await browser.newContext({viewport:{width:393,height:852},hasTouch:true,deviceScaleFactor:2}),page=await context.newPage(),errors=[],external=[];
+    const {copyLayout}=await import(path.join(root,'pizza-layout.js'));await context.addInitScript(items=>{if(!localStorage.getItem('pizza-city-layout-v1'))localStorage.setItem('pizza-city-layout-v1',JSON.stringify({version:5,items,balanceCents:24356000}));},copyLayout());
     await context.addInitScript(r=>{if(!localStorage.getItem('pizza-menu-v1')){localStorage.setItem('pizza-recipes-v1',JSON.stringify({draft:r,recipes:[r]}));localStorage.setItem('pizza-menu-v1',JSON.stringify({version:1,items:[{recipe:r,price:850,active:true}]}));}},recipe);
     // Stop automatic time before the restored service can advance; this test drives the real ticker explicitly.
     assert(source.includes('state.ready=true;'));

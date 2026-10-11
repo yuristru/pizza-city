@@ -1,6 +1,7 @@
-import {DEFAULT_PLAN} from './pizza-floorplans.js?v=20261011k';
-import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261011k';
-import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261011k';
+import {kitchenReadiness} from './pizza-kitchen.js?v=20261011l';
+import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261011l';
+import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261011l';
+import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261011l';
 
 export const SERVICE_PHASES=['arriving','waiting','eating','leaving','paying'];
 export const tableKey=t=>[t.x,t.y,t.r,t.seats,t.variant||'wood'].join(':');
@@ -21,11 +22,11 @@ export function restoreService(raw,plan=DEFAULT_PLAN){
   return fresh;
 }
 function freeCells(layout,plan){const used=new Set(layout.flatMap(occupiedCells)),free=new Set();for(let y=0;y<plan.h;y++)for(let x=0;x<plan.w;x++)if(guestCell(x,y,plan)&&!used.has(`${x},${y}`))free.add(`${x},${y}`);return free;}
-export function servicePath(layout,start,goal,plan=DEFAULT_PLAN){return routeBetween(freeCells(layout,plan),start,goal);}
-function routeBetween(free,start,goal){
+export function servicePath(layout,start,goal,plan=DEFAULT_PLAN){return routeBetween(freeCells(layout,plan),start,goal,plan);}
+function routeBetween(free,start,goal,plan){
   const first=`${start.x},${start.y}`,last=`${goal.x},${goal.y}`;if(!free.has(first)||!free.has(last))return null;
   const queue=[first],parents=new Map([[first,null]]);
-  for(let i=0;i<queue.length;i++){const key=queue[i];if(key===last)break;const [x,y]=key.split(',').map(Number);for(const [dx,dy]of [[-1,0],[0,-1],[1,0],[0,1]]){const next=`${x+dx},${y+dy}`;if(free.has(next)&&!parents.has(next)){parents.set(next,key);queue.push(next);}}}
+  for(let i=0;i<queue.length;i++){const key=queue[i];if(key===last)break;const [x,y]=key.split(',').map(Number);for(const [dx,dy]of [[-1,0],[0,-1],[1,0],[0,1]]){const next=`${x+dx},${y+dy}`;if(free.has(next)&&roomStep({x,y},{x:x+dx,y:y+dy},plan)&&!parents.has(next)){parents.set(next,key);queue.push(next);}}}
   if(!parents.has(last))return null;
   const result=[];let key=last;while(key!==null){const [x,y]=key.split(',').map(Number);result.unshift({x,y});key=parents.get(key);}return result;
 }
@@ -33,11 +34,11 @@ function tableRoute(layout,t,plan){
   const {w,h}=dimensions(t),free=freeCells(layout,plan),choices=[];
   for(let x=t.x;x<t.x+w;x++)for(const y of [t.y-1,t.y+h])choices.push({x,y});
   for(let y=t.y;y<t.y+h;y++)for(const x of [t.x-1,t.x+w])choices.push({x,y});
-  return choices.map(p=>routeBetween(free,plan.entrance,p)).filter(Boolean).sort((a,b)=>a.length-b.length)[0]||null;
+  return choices.map(p=>routeBetween(free,plan.entrance,p,plan)).filter(Boolean).sort((a,b)=>a.length-b.length)[0]||null;
 }
 export function serviceLayoutIssue(layout,plan=DEFAULT_PLAN){
   const free=freeCells(layout,plan);
-  if(plan.approach&&!routeBetween(free,plan.entrance,plan.approach))return 'Bitte einen Laufweg zur Küchentür frei lassen.';
+  if(plan.approach&&!routeBetween(free,plan.entrance,plan.approach,plan))return 'Bitte einen Laufweg zur Küchentür frei lassen.';
   if(layout.some(t=>t.type==='table'&&!tableRoute(layout,t,plan)))return 'Bitte einen Laufweg zu jedem Tisch frei lassen.';
   return null;
 }
@@ -52,10 +53,10 @@ export function servicePlacementIssue(item,service){
 function leave(group,layout,plan){
   const position=['waiting','eating'].includes(group.phase)?group.route.at(-1):routePosition(group),free=freeCells(layout,plan);
   const starts=[...free].map(key=>{const [x,y]=key.split(',').map(Number);return {x,y};}).sort((a,b)=>Math.hypot(a.x-position.x,a.y-position.y)-Math.hypot(b.x-position.x,b.y-position.y));
-  for(const start of starts){const route=routeBetween(free,start,plan.entrance);if(route){group.phase='leaving';group.route=route;group.progress=0;return;}}
+  for(const start of starts){const route=routeBetween(free,start,plan.entrance,plan);if(route){group.phase='leaving';group.route=route;group.progress=0;return;}}
 }
 function admit(service,layout,menu,balance,plan){
-  if(service.groups.length>=12)return;
+  if(service.groups.length>=12||plan.kitchenKeys&&!kitchenReadiness([...plan.kitchenKeys].map(key=>{const [x,y]=key.split(',').map(Number);return {x,y};}),layout,plan).ready)return;
   const sizes=[2,1,3,2,4,2,6,1,8,3],reserved=new Set(service.groups.filter(g=>!['leaving','paying'].includes(g.phase)).map(g=>tableKey(g.table)));
   const available=layout.filter(t=>t.type==='table'&&!reserved.has(tableKey(t))).map(table=>({table,route:tableRoute(layout,table,plan)})).filter(t=>t.route);
   const size=Math.min(sizes[(service.nextId-1)%sizes.length],Math.max(0,...available.map(t=>t.table.seats)));if(!size)return;

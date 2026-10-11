@@ -1,13 +1,13 @@
-import {restaurantPlan} from './pizza-floorplans.js?v=20261011k';
-import {state,saveLayout,updateMoney,ensureRestaurants} from './pizza-core.js?v=20261011k';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261011k';
-import {advanceService} from './pizza-service.js?v=20261011k';
+import {profilePlan} from './pizza-kitchen.js?v=20261011l';
+import {state,saveLayout,updateMoney,ensureRestaurants} from './pizza-core.js?v=20261011l';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261011l';
+import {advanceService} from './pizza-service.js?v=20261011l';
 
 let checkpoint=0;
 export function tickService(seconds){
   const events=[];
   for(const [id,profile]of Object.entries(ensureRestaurants())){
-    const result=advanceService(profile.service,seconds,profile.items,serviceMenu(),Math.round(state.balance*100),restaurantPlan(id));
+    const result=advanceService(profile.service,seconds,profile.items,serviceMenu(),Math.round(state.balance*100),profilePlan(id,profile));
     state.balance=result.balanceCents/100;events.push(...result.events.map(event=>({...event,restaurantId:id})));
   }
   checkpoint+=seconds;

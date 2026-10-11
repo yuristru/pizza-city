@@ -1,5 +1,5 @@
-import {product,itemPrice} from './pizza-catalog.js?v=20261011k';
-import {DEFAULT_PLAN,roomCell,kitchenCell,passageCell} from './pizza-floorplans.js?v=20261011k';
+import {product,itemPrice} from './pizza-catalog.js?v=20261011l';
+import {DEFAULT_PLAN,roomCell,roomStep,kitchenCell,passageCell} from './pizza-floorplans.js?v=20261011l';
 export {roomCell,kitchenCell,passageCell};
 export const ROOM={w:DEFAULT_PLAN.w,h:DEFAULT_PLAN.h};
 export const KITCHEN=DEFAULT_PLAN.kitchen;
@@ -12,7 +12,7 @@ export const GRID = {width:64,height:32};
 
 export function project(x,y){return {x:(x-y)*GRID.width/2,y:(x+y)*GRID.height/2};}
 export function gridCell(point){return {x:Math.floor(point.x/GRID.width+point.y/GRID.height+.5),y:Math.floor(point.y/GRID.height-point.x/GRID.width+.5)};}
-export const TOOL_TYPES = ['table','oven','bar','plant','jukebox','arcade'];
+export const TOOL_TYPES = ['table','fridge','oven','bar','plant','jukebox','arcade'];
 export const TABLE_SEATS = [2,4,6,8];
 export const TABLE_SIZES = {2:{w:2,h:2},4:{w:2,h:2},6:{w:3,h:2},8:{w:4,h:2}};
 export function tableChairs(seats){
@@ -55,14 +55,19 @@ export function placementIssue(item,layout=[],plan=DEFAULT_PLAN){
   if(item.variant!==undefined&&!product(item))return 'Ungültige Möbelvariante.';
   if(item.paid!==undefined&&(!Number.isInteger(item.paid)||item.paid!==itemPrice(item)))return 'Ungültiger Kaufpreis.';
   const cells=occupiedCells(item);
+  if(cells.includes(`${plan.entrance.x},${plan.entrance.y}`))return 'Bitte den Eingang frei lassen.';
   for(const cell of cells){
     const [x,y]=cell.split(',').map(Number);
     if(!roomCell(x,y,plan)) return 'Das Möbelstück passt hier nicht in den Raum.';
     if(decorCell(x,y,plan)) return 'Die feste Wanddekoration bleibt frei.';
-    if(kitchenCell(x,y,plan)) return 'Die feste Küche bleibt frei.';
+    if(plan.kitchenKeys){
+      if(['oven','bar','fridge'].includes(item.type)&&!kitchenCell(x,y,plan))return 'Küchengeräte dürfen nur auf Küchenplatten stehen.';
+      if(!['oven','bar','fridge'].includes(item.type)&&kitchenCell(x,y,plan))return 'Auf Küchenplatten dürfen nur Küchengeräte stehen.';
+    }else if(kitchenCell(x,y,plan))return 'Die feste Küche bleibt frei.';
     if(passageCell(x,y,plan)) return 'Bitte den Küchendurchgang frei lassen.';
     if(x===plan.entrance.x&&y===plan.entrance.y) return 'Bitte den Eingang frei lassen.';
   }
+  if(plan.kitchenKeys){const set=new Set(cells);for(const key of cells){const [x,y]=key.split(',').map(Number);for(const [dx,dy]of [[1,0],[0,1]])if(set.has(`${x+dx},${y+dy}`)&&!roomStep({x,y},{x:x+dx,y:y+dy},plan))return 'Das Möbelstück darf keine Wand überqueren.';} }
   const used=new Set(layout.flatMap(occupiedCells));
   if(cells.some(cell=>used.has(cell))) return 'Hier steht bereits ein Möbelstück.';
   return null;
@@ -84,7 +89,7 @@ export function copyLayout(layout=DEFAULT_LAYOUT){
 }
 
 export function upgradeLayout(value,version,plan=DEFAULT_PLAN){
-  if(!Array.isArray(value)||![1,2,3,4,5,6,7].includes(version))return null;
+  if(!Array.isArray(value)||![1,2,3,4,5,6,7,8].includes(version))return null;
   const items=version===1?value.filter(item=>item?.type!=='chair').map(item=>item?.type==='table'?{...item,seats:4}:item):value;
   return validLayout(items,plan)?copyLayout(items):null;
 }
