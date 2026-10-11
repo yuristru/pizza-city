@@ -9,6 +9,8 @@ on:
       - 'tests/pizza-demo-qa.cjs'
       - 'tests/pizza-catalog-qa.mjs'
       - 'tests/pizza-recipe-qa.mjs'
+      - 'tests/pizza-menu-qa.mjs'
+      - 'tests/pizza-menu-browser-qa.cjs'
       - 'tests/pizza-properties-qa.mjs'
       - 'tests/pizza-city-layout-qa.mjs'
       - 'tests/pizza-isometric-art-qa.mjs'
@@ -31,6 +33,8 @@ jobs:
         run: |
           node tests/pizza-catalog-qa.mjs
           node tests/pizza-recipe-qa.mjs
+          node tests/pizza-menu-qa.mjs
+          node tests/pizza-menu-browser-qa.cjs
           node tests/pizza-properties-qa.mjs
           node tests/pizza-city-layout-qa.mjs
           node tests/pizza-isometric-art-qa.mjs

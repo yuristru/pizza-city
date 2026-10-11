@@ -1,6 +1,6 @@
-import {drawIngredientArt} from './pizza-ingredient-art.js?v=20261011c';
-import {app,state,clearWorld,sceneUI,notify} from './pizza-core.js?v=20261011c';
-import {INGREDIENTS,ingredient,blankRecipe,onPizza,validRecipe,copyRecipe,recipeCost,toppingAt,formOf,nextForm,formName} from './pizza-recipe.js?v=20261011c';
+import {drawIngredientArt} from './pizza-ingredient-art.js?v=20261011d';
+import {app,state,clearWorld,sceneUI,notify} from './pizza-core.js?v=20261011d';
+import {INGREDIENTS,ingredient,blankRecipe,onPizza,validRecipe,copyRecipe,recipeCost,toppingAt,formOf,nextForm,formName} from './pizza-recipe.js?v=20261011d';
 const el=id=>document.getElementById(id),board=el('pizzaBoard'),pixelBoard=document.createElement('canvas'),ctx=pixelBoard.getContext('2d'),KEY='pizza-recipes-v1';
 pixelBoard.width=160;pixelBoard.height=160;ctx.setTransform(.5,0,0,.5,0,0);ctx.imageSmoothingEnabled=false;
 let recipe=blankRecipe(),recipes=[],selected='mozzarella',erase=false,history=[],stroke=null,forms=Object.fromEntries(INGREDIENTS.map(i=>[i.id,0]));
@@ -52,15 +52,18 @@ function drawTopping(t,paint=ctx){
  }
  ctx.restore();
 }
-function draw(){
- const target=board.getContext('2d');ctx.clearRect(0,0,320,320);ctx.fillStyle='#987045';ctx.fillRect(4,4,312,312);ctx.fillStyle='#bc905b';ctx.fillRect(9,9,302,302);
+export function drawRecipePreview(previewRecipe,canvas){
+ const target=canvas.getContext('2d');ctx.clearRect(0,0,320,320);ctx.fillStyle='#987045';ctx.fillRect(4,4,312,312);ctx.fillStyle='#bc905b';ctx.fillRect(9,9,302,302);
  for(let y=25;y<310;y+=29){ctx.fillStyle='#a4794840';ctx.fillRect(9,y,302,2);for(let x=15;x<300;x+=67)ctx.fillRect(x,y+7,39,1);}
  circle(162,165,143,'#694a31');circle(160,160,143,'#d8bb83');circle(160,160,136,'#efd59b');circle(160,160,126,'#bd803e');circle(160,157,126,'#e8b864');circle(160,157,118,'#efc985');
  for(let i=0;i<44;i++){const a=i*2.399,r=122+i%3*3;circle(160+Math.cos(a)*r,157+Math.sin(a)*r,2+i%3,'#aa6e38');}
- circle(160,160,113,recipe.sauce==='tomato'?'#a83b28':'#ebd9ad');
- for(let i=0;i<70;i++){const a=i*2.399,r=12+Math.sqrt(i/70)*96;circle(160+Math.cos(a)*r,160+Math.sin(a)*r,1+i%3,recipe.sauce==='tomato'?'#ca5230':'#d1bc8e');}
- for(const t of recipe.toppings)drawTopping(t);
- target.imageSmoothingEnabled=false;target.clearRect(0,0,320,320);target.drawImage(pixelBoard,0,0,320,320);
+ circle(160,160,113,previewRecipe.sauce==='tomato'?'#a83b28':'#ebd9ad');
+ for(let i=0;i<70;i++){const a=i*2.399,r=12+Math.sqrt(i/70)*96;circle(160+Math.cos(a)*r,160+Math.sin(a)*r,1+i%3,previewRecipe.sauce==='tomato'?'#ca5230':'#d1bc8e');}
+ for(const t of previewRecipe.toppings)drawTopping(t);
+ target.imageSmoothingEnabled=false;target.clearRect(0,0,canvas.width,canvas.height);target.drawImage(pixelBoard,0,0,canvas.width,canvas.height);
+}
+function draw(){
+ drawRecipePreview(recipe,board);
  board.setAttribute('aria-label',recipe.name+': '+recipe.toppings.length+' Zutatenstücke. Zutat wählen und Pizza antippen.');
 }
 function render(){
@@ -105,11 +108,13 @@ el('pizzaErase').onclick=()=>{erase=!erase;render();};
 el('pizzaUndo').onclick=()=>{if(!history.length)return;recipe=history.pop();persist();render();};
 el('pizzaClear').onclick=()=>{if(!recipe.toppings.length)return;remember();recipe.toppings=[];persist();render();};
 el('pizzaName').addEventListener('change',()=>{const name=el('pizzaName').value.trim().slice(0,40)||'Meine Pizza';if(name!==recipe.name){remember();recipe.name=name;persist();render();}});
-el('pizzaSave').onclick=()=>{el('pizzaName').dispatchEvent(new Event('change'));const index=recipes.findIndex(r=>r.name===recipe.name);if(index<0&&recipes.length>=20){notify('Maximal 20 Rezepte. Einen vorhandenen Namen zum Ersetzen verwenden.');return;}if(index<0)recipes.push(copyRecipe(recipe));else recipes[index]=copyRecipe(recipe);updateRecipes();if(persist())notify('Rezept gespeichert: '+recipe.name+'.');};
+el('pizzaSave').onclick=()=>{el('pizzaName').dispatchEvent(new Event('change'));const index=recipes.findIndex(r=>r.name===recipe.name);if(index<0&&recipes.length>=20){notify('Maximal 20 Rezepte. Einen vorhandenen Namen zum Ersetzen verwenden.');return;}if(index<0)recipes.push(copyRecipe(recipe));else recipes[index]=copyRecipe(recipe);updateRecipes();if(persist())notify('Rezept gespeichert: '+recipe.name+'.');document.dispatchEvent(new Event('pizza-recipes-changed'));};
 el('pizzaRecipes').onchange=()=>{const r=recipes[Number(el('pizzaRecipes').value)];if(el('pizzaRecipes').value===''||!r)return;remember();recipe=copyRecipe(r);erase=false;persist();render();};
 el('pizzaNew').onclick=()=>{remember();recipe=blankRecipe();erase=false;persist();render();};
-export function showPizza(){if(state.scene==='pizza')return;clearWorld();state.scene='pizza';sceneUI('pizza');app.render();render();}
+export function showPizza(){if(state.scene==='pizza')return;clearWorld();state.scene='pizza';sceneUI('pizza');resizePizzaBoard();app.render();render();}
 export function pizzaSnapshot(){return {recipe:copyRecipe(recipe),recipes:recipes.map(copyRecipe),history:history.length,selected,form:forms[selected],forms:{...forms}};}
+export function savedRecipes(){return recipes.map(copyRecipe);}
 updateRecipes();render();
 
-new ResizeObserver(()=>{const wrap=board.parentElement,size=Math.max(1,Math.min(wrap.clientWidth,wrap.clientHeight));board.style.width=size+'px';board.style.height=size+'px';}).observe(board.parentElement);
+function resizePizzaBoard(){const wrap=board.parentElement;if(!wrap.clientWidth||!wrap.clientHeight)return;const size=Math.min(wrap.clientWidth,wrap.clientHeight);board.style.width=size+'px';board.style.height=size+'px';}
+new ResizeObserver(resizePizzaBoard).observe(board.parentElement);

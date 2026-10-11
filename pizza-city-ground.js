@@ -1,4 +1,4 @@
-import {Sprite,Texture,CITY_N,hash} from './pizza-core.js?v=20261011c';
+import {Sprite,Texture,CITY_N,hash} from './pizza-core.js?v=20261011d';
 
 // One texture pixel per world pixel matches the city sprites; bake once per map.
 export function cityGround({road,roadCell,water,bridge,park,fountainCell},seed){

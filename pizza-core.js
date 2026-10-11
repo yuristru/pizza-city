@@ -1,8 +1,8 @@
-import {DEFAULT_CITY_SEED} from './pizza-city-layout.js?v=20261011c';
-import {restoreProperties,propertySpend} from './pizza-properties.js?v=20261011c';
+import {DEFAULT_CITY_SEED} from './pizza-city-layout.js?v=20261011d';
+import {restoreProperties,propertySpend} from './pizza-properties.js?v=20261011d';
 import {Application,Container,Graphics,Sprite,Texture,Text,Rectangle} from './assets/pizza/vendor/pixi-8.22.0.mjs';
-import {copyLayout,upgradeLayout} from './pizza-layout.js?v=20261011c';
-import {START_MONEY,money,defaultFinishes,restoreFinishes} from './pizza-catalog.js?v=20261011c';
+import {copyLayout,upgradeLayout} from './pizza-layout.js?v=20261011d';
+import {START_MONEY,money,defaultFinishes,restoreFinishes} from './pizza-catalog.js?v=20261011d';
 export {Container,Graphics,Sprite,Texture,Text,Rectangle};
 
 export const root=document.querySelector('#app');
@@ -43,7 +43,7 @@ export function clearWorld(){
 
 export function sceneUI(scene){
   const restaurant=scene==='restaurant';
-  const propertyDialog=document.querySelector('#propertyDialog');if(propertyDialog?.open)propertyDialog.close();
+  for(const id of ['propertyDialog','menuDialog']){const dialog=document.getElementById(id);if(dialog?.open)dialog.close();}
   root.dataset.scene=scene;
   document.querySelector('#pizzaEditor').hidden=scene!=='pizza';
   document.querySelector('#tools').hidden=!restaurant;
@@ -124,9 +124,9 @@ async function loadCityAtlas(){
 }
 
 export async function loadAssets(){
-  const {loadCityArt}=await import('./pizza-city-art.js?v=20261011c');
-  const {loadRestaurantArt}=await import('./pizza-restaurant-art.js?v=20261011c');
-  const {loadIngredientArt}=await import('./pizza-ingredient-art.js?v=20261011c');
+  const {loadCityArt}=await import('./pizza-city-art.js?v=20261011d');
+  const {loadRestaurantArt}=await import('./pizza-restaurant-art.js?v=20261011d');
+  const {loadIngredientArt}=await import('./pizza-ingredient-art.js?v=20261011d');
   await Promise.all([loadCityArt(),loadRestaurantArt(),loadIngredientArt()]);
   if(!state.cityArt.buildings) await loadCityAtlas();
   loading.hidden=true;

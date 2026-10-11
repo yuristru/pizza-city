@@ -1,14 +1,16 @@
-import {mountProperties} from './pizza-properties-ui.js?v=20261011c';
-import {showPizza} from './pizza-editor.js?v=20261011c';
-import {app,root,state,loadAssets,updateMoney} from './pizza-core.js?v=20261011c';
-import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261011c';
-import {showRestaurant,tickRestaurant,resizeRestaurant,resetRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView} from './pizza-restaurant.js?v=20261011c';
+import {mountProperties} from './pizza-properties-ui.js?v=20261011d';
+import {mountMenu} from './pizza-menu-ui.js?v=20261011d';
+import {showPizza} from './pizza-editor.js?v=20261011d';
+import {app,root,state,loadAssets,updateMoney} from './pizza-core.js?v=20261011d';
+import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261011d';
+import {showRestaurant,tickRestaurant,resizeRestaurant,resetRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView} from './pizza-restaurant.js?v=20261011d';
 
-import {furnitureIcon} from './pizza-sprites.js?v=20261011c';
+import {furnitureIcon} from './pizza-sprites.js?v=20261011d';
 
 const rotateBtn=document.querySelector('#rotateBtn'),deleteBtn=document.querySelector('#deleteBtn');
-import {mountCatalog,renderCatalog,showCatalogSizes} from './pizza-catalog-ui.js?v=20261011c';
+import {mountCatalog,renderCatalog,showCatalogSizes} from './pizza-catalog-ui.js?v=20261011d';
 mountProperties();
+mountMenu();
 mountCatalog(()=>{if(restaurantView().panMode)toggleRestaurantPan();cancelPlacement();syncEditUI();});
 state.navigate=where=>where==='restaurant'?showRestaurant():showCity();
 document.querySelector('#cityBtn').onclick=showCity;
@@ -84,7 +86,7 @@ function resize(){
 new ResizeObserver(resize).observe(root);window.addEventListener('resize',resize);resize();
 document.addEventListener('visibilitychange',()=>document.hidden?app.ticker.stop():app.ticker.start());
 window.addEventListener('keydown',event=>{
-  if(state.scene!=='restaurant'||event.target.closest?.('input,textarea,select,[contenteditable]')) return;
+  if(document.querySelector('dialog[open]')||state.scene!=='restaurant'||event.target.closest?.('input,textarea,select,[contenteditable]')) return;
   if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='z'){event.preventDefault();undoRestaurant();}
   else if(!event.ctrlKey&&!event.metaKey&&event.key.toLowerCase()==='r') rotateBtn.click();
   else if(event.key==='Enter'&&state.pendingPlacement){event.preventDefault();confirmPlacement();}

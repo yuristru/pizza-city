@@ -1,8 +1,8 @@
-import {propertySpend} from './pizza-properties.js?v=20261011c';
-import {START_MONEY,itemPrice,product,money,ROOM_PRODUCTS,roomProduct,roomPurchaseIssue,defaultFinishes} from './pizza-catalog.js?v=20261011c';
-import {app,world,state,Container,Graphics,Rectangle,clearWorld,sceneUI,sceneViewport,rememberEdit,saveLayout,updateMoney,notify,hash} from './pizza-core.js?v=20261011c';
-import {ROOM,GRID,KITCHEN,KITCHEN_DOOR,FIXED_DECOR,kitchenCell,passageCell,guestCell,project,gridCell,dimensions,occupiedCells,placementIssue,copyLayout} from './pizza-layout.js?v=20261011c';
-import {furnitureSprite,personSprite} from './pizza-sprites.js?v=20261011c';
+import {propertySpend} from './pizza-properties.js?v=20261011d';
+import {START_MONEY,itemPrice,product,money,ROOM_PRODUCTS,roomProduct,roomPurchaseIssue,defaultFinishes} from './pizza-catalog.js?v=20261011d';
+import {app,world,state,Container,Graphics,Rectangle,clearWorld,sceneUI,sceneViewport,rememberEdit,saveLayout,updateMoney,notify,hash} from './pizza-core.js?v=20261011d';
+import {ROOM,GRID,KITCHEN,KITCHEN_DOOR,FIXED_DECOR,kitchenCell,passageCell,guestCell,project,gridCell,dimensions,occupiedCells,placementIssue,copyLayout} from './pizza-layout.js?v=20261011d';
+import {furnitureSprite,personSprite} from './pizza-sprites.js?v=20261011d';
 
 const RTW=GRID.width,RTH=GRID.height,WALL_HEIGHT=96;
 const TOOL_NAMES={table:'Tisch',oven:'Ofen',bar:'Theke',plant:'Pflanze',jukebox:'Musikautomat',arcade:'Spielautomat'};
