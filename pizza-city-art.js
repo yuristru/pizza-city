@@ -1,5 +1,5 @@
-import {groundProjection} from './pizza-isometric-art.js?v=20261011e';
-import {Sprite,Texture,state} from './pizza-core.js?v=20261011e';
+import {groundProjection} from './pizza-isometric-art.js?v=20261011f';
+import {Sprite,Texture,state} from './pizza-core.js?v=20261011f';
 
 // Atlas coordinates isolate complete flat drawings, including their ground contact.
 // Rasterize once at the city's pixel scale instead of scaling high-resolution art per frame.
@@ -28,8 +28,8 @@ const ATLASES=[
     [797,520,352,442,124,[[800,876],[1050,956],[1146,915]]],
     [1165,524,360,467,124,[[1178,914],[1353,984],[1511,921]]]
   ]},
-  {key:'landmarks',url:'italian-landmarks-v2.png',frames:[
-    [40,190,839,650,224],[975,21,772,849,194]
+  {key:'landmarks',url:'italian-landmarks-v3.png',frames:[
+    [104,202,743,664,224],[902,87,690,794,194,[[982,777],[1199,870],[1420,758]]]
   ]},
   {key:'props',url:'italian-props-v2.png',frames:[
     [16,74,433,472,58],[455,20,383,533,57],[896,23,168,540,22],[1118,97,404,453,58],

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {groundProjection} from '../pizza-isometric-art.js';
 for(const corners of [
   [[0,0],[100,50],[200,0]],
+  [[982,777],[1199,870],[1420,758]],
   [[800,876],[1050,956],[1146,915]],
   [[1226,941],[1294,990],[1475,908]],
   [[1178,914],[1353,984],[1511,921]]
