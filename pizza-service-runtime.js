@@ -1,6 +1,6 @@
-import {state,saveLayout,updateMoney} from './pizza-core.js?v=20261011h';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261011h';
-import {advanceService} from './pizza-service.js?v=20261011h';
+import {state,saveLayout,updateMoney} from './pizza-core.js?v=20261011i';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261011i';
+import {advanceService} from './pizza-service.js?v=20261011i';
 
 let checkpoint=state.service.elapsed;
 export function tickService(seconds){

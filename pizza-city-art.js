@@ -1,12 +1,14 @@
-import {groundProjection} from './pizza-isometric-art.js?v=20261011h';
-import {Sprite,Texture,state} from './pizza-core.js?v=20261011h';
+import {groundProjection} from './pizza-isometric-art.js?v=20261011i';
+import {Sprite,Texture,state} from './pizza-core.js?v=20261011i';
 
 // Atlas coordinates isolate complete flat drawings, including their ground contact.
 // Rasterize once at the city's pixel scale instead of scaling high-resolution art per frame.
 export const ATLASES=[
   {key:'buildings',url:'italian-buildings-v2.png',frames:[
     [43,52,315,460,116],[412,45,336,473,124],[795,92,340,420,116],[1206,40,287,478,106],
-    [23,546,355,399,124],[414,557,345,401,124],[798,551,348,404,124],[1175,539,336,416,118]
+    [23,546,355,399,124,[[37,882],[213,942],[365,890]]],
+    [414,557,345,401,124,[[430,897],[579,958],[747,894]]],
+    [798,551,348,404,124],[1175,539,336,416,118]
   ]},
   {key:'buildingExtras',url:'italian-buildings-extra-v1.png',frames:[
     [38,27,331,485,116,[[49,442],[198,510],[361,434]]],
@@ -54,7 +56,8 @@ function frame(image,[x,y,w,h,width,corners,edgeUnits]){
   const anchor={x:front[0]*scaleX*scale/canvas.width,y:(front[1]+skewY*front[0]-minY)*scale/canvas.height};
   const pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;
   const texture=Texture.from(canvas);texture.source.scaleMode='nearest';
-  return {texture,anchor,projection:projection?{scaleX,skewY}:null,hitArea:{contains(px,py){
+  const groundSize=corners?{width:(corners[1][0]-corners[0][0])*scaleX*scale/32,depth:(corners[2][0]-corners[1][0])*scaleX*scale/32}:null;
+  return {texture,anchor,groundSize,projection:projection?{scaleX,skewY}:null,hitArea:{contains(px,py){
     const ix=Math.floor(px+anchor.x*canvas.width),iy=Math.floor(py+anchor.y*canvas.height);
     return ix>=0&&iy>=0&&ix<canvas.width&&iy<canvas.height&&pixels[(iy*canvas.width+ix)*4+3]>100;
   }}};

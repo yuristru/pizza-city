@@ -158,3 +158,10 @@ Ein sinnvoller nächster Vergleich verwendet dieselbe Kamerafahrt und denselben 
 6. Dieselben Bausteine ergeben mindestens zwei glaubwürdige Anordnungen, ohne jedes Mal die Bilder nachzubearbeiten.
 
 Der vorliegende Versuch besteht den technischen Aufbau mit echten Sprites und macht die Grenzen sichtbar. Er besteht ausdrücklich noch nicht die endgültige visuelle Anschlussabnahme. Genau diese Unterscheidung sollte die nächste Entscheidung über Generator und neue Assets bestimmen.
+
+
+## Umgesetzte Mischung nach Auswahl
+
+Nach Auswahl der Varianten 02 und 03 bilden gemessene Sockelbreiten nun gemeinsame Fronten an Vorder- und Rückseiten der Wohnblöcke. Restbreite wird an einem Zeilenende als Durchgang gebündelt. Drei innere Quartiere kombinieren eine rückwärtige Zeile mit L- beziehungsweise U-Bauten. Wenn eine kurze Seitenbebauung vollständig in den Innenbereich passt, kann sie eine zusätzliche Ecke bilden. Restaurants liegen innerhalb ihrer Front und behalten freie Terrassen; alle neun Immobilien bleiben erhalten.
+
+Die Kanten beziehen sich auf gemessene Sockel, nicht auf eine neue, nahtlose Dachfamilie. Die im Test dokumentierten Dach- und Markisenabweichungen des Bestands gelten weiterhin. Der Generator verteilt somit die gewählte Mischung bereits im Spiel, während gezielte Anschlussgrafiken eine nächste Verfeinerung bleiben. `tests/pizza-city-mix-qa.cjs` prüft acht unterschiedliche Seeds auf Grundstückserhalt, gemeinsame Zeilenkanten, Grundflächen außerhalb von Straßen/Wasser und fehlende Überschneidungen zwischen Baukörpern.

@@ -1,16 +1,16 @@
-import {mountProperties} from './pizza-properties-ui.js?v=20261011h';
-import {mountMenu} from './pizza-menu-ui.js?v=20261011h';
-import {tickService} from './pizza-service-runtime.js?v=20261011h';
-import {renderServiceUI} from './pizza-service-ui.js?v=20261011h';
-import {showPizza} from './pizza-editor.js?v=20261011h';
-import {app,root,state,loadAssets,updateMoney} from './pizza-core.js?v=20261011h';
-import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261011h';
-import {showRestaurant,tickRestaurant,resizeRestaurant,resetRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView} from './pizza-restaurant.js?v=20261011h';
+import {mountProperties} from './pizza-properties-ui.js?v=20261011i';
+import {mountMenu} from './pizza-menu-ui.js?v=20261011i';
+import {tickService} from './pizza-service-runtime.js?v=20261011i';
+import {renderServiceUI} from './pizza-service-ui.js?v=20261011i';
+import {showPizza} from './pizza-editor.js?v=20261011i';
+import {app,root,state,loadAssets,updateMoney} from './pizza-core.js?v=20261011i';
+import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261011i';
+import {showRestaurant,tickRestaurant,resizeRestaurant,resetRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView} from './pizza-restaurant.js?v=20261011i';
 
-import {furnitureIcon} from './pizza-sprites.js?v=20261011h';
+import {furnitureIcon} from './pizza-sprites.js?v=20261011i';
 
 const rotateBtn=document.querySelector('#rotateBtn'),deleteBtn=document.querySelector('#deleteBtn');
-import {mountCatalog,renderCatalog,showCatalogSizes} from './pizza-catalog-ui.js?v=20261011h';
+import {mountCatalog,renderCatalog,showCatalogSizes} from './pizza-catalog-ui.js?v=20261011i';
 mountProperties();
 mountMenu();
 mountCatalog(()=>{if(restaurantView().panMode)toggleRestaurantPan();cancelPlacement();syncEditUI();});

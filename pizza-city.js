@@ -1,12 +1,13 @@
-import {BUILDING_FOOTPRINTS,footprintAnchor,footprintCells,footprintFits} from './pizza-city-footprints.js?v=20261011h';
-import {cityGround} from './pizza-city-ground.js?v=20261011h';
-import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261011h';
-import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261011h';
-import {openProperty} from './pizza-properties-ui.js?v=20261011h';
-import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261011h';
-import {citySprite} from './pizza-city-art.js?v=20261011h';
-import {personSprite} from './pizza-sprites.js?v=20261011h';
-import {carSprite} from './pizza-city-traffic.js?v=20261011h';
+import {frontageRow} from './pizza-city-frontages.js?v=20261011i';
+import {BUILDING_FOOTPRINTS,footprintAnchor,footprintCells,footprintFits} from './pizza-city-footprints.js?v=20261011i';
+import {cityGround} from './pizza-city-ground.js?v=20261011i';
+import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261011i';
+import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261011i';
+import {openProperty} from './pizza-properties-ui.js?v=20261011i';
+import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261011i';
+import {citySprite} from './pizza-city-art.js?v=20261011i';
+import {personSprite} from './pizza-sprites.js?v=20261011i';
+import {carSprite} from './pizza-city-traffic.js?v=20261011i';
 
 let districts=districtOrder();
 function cityHash(x,y,s=0){return hash(x,y,(state.citySeed+s)>>>0);}
@@ -89,7 +90,7 @@ function propertyBuilding(objects,labels,x,y,site){
   bg.roundRect(-43,-9,86,18,3).fill(owned?0x426440:size.color).stroke({color:0xead4a5,width:1});
   text.anchor.set(.5);text.text=(owned?'DEIN':'KAUFEN')+' · '+size.badge;
   marker.addChild(bg,text);marker.eventMode='static';marker.cursor='pointer';marker.hitArea=new Rectangle(-43,-12,86,28);
-  marker.on('pointertap',()=>{if(!state.cityGesture?.moved)openProperty(site.id);});labels.addChild(marker);
+  marker.on('pointertap',()=>{if(!state.cityGesture?.moved)openProperty(site.id);});labels.addChild(marker);return object;
 }
 function refreshPropertyMarkers(){
   if(state.scene!=='city')return;
@@ -124,43 +125,65 @@ function block(objects,labels,b){
     [[.25,.8],[w*.55,.5],[w-.35,1.5],[w-.4,h-.5]].forEach(([x,y],i)=>put(tree(i%4,.8),x,y));
     put(bench(),w-1.4,h-.35);put(bench(),w-.3,h-2.5);return;
   }
-  const pool=[0,1,2,3,7].map(index=>({kind:'buildings',index}));
-  for(let i=8;i<(state.cityArt.buildings?.length||8);i++)pool.push({kind:'buildings',index:i});
-  for(let i=0;i<(state.cityArt.buildingTypes?.length||0);i++)pool.push({kind:'buildingTypes',index:i});
-  function ordinary(slot,x,y){
-    const site=PROPERTIES.find(p=>p.bx===bx&&p.by===by&&p.slot===slot);
-    if(site){propertyBuilding(objects,labels,x0+x,y0+y,site);return;}
-    const {kind,index}=pool[Math.floor(cityHash(bx*4+slot,by)*pool.length)];
-    building(objects,labels,x0+x,y0+y,index,null,false,kind);
+  const size=(kind,index)=>state.cityArt[kind]?.[index]?.groundSize||{width:1.65,depth:1.65};
+  const item=(kind,index,extra={})=>({kind,index,...size(kind,index),...extra});
+  const pool=[];
+  for(let index=8;index<16;index++)pool.push(item('buildings',index));
+  for(const index of [0,1,3,4,5,6,7])pool.push(item('buildingTypes',index));
+  const sites=PROPERTIES.filter(p=>p.bx===bx&&p.by===by);
+  const required=sites.map(site=>item(site.art,site.sprite,{site}));
+  function row(which,mandatory,candidates,edge){
+    const houses=frontageRow(w,mandatory,candidates,n=>cityHash(bx*11+n,by,which==='back'?81:83));
+    // Restaurants sit within the front rather than behind the camera controls at its end.
+    if(mandatory.some(h=>h.name)&&houses.length>1){
+      const start=houses[0].start,restaurant=houses.shift();houses.splice(Math.floor(houses.length/2),0,restaurant);
+      let cursor=start;for(const house of houses){house.start=cursor;cursor+=house.width;}
+    }
+    for(const house of houses){
+      const x=x0+house.start+house.width,y=which==='back'?edge+house.depth:edge;
+      const object=house.site?propertyBuilding(objects,labels,x,y,house.site):building(objects,labels,x,y,house.index,house.name,house.player,house.kind);
+      object.frontage=which;object.blockKey=b.bx+','+b.by;
+      object.groundBounds={x0:x-house.width,x1:x,y0:y-house.depth,y1:y};
+    }
+    return houses;
   }
-  const form=Math.floor(cityHash(bx,by,71)*4),left=2.25,right=w-.55,back=2.4,front=h-.7;
   const courtIndex=bx===0&&by===2?1:((bx===0&&by===1)||(bx===1&&by===2))?0:-1;
   if(courtIndex>=0&&state.cityArt.courtyardBuildings){
     const template=BUILDING_FOOTPRINTS.find(t=>t.id===(courtIndex?'courtyard-u':'corner-l'));
-    const cx=x0+(w-template.width)/2,cy=y1-template.depth-.4;
-    const allowed=(x,y)=>x>=x0&&x<=x1&&y>=y0+1.85&&y<=y1&&!road(x,y)&&!water(x,y);
+    const cx=x0+(w-template.width)/2,cy=y1-template.depth-.2;
+    const shallow=pool.filter(p=>p.depth<=1.85);
+    const allowed=(x,y)=>x>=x0&&x<=x1&&y>=y0+2&&y<=y1&&!road(x,y)&&!water(x,y);
     if(footprintFits(template,cx,cy,allowed)){
-      ordinary(0,left,1.85);ordinary(1,right,1.85);
+      row('back',required,shallow,y0+.15);
       const object=citySprite('courtyardBuildings',courtIndex),anchor=footprintAnchor(template);
       place(objects,object,cx+anchor[0],cy+anchor[1]);object.label='city-courtyard-building';
-      object.footprintId=template.id;object.groundOrigin={x:cx,y:cy};
+      object.footprintId=template.id;object.groundOrigin={x:cx,y:cy};object.blockKey=b.bx+','+b.by;
       object.occupiedGroundCells=footprintCells(template).map(([x,y])=>[cx+x,cy+y]);
-      put(lamp(),.25,h-.15);return;
+      object.groundBounds={x0:cx,x1:cx+template.width,y0:cy,y1:cy+template.depth};
+      put(lamp(),.08,h-.08);return;
     }
   }
-  // Alternating setbacks, long rows and courtyards break the repeated four-house pattern.
-  ordinary(0,left,back+(form===1?.55:0));ordinary(1,right,back+(form===2?.6:0));
-  if(bx===1&&by===1)building(objects,labels,x0+2.5,y0+h-1.1,4,'Mamma Mia',true);
-  else if(bx===2&&by===1)building(objects,labels,x0+2.35,y0+h-1.1,5,"Luigi's");
-  else ordinary(2,left+(form===2?.35:0),front);
-  const hasFrontProperty=PROPERTIES.some(p=>p.bx===bx&&p.by===by&&p.slot===3);
-  if(form!==1||hasFrontProperty)ordinary(3,right,front-(form===3?.45:0));
-  if(h>6.8&&form!==2){ordinary(4,left,back+(front-back)/2);if(w>7.5)ordinary(5,right,back+(front-back)/2);}
-  else if(w>7.5&&form===2)ordinary(4,(left+right)/2,back+.15);
-  if(form===1){put(tree(3,.82),right,front-.4);put(bench(),right-.5,front+.2);}
-  else put(tree(Math.floor(cityHash(bx,by,3)*4),.76),w-.18,h-.15);
-  put(lamp(),.25,h-.15);
-  if(form===2)put(planter(),w*.5,h*.5);
+  // Two fronts enclose a narrow, deliberately open interior instead of scattering
+  // separate houses at four fixed anchors. Widths vary; each row shares an edge.
+  const back=row('back',required,pool,y0+.15);
+  const restaurant=bx===1&&by===1?item('buildings',4,{name:'Mamma Mia',player:true}):bx===2&&by===1?item('buildings',5,{name:"Luigi's"}):null;
+  const front=row('front',restaurant?[restaurant]:[],pool,y1-(restaurant?.85:.15));
+  const innerBack=y0+.15+Math.max(...back.map(p=>p.depth));
+  const innerFront=y1-(restaurant?.85:.15)-Math.max(...front.map(p=>p.depth));
+  // Occasionally connect one side with a short wing, leaving the other as a
+  // clear passage. A wing is added only if its full foundation fits the gap.
+  const gap=innerFront-innerBack;
+  const wings=pool.filter(p=>p.depth<=gap-.2&&p.width<2);
+  if(wings.length&&cityHash(bx,by,89)>.35){
+    const wing=wings[Math.min(wings.length-1,Math.floor(cityHash(bx,by,91)*wings.length))];
+    const x=x0+.18+wing.width,y=innerBack+.1+wing.depth;
+    const object=building(objects,labels,x,y,wing.index,null,false,wing.kind);
+    object.frontage='wing';object.blockKey=b.bx+','+b.by;
+    object.groundBounds={x0:x-wing.width,x1:x,y0:y-wing.depth,y1:y};
+  }
+  if(gap>.8){put(planter(),w*.62,(innerBack+innerFront)/2-y0);if(gap>1.3)put(bench(),w*.68,(innerBack+innerFront)/2-y0);}
+  put(lamp(),.08,h-.08);
+
 }
 
 let viewOffset=0;

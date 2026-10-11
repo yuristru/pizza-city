@@ -1,5 +1,5 @@
-import {ROOM,ENTRANCE,guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261011h';
-import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261011h';
+import {ROOM,ENTRANCE,guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261011i';
+import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261011i';
 
 export const SERVICE_PHASES=['arriving','waiting','eating','leaving','paying'];
 export const tableKey=t=>[t.x,t.y,t.r,t.seats,t.variant||'wood'].join(':');
