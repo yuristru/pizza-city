@@ -1,0 +1,49 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http');
+const {chromium}=require('playwright');
+const root=process.cwd(),out=path.join(root,'qa/pizza/service');fs.mkdirSync(out,{recursive:true});
+const source=fs.readFileSync(path.join(root,'pizza.js'),'utf8'),core=source.match(/from ['"](.\/pizza-core\.js[^'"]*)['"]/)[1].replace('./','/');
+const recipe={name:'Margherita',sauce:'tomato',toppings:Array.from({length:8},(_,i)=>({id:'mozzarella',form:1,x:160+Math.cos(i*Math.PI/4)*60,y:160+Math.sin(i*Math.PI/4)*60,angle:0}))};
+const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));if(!file.startsWith(root+path.sep))return res.writeHead(403).end();fs.readFile(file,(error,data)=>{if(error)return res.writeHead(404).end();res.setHeader('Content-Type',({'.html':'text/html','.css':'text/css','.js':'text/javascript','.mjs':'text/javascript','.png':'image/png'})[path.extname(file)]||'application/octet-stream');res.end(data);});});
+(async()=>{
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));let browser;
+  try{
+    browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined,args:process.env.PIZZA_BROWSER_ARGS?JSON.parse(process.env.PIZZA_BROWSER_ARGS):['--no-sandbox','--disable-dev-shm-usage','--enable-unsafe-swiftshader']});
+    const context=await browser.newContext({viewport:{width:393,height:852},hasTouch:true,deviceScaleFactor:2}),page=await context.newPage(),errors=[],external=[];
+    await context.addInitScript(r=>{if(!localStorage.getItem('pizza-menu-v1')){localStorage.setItem('pizza-recipes-v1',JSON.stringify({draft:r,recipes:[r]}));localStorage.setItem('pizza-menu-v1',JSON.stringify({version:1,items:[{recipe:r,price:850,active:true}]}));}},recipe);
+    const base='http://127.0.0.1:'+server.address().port,url=base+'/pizza.html';await context.route('**/*',route=>route.request().url().startsWith(base+'/')?route.continue():(external.push(route.request().url()),route.abort()));page.on('pageerror',e=>errors.push(e.message));
+    async function loaded(){await page.goto(url);await page.waitForSelector('#loading',{state:'hidden',timeout:Number(process.env.PIZZA_LOAD_TIMEOUT)||15000});await page.evaluate(async p=>{const {app}=await import(p);app.ticker.stop();app.ticker.maxFPS=0;app.ticker.remove(app.render,app);app.render();},core);}
+    const snapshot=()=>page.evaluate(async p=>{const {state}=await import(p);return {balance:state.balance,service:JSON.parse(JSON.stringify(state.service)),scene:state.scene,assets:state.assetFailures};},core);
+    async function advance(seconds){await page.evaluate(async({p,seconds})=>{const {app}=await import(p);for(let i=0;i<Math.ceil(seconds*20);i++)app.ticker.update(app.ticker.lastTime+50);app.render();},{p:core,seconds});}
+    async function until(condition,limit=100){for(let i=0;i<limit;i++){const s=await snapshot();if(condition(s))return s;await advance(.5);}throw new Error('Timed out waiting for guest phase: '+JSON.stringify(await snapshot()));}
+    async function capture(name){await page.screenshot({path:path.join(out,name),style:'#toast{visibility:hidden}'});}
+    async function render(){await advance(.02);}
+    await loaded();assert.deepEqual((await snapshot()).assets,[]);assert.equal(await page.locator('#app>canvas').count(),1);
+    await page.click('#restaurantBtn');await page.click('[data-speed="0"]');const paused=await snapshot();await advance(5);assert.deepEqual((await snapshot()).service,paused.service);assert.equal((await snapshot()).balance,paused.balance);
+    await page.click('[data-speed="1"]');await advance(2.5);assert.equal((await snapshot()).service.groups[0].phase,'arriving');await capture('guests-arriving.png');
+    const waiting=await until(s=>s.service.groups[0]?.phase==='waiting');assert.equal(waiting.service.groups[0].size,2);assert.equal(waiting.balance,243555.98);
+    const actors=()=>page.evaluate(async p=>{const {state}=await import(p),objects=state.restaurantCamera.children.find(c=>c.label==='restaurant-objects');return objects.children.filter(c=>['service-guest','service-meal'].includes(c.label)).map(c=>({label:c.label,groupId:c.groupId,phase:c.phase,seated:c.seated,sprite:c.children[0].label,cell:c.cell}));},core);
+    assert.equal((await actors()).filter(a=>a.groupId===1&&a.seated).length,2);assert.equal((await actors()).filter(a=>a.label==='service-meal').length,0);
+    const eating=await until(s=>s.service.groups[0]?.phase==='eating');assert.equal(eating.service.revenueCents,0);assert.equal((await actors()).filter(a=>a.label==='service-meal').length,2);assert((await actors()).filter(a=>a.label==='service-guest').every(a=>a.sprite==='seated-guest-sprite'));
+    await page.click('[data-speed="0"]');await render();await capture('guests-eating.png');
+    const beforeFloor=await snapshot();await page.click('[data-category="finish"]');await page.click('[data-finish="stone"]');await page.click('#placeBtn');assert.equal((await snapshot()).balance,beforeFloor.balance-3200);assert.equal((await snapshot()).service.groups[0].phase,'eating');
+    await page.click('.restaurantMenuButton');await page.locator('.menuPriceForm input').fill('9,50');await page.locator('.menuPriceForm button').click();await page.click('#menuClose');
+    const beforeCity=await snapshot();await page.click('#cityBtn');assert.deepEqual((await snapshot()).service,beforeCity.service);
+    await page.click('[data-speed="1"]');const paid=await until(s=>s.service.payments.some(p=>p.id===1));assert.equal(paid.service.payments[0].amount,1700);assert.equal(Math.round(paid.balance*100),24356000-320000+paid.service.netCents);
+    await page.click('[data-speed="0"]');await render();const banner=page.locator('[data-payment-id="1"]');assert(await banner.isVisible());assert.equal(await banner.getAttribute('data-scene'),'city');assert.equal(await banner.getAttribute('data-amount-cents'),'1700');assert.equal(await banner.innerText(),'+17,00 DM');
+    const alignment=await page.evaluate(async p=>{const {state,root}=await import(p),point=state.restaurantSign.toGlobal({x:0,y:-22}),b=document.querySelector('[data-payment-id="1"]').getBoundingClientRect(),base=root.getBoundingClientRect();return {x:Math.abs((b.left+b.right)/2-(point.x+base.left)),y:Math.abs(b.bottom-(point.y+base.top))};},core);assert(alignment.x<1&&alignment.y<4,JSON.stringify(alignment));await capture('guests-income-city.png');
+    await page.click('#restaurantBtn');await render();assert.equal(await banner.getAttribute('data-scene'),'restaurant');assert.equal((await snapshot()).service.revenueCents,paid.service.revenueCents);await capture('guests-income-restaurant.png');
+    await page.click('#undoBtn');const undone=await snapshot();assert.equal(Math.round(undone.balance*100),Math.round(beforeFloor.balance*100)+undone.service.netCents-beforeFloor.service.netCents,'Undo must retain earned revenue and ingredient costs.');
+    for(const [width,height]of [[320,568],[393,852],[844,390]]){
+      await page.setViewportSize({width,height});await page.waitForTimeout(120);await render();assert(await banner.isVisible());
+      const moneyFits=await page.locator('.money').evaluate(e=>{const box=e.getBoundingClientRect(),cell=e.parentElement.getBoundingClientRect();return e.scrollWidth<=e.clientWidth+1&&box.left>=cell.left&&box.right<=cell.right;});assert(moneyFits,'Cash including Pfennig must fit at '+width+'px');
+      await capture('guests-restaurant-'+width+'.png');await page.click('#cityBtn');await render();assert.equal(await banner.getAttribute('data-scene'),'city');await capture('guests-city-'+width+'.png');await page.click('#restaurantBtn');await render();
+    }
+    const beforeReload=await snapshot();await page.evaluate(async p=>(await import(p)).saveLayout(),core);await loaded();await page.click('[data-speed="0"]');await render();const resumed=await snapshot();assert.equal(resumed.balance,beforeReload.balance);assert.equal(resumed.service.revenueCents,beforeReload.service.revenueCents);assert.equal(resumed.service.groups.find(g=>g.id===1).paid,true);
+    await page.click('#restaurantBtn');await page.click('.restaurantMenuButton');await page.click('[data-menu-toggle]');await page.click('#menuClose');
+    const pending=await snapshot(),expectedRevenue=pending.service.revenueCents+pending.service.groups.filter(g=>!g.paid).reduce((sum,g)=>sum+g.order.price*g.size,0);
+    await page.click('#cityBtn');await page.click('[data-speed="1"]');await advance(120);const finished=await snapshot();assert.equal(finished.service.groups.length,0);assert.equal(finished.service.revenueCents,expectedRevenue,'Persisted customers must pay exactly once.');assert.equal(Math.round(finished.balance*100),24356000+finished.service.netCents);assert(finished.balance>243560);
+    await page.evaluate(async p=>(await import(p)).saveLayout(),core);await loaded();assert.equal((await snapshot()).balance,finished.balance,'Earnings above the starting balance must survive reload.');assert.equal((await snapshot()).service.groups.length,0);
+    assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
+    console.log('Guest browser passed: real ticker/pause, walking, reserved seats, eating sprites/pizzas, production costs, locked order prices, background city payments, both banner anchors, undo preserving earnings, responsive views and single-payment reload above starting funds.');
+  }finally{await browser?.close();server.close();}
+})().catch(error=>{console.error(error);server.close();process.exitCode=1;});

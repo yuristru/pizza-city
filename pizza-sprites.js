@@ -1,6 +1,6 @@
-import {Sprite,Texture,Rectangle} from './pizza-core.js?v=20261011d';
-import {restaurantSprite,restaurantIcon} from './pizza-restaurant-art.js?v=20261011d';
-import {project} from './pizza-layout.js?v=20261011d';
+import {Sprite,Texture,Rectangle} from './pizza-core.js?v=20261011e';
+import {restaurantSprite,restaurantIcon} from './pizza-restaurant-art.js?v=20261011e';
+import {project,tableChairs} from './pizza-layout.js?v=20261011e';
 
 // Pixel bitmaps with four fixed views. The scene places only flat 2D sprites.
 const WIDTH=256,HEIGHT=192,FOOT={x:128,y:144},cache=new Map();
@@ -89,10 +89,7 @@ function drawTableGroup(a,seats,variant){
   if(variant==='plastic')a.chairStyle={wood:{top:'#ecead6',x:'#b4b5a4',y:'#d4d5c2'},legs:{top:'#e1e2ce',x:'#a7aa9b',y:'#cbd0be'},cushion:{top:'#e7e8d7',x:'#b2b9a7',y:'#d1d6c2'}};
   if(variant==='premium')a.chairStyle={wood:{top:'#663b2a',x:'#362219',y:'#4e2b20'},legs:{top:'#79543a',x:'#3e2b20',y:'#62422e'},cushion:{top:'#d7ba83',x:'#91774d',y:'#b89a64'}};
   const width=seats<=4?.84:seats===6?2.65:3.65,depth=.8;
-  let chairs;
-  if(seats===2)chairs=[[0,-.7,1],[0,.7,3]];
-  else if(seats===4)chairs=[[-.7,0,0],[.7,0,2],[0,-.7,1],[0,.7,3]];
-  else{const xs=seats===6?[-.95,0,.95]:[-1.45,-.48,.48,1.45];chairs=xs.flatMap(x=>[[x,-.7,1],[x,.7,3]]);}
+  const chairs=tableChairs(seats);
   const front=([x,y])=>a.rotation===1?x-y:a.rotation===2?-x-y:a.rotation===3?y-x:x+y;
   chairs.sort((p,q)=>front(p)-front(q));
   for(const [x,y,r]of chairs.filter(p=>front(p)<0))drawChair(shifted(a,x,y,r));
@@ -215,4 +212,33 @@ export function personSprite(index,rotation=0){
     if(a.rotation===0||a.rotation===1){a.front(.093,-.08,-.04,52,54,'#413428');a.front(.093,.04,.08,52,54,'#413428');}
   });
   return sprite(art,'person-sprite');
+}
+
+export function guestSprite(index,rotation=0,seated=false,eating=false){
+  index%=8;
+  const colors=['#b7533d','#54899b','#6e8b4e','#d3b780','#91577b','#e8ddbc','#516d8e','#a47b48'],shirt={top:colors[index],x:colors[(index+2)%8],y:colors[index]},skin={top:index%3===0?'#b78052':'#dfb07e',x:'#a77851',y:'#d09b6c'},hair={top:index%2?'#493829':'#735236',x:'#352b22',y:'#604332'};
+  const art=bitmap('guest-'+index+':'+(seated?'seated'+Number(eating):'walking'),rotation,a=>{
+    const legs={top:'#5a4d3c',x:'#34342d',y:'#484239'},shoes={top:'#634d34',x:'#342a22',y:'#45382c'};
+    a.shadow(.35,.32);
+    for(const y of [-.13,.04]){
+      if(seated){a.box(.12,y,.13,.09,3,15,legs);a.box(-.08,y,.34,.09,18,5,legs);a.box(.1,y-.015,.26,.12,0,3,shoes);}
+      else{a.box(-.08,y,.13,.09,3,26,legs);a.box(-.1,y-.015,.26,.12,0,3,shoes);}
+    }
+    const bottom=seated?23:29,top=bottom+18;
+    a.box(-.12,-.14,.24,.28,bottom,18,shirt);a.box(.115,-.06,.025,.12,top-7,6,{top:'#e9d9bd',x:'#c4b69d',y:'#e9d9bd'});
+    for(const y of [-.22,.14]){a.box(-.08,y,.15,.08,bottom+2,14,shirt);a.box(eating?.18:-.08,y,.14,.08,eating?top-1:bottom-2,4,skin);}
+    if(eating)a.line([[.22,-.18,top+3],[.22,-.18,top+8]],'#d7d8c5',1);
+    a.box(-.06,-.09,.12,.18,top,3,skin);a.box(-.09,-.11,.18,.22,top+3,10,skin);a.box(-.095,-.115,.19,.23,top+13,3,hair);
+    if(rotation===0||rotation===1){a.front(.095,-.08,-.045,top+8,top+10,'#413428');a.front(.095,.04,.075,top+8,top+10,'#413428');}
+  });return sprite(art,seated?'seated-guest-sprite':'walking-guest-sprite');
+}
+export function mealSprite(portion=0){
+  return sprite(bitmap('pizza-meal-'+portion,0,a=>{
+    a.disc(0,0,.2,35,'#eee3c9');a.disc(0,0,.17,36,'#c3ad88');
+    for(let slice=portion*2;slice<8;slice++){
+      const x=slice*Math.PI/4,y=(slice+1)*Math.PI/4;
+      a.surface([[0,0],[Math.cos(x)*.16,Math.sin(x)*.16],[Math.cos(y)*.16,Math.sin(y)*.16]],37,'#d4a04f');
+      a.surface([[0,0],[Math.cos(x)*.125,Math.sin(x)*.125],[Math.cos(y)*.125,Math.sin(y)*.125]],38,slice%2?'#b7492f':'#e6c277');
+    }
+  }),'pizza-meal-sprite');
 }

@@ -1,4 +1,4 @@
-import {product,itemPrice} from './pizza-catalog.js?v=20261011d';
+import {product,itemPrice} from './pizza-catalog.js?v=20261011e';
 export const ROOM = {w:12,h:10};
 export const KITCHEN = {x:8,y:0,w:4,h:4};
 export const KITCHEN_DOOR = {x:9,y:4};
@@ -15,6 +15,16 @@ export function gridCell(point){return {x:Math.floor(point.x/GRID.width+point.y/
 export const TOOL_TYPES = ['table','oven','bar','plant','jukebox','arcade'];
 export const TABLE_SEATS = [2,4,6,8];
 export const TABLE_SIZES = {2:{w:2,h:2},4:{w:2,h:2},6:{w:3,h:2},8:{w:4,h:2}};
+export function tableChairs(seats){
+  if(seats===2)return [[0,-.7,1],[0,.7,3]];
+  if(seats===4)return [[-.7,0,0],[.7,0,2],[0,-.7,1],[0,.7,3]];
+  return (seats===6?[-.95,0,.95]:[-1.45,-.48,.48,1.45]).flatMap(x=>[[x,-.7,1],[x,.7,3]]);
+}
+export function tableSeatPositions(item){
+  const {w,h}=dimensions(item),cx=item.x+(w-1)/2,cy=item.y+(h-1)/2;
+  const turn=(x,y)=>item.r===1?[-y,x]:item.r===2?[-x,-y]:item.r===3?[y,-x]:[x,y];
+  return tableChairs(item.seats).map(([x,y,r])=>{const [dx,dy]=turn(x,y),[mx,my]=turn(x*(y?1:.42),y*.42);return {x:cx+dx,y:cy+dy,r:(r+item.r)%4,mealX:cx+mx,mealY:cy+my};});
+}
 export const DEFAULT_LAYOUT = [
   {type:'table',seats:4,x:2,y:3,r:0},
   {type:'table',seats:4,x:4,y:5,r:0},
@@ -74,7 +84,7 @@ export function copyLayout(layout=DEFAULT_LAYOUT){
 }
 
 export function upgradeLayout(value,version){
-  if(!Array.isArray(value)||![1,2,3,4].includes(version))return null;
+  if(!Array.isArray(value)||![1,2,3,4,5].includes(version))return null;
   const items=version===1?value.filter(item=>item?.type!=='chair').map(item=>item?.type==='table'?{...item,seats:4}:item):value;
   return validLayout(items)?copyLayout(items):null;
 }

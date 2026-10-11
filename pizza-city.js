@@ -1,11 +1,11 @@
-import {cityGround} from './pizza-city-ground.js?v=20261011d';
-import {districtOrder,nextCitySeed} from './pizza-city-layout.js?v=20261011d';
-import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261011d';
-import {openProperty} from './pizza-properties-ui.js?v=20261011d';
-import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261011d';
-import {citySprite} from './pizza-city-art.js?v=20261011d';
-import {personSprite} from './pizza-sprites.js?v=20261011d';
-import {carSprite} from './pizza-city-traffic.js?v=20261011d';
+import {cityGround} from './pizza-city-ground.js?v=20261011e';
+import {districtOrder,nextCitySeed} from './pizza-city-layout.js?v=20261011e';
+import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261011e';
+import {openProperty} from './pizza-properties-ui.js?v=20261011e';
+import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261011e';
+import {citySprite} from './pizza-city-art.js?v=20261011e';
+import {personSprite} from './pizza-sprites.js?v=20261011e';
+import {carSprite} from './pizza-city-traffic.js?v=20261011e';
 
 let districts=districtOrder();
 function cityHash(x,y,s=0){return hash(x,y,(state.citySeed+s)>>>0);}
@@ -70,7 +70,7 @@ function building(objects,labels,x,y,index=0,name=null,player=false,kind='buildi
     const bg=new Graphics();bg.roundRect(-width/2,-13,width,26,4).fill(0xf0dfbf).stroke({color:0x745238,width:2});
     bg.poly([-width/2+4,-10,width/2-4,-10]).stroke({color:0xfff1d4,width:1});pizzaBadge(bg,-width/2+13);
     text.anchor.set(0,.5);text.x=-width/2+28;tag.addChild(bg,text);
-    if(player){tag.label='restaurant-sign';tag.eventMode='static';tag.cursor='pointer';tag.hitArea=new Rectangle(-width/2,-14,width,28);tag.on('pointertap',openRestaurant);}
+    if(player){state.restaurantSign=tag;tag.label='restaurant-sign';tag.eventMode='static';tag.cursor='pointer';tag.hitArea=new Rectangle(-width/2,-14,width,28);tag.on('pointertap',openRestaurant);}
     labels.addChild(tag);
   }
   return object;
@@ -201,6 +201,7 @@ export function showCity(){
   if(state.scene==='city') return;
   districts=districtOrder(state.citySeed);
   clearWorld();state.scene='city';sceneUI('city');
+  state.restaurantSign=null;
   state.camera=new Container();world.addChild(state.camera);
   const ground=cityGround({road,roadCell,water,bridge,park,fountainCell},state.citySeed),markings=new Container(),objects=new Container(),labels=new Container();
   ground.label='city-ground';objects.label='city-objects';objects.sortableChildren=true;labels.sortableChildren=true;

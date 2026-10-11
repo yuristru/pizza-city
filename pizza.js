@@ -1,14 +1,16 @@
-import {mountProperties} from './pizza-properties-ui.js?v=20261011d';
-import {mountMenu} from './pizza-menu-ui.js?v=20261011d';
-import {showPizza} from './pizza-editor.js?v=20261011d';
-import {app,root,state,loadAssets,updateMoney} from './pizza-core.js?v=20261011d';
-import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261011d';
-import {showRestaurant,tickRestaurant,resizeRestaurant,resetRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView} from './pizza-restaurant.js?v=20261011d';
+import {mountProperties} from './pizza-properties-ui.js?v=20261011e';
+import {mountMenu} from './pizza-menu-ui.js?v=20261011e';
+import {tickService} from './pizza-service-runtime.js?v=20261011e';
+import {renderServiceUI} from './pizza-service-ui.js?v=20261011e';
+import {showPizza} from './pizza-editor.js?v=20261011e';
+import {app,root,state,loadAssets,updateMoney} from './pizza-core.js?v=20261011e';
+import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261011e';
+import {showRestaurant,tickRestaurant,resizeRestaurant,resetRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView} from './pizza-restaurant.js?v=20261011e';
 
-import {furnitureIcon} from './pizza-sprites.js?v=20261011d';
+import {furnitureIcon} from './pizza-sprites.js?v=20261011e';
 
 const rotateBtn=document.querySelector('#rotateBtn'),deleteBtn=document.querySelector('#deleteBtn');
-import {mountCatalog,renderCatalog,showCatalogSizes} from './pizza-catalog-ui.js?v=20261011d';
+import {mountCatalog,renderCatalog,showCatalogSizes} from './pizza-catalog-ui.js?v=20261011e';
 mountProperties();
 mountMenu();
 mountCatalog(()=>{if(restaurantView().panMode)toggleRestaurantPan();cancelPlacement();syncEditUI();});
@@ -67,10 +69,12 @@ function updateClock(){
 updateClock();updateMoney();syncEditUI();
 app.ticker.maxFPS=60;
 app.ticker.add(ticker=>{
-  if(!state.ready||state.speed===0) return;
+  if(!state.ready) return;
   const dt=Math.min(ticker.deltaTime,3)*state.speed;
-  if(state.scene==='city') tickCity(dt);else if(state.scene==='restaurant')tickRestaurant(dt);
-  state.gameMinutes+=Math.min(ticker.deltaMS,50)*state.speed/5000;updateClock();
+  const seconds=Math.min(ticker.deltaMS,50)*state.speed/1000;
+  state.gameMinutes+=seconds/5;updateClock();if(seconds>0)tickService(seconds);
+  if(state.scene==='city'&&dt>0) tickCity(dt);else if(state.scene==='restaurant')tickRestaurant(dt);
+  renderServiceUI();
 });
 
 let resizeFrame;

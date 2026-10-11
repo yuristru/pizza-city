@@ -1,8 +1,10 @@
-import {propertySpend} from './pizza-properties.js?v=20261011d';
-import {START_MONEY,itemPrice,product,money,ROOM_PRODUCTS,roomProduct,roomPurchaseIssue,defaultFinishes} from './pizza-catalog.js?v=20261011d';
-import {app,world,state,Container,Graphics,Rectangle,clearWorld,sceneUI,sceneViewport,rememberEdit,saveLayout,updateMoney,notify,hash} from './pizza-core.js?v=20261011d';
-import {ROOM,GRID,KITCHEN,KITCHEN_DOOR,FIXED_DECOR,kitchenCell,passageCell,guestCell,project,gridCell,dimensions,occupiedCells,placementIssue,copyLayout} from './pizza-layout.js?v=20261011d';
-import {furnitureSprite,personSprite} from './pizza-sprites.js?v=20261011d';
+import {propertySpend} from './pizza-properties.js?v=20261011e';
+import {START_MONEY,itemPrice,product,money,ROOM_PRODUCTS,roomProduct,roomPurchaseIssue,defaultFinishes} from './pizza-catalog.js?v=20261011e';
+import {app,world,state,Container,Graphics,Rectangle,clearWorld,sceneUI,sceneViewport,rememberEdit,saveLayout,updateMoney,notify,hash} from './pizza-core.js?v=20261011e';
+import {ROOM,GRID,KITCHEN,KITCHEN_DOOR,FIXED_DECOR,kitchenCell,passageCell,guestCell,project,gridCell,dimensions,occupiedCells,placementIssue,copyLayout} from './pizza-layout.js?v=20261011e';
+import {furnitureSprite,personSprite} from './pizza-sprites.js?v=20261011e';
+import {syncServiceGuests} from './pizza-service-ui.js?v=20261011e';
+import {servicePlacementIssue,tableKey} from './pizza-service.js?v=20261011e';
 
 const RTW=GRID.width,RTH=GRID.height,WALL_HEIGHT=96;
 const TOOL_NAMES={table:'Tisch',oven:'Ofen',bar:'Theke',plant:'Pflanze',jukebox:'Musikautomat',arcade:'Spielautomat'};
@@ -80,62 +82,9 @@ function person(index){
   const group=new Container();group.addChild(personSprite(index));group.eventMode='none';return group;
 }
 
-function face(mover,dx,dy){
-  const rotation=Math.abs(dx)>Math.abs(dy)?(dx>0?0:2):(dy>0?1:3);
-  if(rotation===mover.facing)return;
-  mover.g.removeChildren().forEach(child=>child.destroy());mover.g.addChild(personSprite(mover.index,rotation));mover.facing=rotation;
-}
-
-function walkableCells(){
-  const used=new Set(state.restaurantState.flatMap(occupiedCells)),cells=[];
-  for(let y=0;y<ROOM.h;y++)for(let x=0;x<ROOM.w;x++)if(guestCell(x,y)&&!used.has(`${x},${y}`))cells.push({x,y});
-  return cells;
-}
-
-function pathTo(start,goal,free){
-  const first=`${start.x},${start.y}`,last=`${goal.x},${goal.y}`,queue=[first],parents=new Map([[first,null]]);
-  for(let i=0;i<queue.length;i++){
-    const current=queue[i];if(current===last)break;
-    const [x,y]=current.split(',').map(Number);
-    for(const [dx,dy]of [[1,0],[0,1],[-1,0],[0,-1]]){
-      const next=`${x+dx},${y+dy}`;
-      if(free.has(next)&&!parents.has(next)){parents.set(next,current);queue.push(next);}
-    }
-  }
-  if(!parents.has(last))return [];
-  const path=[];let cell=last;
-  while(cell!==first){const [x,y]=cell.split(',').map(Number);path.unshift({x,y});cell=parents.get(cell);}
-  return path;
-}
-
-function nextRoute(mover,cells=walkableCells()){
-  const free=new Set(cells.map(cell=>`${cell.x},${cell.y}`)),start={x:Math.round(mover.x),y:Math.round(mover.y)};
-  mover.path=[];mover.trip++;
-  for(let attempt=0;attempt<8&&cells.length;attempt++){
-    const goal=cells[Math.floor(hash(mover.index+attempt,mover.trip)*cells.length)%cells.length];
-    mover.path=pathTo(start,goal,free);if(mover.path.length)break;
-  }
-  mover.wait=45+mover.index*20;
-}
-
-function refreshActors(){
-  const cells=walkableCells(),free=new Set(cells.map(cell=>`${cell.x},${cell.y}`)),claimed=new Set();
-  for(const mover of state.movers){
-    if(mover.kind!=='restaurant')continue;
-    const key=`${Math.round(mover.x)},${Math.round(mover.y)}`;
-    if(!free.has(key)||claimed.has(key)){
-      const nearest=cells.filter(cell=>!claimed.has(`${cell.x},${cell.y}`)).sort((a,b)=>Math.hypot(a.x-mover.x,a.y-mover.y)-Math.hypot(b.x-mover.x,b.y-mover.y))[0];
-      if(!nearest){mover.g.visible=false;continue;}
-      mover.x=nearest.x;mover.y=nearest.y;
-    }else{mover.x=Math.round(mover.x);mover.y=Math.round(mover.y);}
-    mover.g.visible=true;claimed.add(`${mover.x},${mover.y}`);nextRoute(mover,cells);
-    const p=project(mover.x,mover.y);mover.g.position.set(p.x,p.y);mover.g.zIndex=p.y+.5;
-  }
-}
-
 function renderFurniture(){
   for(const child of objects.children.slice())if(child.label==='placed-furniture'){objects.removeChild(child);child.destroy({children:true});}
-  state.restaurantState.forEach(item=>placed(item));refreshActors();state.onEditChange?.();
+  state.restaurantState.forEach(item=>placed(item));syncServiceGuests(objects);state.onEditChange?.();
 }
 
 function finishEdit(message){
@@ -147,6 +96,8 @@ function finishEdit(message){
 function removeAt(x,y){
   const index=state.restaurantState.findIndex(item=>occupiedCells(item).includes(`${x},${y}`));
   if(index<0){notify(kitchenCell(x,y)?'Die feste Küche bleibt erhalten.':'Hier steht kein Möbelstück.');return;}
+  const item=state.restaurantState[index];
+  if(item.type==='table'&&state.service.groups.some(g=>!['leaving','paying'].includes(g.phase)&&tableKey(g.table)===tableKey(item))){notify('Dieser Tisch ist gerade für Gäste reserviert.');return;}
   rememberEdit();const refund=Math.floor((state.restaurantState[index].paid||0)/2);state.restaurantState.splice(index,1);state.balance+=refund;finishEdit('Möbel verkauft: '+money(refund)+'.');
 }
 
@@ -166,7 +117,7 @@ function buyFinish(){
 export function confirmPlacement(){
   if(state.scene==='restaurant'&&!state.deleteMode&&['floor','renovation'].includes(state.selectedTool)){buyFinish();return;}
   if(state.scene!=='restaurant'||state.deleteMode||!state.pendingPlacement)return;
-  const item=chosenItem(state.pendingPlacement),issue=placementIssue(item,state.restaurantState);
+  const item=chosenItem(state.pendingPlacement),issue=placementIssue(item,state.restaurantState)||servicePlacementIssue(item,state.service);
   if(issue){notify(issue);return;}
   const price=itemPrice(item);if(state.balance<price){notify('Nicht genügend Geld.');return;}
   rememberEdit();state.balance-=price;item.paid=price;state.restaurantState.push(item);finishEdit(item.type==='table'?`${item.seats}er-Tisch mit Stühlen platziert.`:`${TOOL_NAMES[item.type]} platziert.`);
@@ -193,7 +144,7 @@ export function updatePlacementPreview(){
     const button=document.querySelector('#placeBtn');button.hidden=false;button.disabled=!!issue||panMode;
     document.querySelector('#cancelBtn').hidden=true;return;
   }
-  const cell=state.pendingPlacement||hoverCell,item=cell?chosenItem(cell):null,issue=item?(placementIssue(item,state.restaurantState)||(state.balance<itemPrice(item)?'Nicht genügend Geld.':null)):null;
+  const cell=state.pendingPlacement||hoverCell,item=cell?chosenItem(cell):null,issue=item?(placementIssue(item,state.restaurantState)||servicePlacementIssue(item,state.service)||(state.balance<itemPrice(item)?'Nicht genügend Geld.':null)):null;
   const title=panMode?'Ansicht verschieben':state.deleteMode?'Möbel verkaufen':`${state.selectedTool==='table'?state.selectedSeats+'er-Tisch mit Stühlen':TOOL_NAMES[state.selectedTool]} · ${state.rotation*90}°`;
   document.querySelector('#placementTitle').textContent=title;
   document.querySelector('#placementStatus').textContent=panMode?'Zum Einrichten den Hand-Modus ausschalten.':state.deleteMode?'Antippen: 50 % des Kaufpreises zurück.':issue||(state.pendingPlacement?'Position gewählt. Mit Setzen bestätigen.':'Auf das Raster tippen oder ziehen.');
@@ -314,7 +265,7 @@ export function resizeRestaurant(){
 export function showRestaurant(){
   if(state.scene==='restaurant')return;
   clearWorld();state.scene='restaurant';sceneUI('restaurant');
-  roomLayer=new Container();roomLayer.label='restaurant-room';world.addChild(roomLayer);
+  roomLayer=new Container();state.restaurantCamera=roomLayer;roomLayer.label='restaurant-room';world.addChild(roomLayer);
   roomMask=new Graphics();roomMask.eventMode='none';world.addChild(roomMask);roomLayer.mask=roomMask;
   view.zoom=1;view.x=0;view.y=0;panMode=false;pinching=false;blockTap=false;pointers.clear();updateCameraUI();
   const wall=new Graphics(),floor=new Container();objects=new Container();preview=new Container();
@@ -356,9 +307,6 @@ export function showRestaurant(){
   // Low cutaway edges give the building a facade while leaving the floor visible.
   partition(ROOM.w-.5,-.5,false,ROOM.h,9);
   partition(-.5,ROOM.h-.5,true,ROOM.w-1,9);
-  [{x:1,y:5},{x:5,y:3},{x:6,y:4},{x:0,y:6}].forEach((position,index)=>{
-    const g=person(index);objects.addChild(g);state.movers.push({...position,index,g,kind:'restaurant',trip:0,path:[],wait:0,facing:0});
-  });
   renderFurniture();resizeRestaurant();updatePlacementPreview();
   app.stage.on('globalpointermove',movePointer);
   app.stage.on('pointerdown',event=>{
@@ -378,25 +326,16 @@ export function showRestaurant(){
 }
 
 export function tickRestaurant(dt){
-  for(const mover of state.movers){
-    if(mover.kind!=='restaurant'||!mover.g.visible)continue;
-    if(mover.wait>0){mover.wait-=dt;continue;}
-    if(!mover.path.length){nextRoute(mover);continue;}
-    const next=mover.path[0],dx=next.x-mover.x,dy=next.y-mover.y,distance=Math.hypot(dx,dy),step=.013*dt;
-    face(mover,dx,dy);
-    if(distance<=step){mover.x=next.x;mover.y=next.y;mover.path.shift();}
-    else{mover.x+=dx/distance*step;mover.y+=dy/distance*step;}
-    const p=project(mover.x,mover.y);mover.g.position.set(p.x,p.y);mover.g.zIndex=p.y+.5;
-  }
+  if(objects&&!objects.destroyed)syncServiceGuests(objects);
 }
 
 export function undoRestaurant(){
   if(!state.history.length)return;
-  const edit=state.history.pop();state.restaurantState=edit.items;state.balance=edit.balance;state.finishes=edit.finishes;rebuildSurfaces();finishEdit('Letzte Änderung rückgängig gemacht.');
+  const edit=state.history.pop();state.restaurantState=edit.items;state.balance=Math.round(edit.balance*100+state.service.netCents-(edit.businessNetCents||0))/100;state.finishes=edit.finishes;rebuildSurfaces();finishEdit('Letzte Änderung rückgängig gemacht.');
 }
 
 export function resetRestaurant(){
-  const initial=copyLayout(),initialBalance=START_MONEY-propertySpend(state.ownedProperties);
+  const initial=copyLayout(),initialBalance=Math.max(0,Math.round((START_MONEY-propertySpend(state.ownedProperties))*100+state.service.netCents))/100;
   if(JSON.stringify(initial)!==JSON.stringify(state.restaurantState)||state.balance!==initialBalance||JSON.stringify(state.finishes)!==JSON.stringify(defaultFinishes())){rememberEdit();state.restaurantState=initial;state.balance=initialBalance;state.finishes=defaultFinishes();rebuildSurfaces();}
   state.rotation=0;state.selectedTool='table';state.selectedSeats=4;state.selectedVariant='wood';state.deleteMode=false;
   finishEdit('Start-Einrichtung wiederhergestellt.');

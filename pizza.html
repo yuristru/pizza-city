@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#dec9a5">
   <title>Pizza City · Mamma Mia</title>
-  <link rel="stylesheet" href="pizza.css?v=20261011d">
+  <link rel="stylesheet" href="pizza.css?v=20261011e">
 </head>
 <body>
 <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -63,7 +63,7 @@
     <p class="menuFootnote">Deckungsbeitrag = Verkaufspreis minus Zutatenkosten. Personal, Miete und weitere Betriebskosten sind noch nicht enthalten.</p>
   </dialog>
   <div id="restaurantHead" class="ui restaurantHead" hidden>
-    <svg class="restaurantBadge" aria-hidden="true"><use href="#icon-pizza"/></svg><div class="restaurantName"><strong>Mamma Mia</strong><span>Gastraum + Küche</span></div><div class="stars" aria-label="Vier von fünf Sternen">★★★★☆</div><button type="button" class="restaurantMenuButton" data-open-menu aria-label="Speisekarte öffnen" title="Speisekarte"><svg aria-hidden="true"><use href="#icon-menu"/></svg></button>
+    <svg class="restaurantBadge" aria-hidden="true"><use href="#icon-pizza"/></svg><div class="restaurantName"><strong>Mamma Mia</strong><span id="restaurantServiceStatus">Speisekarte noch leer</span></div><div class="stars" aria-label="Vier von fünf Sternen">★★★★☆</div><button type="button" class="restaurantMenuButton" data-open-menu aria-label="Speisekarte öffnen" title="Speisekarte"><svg aria-hidden="true"><use href="#icon-menu"/></svg></button>
   </div>
   <div id="roomControls" class="ui roomcontrols" hidden aria-label="Restaurantansicht">
     <button type="button" id="roomZoomInBtn" aria-label="Restaurant vergrößern">+</button>
@@ -110,6 +110,7 @@
     </div>
   </section>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <div id="incomeBanners" class="incomeBanners" role="log" aria-label="Einnahmen" aria-live="polite"></div>
   <nav class="ui bottomnav" aria-label="Spielbereiche">
     <button type="button" id="cityBtn" class="navbtn active" aria-pressed="true"><svg aria-hidden="true"><use href="#icon-city"/></svg>Stadt</button>
     <button type="button" id="restaurantBtn" class="navbtn" aria-pressed="false"><svg aria-hidden="true"><use href="#icon-cutlery"/></svg>Restaurant</button>
@@ -122,7 +123,7 @@
 </div>
 <noscript>Bitte JavaScript aktivieren, um die Pizza-Demo zu starten.</noscript>
 <script type="module">
-  import('./pizza.js?v=20261011d').catch(error=>{
+  import('./pizza.js?v=20261011e').catch(error=>{
     console.error('Pizza demo could not start',error);
     const loading=document.querySelector('#loading');loading.hidden=false;loading.replaceChildren();
     const message=document.createElement('p');message.textContent='Die Demo konnte nicht starten. Bitte erneut laden.';

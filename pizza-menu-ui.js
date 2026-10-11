@@ -1,7 +1,7 @@
-import {notify} from './pizza-core.js?v=20261011d';
-import {INGREDIENTS,copyRecipe} from './pizza-recipe.js?v=20261011d';
-import {savedRecipes,drawRecipePreview,showPizza} from './pizza-editor.js?v=20261011d';
-import {parseMenuPrice,menuContribution,restoreMenu,putOnMenu} from './pizza-menu.js?v=20261011d';
+import {notify} from './pizza-core.js?v=20261011e';
+import {INGREDIENTS,copyRecipe} from './pizza-recipe.js?v=20261011e';
+import {savedRecipes,drawRecipePreview,showPizza} from './pizza-editor.js?v=20261011e';
+import {parseMenuPrice,menuContribution,restoreMenu,putOnMenu} from './pizza-menu.js?v=20261011e';
 
 const el=id=>document.getElementById(id),KEY='pizza-menu-v1';
 const money=cents=>(cents/100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' DM';
@@ -61,6 +61,7 @@ function render(){
 }
 export function openMenu(){render();el('menuStatus').textContent='';const dialog=el('menuDialog');if(!dialog.open)dialog.showModal();el('menuClose').focus();}
 export function menuSnapshot(){return items.map(item=>({...item,recipe:copyRecipe(item.recipe)}));}
+export function serviceMenu(){return items;}
 export function mountMenu(){
   for(const b of document.querySelectorAll('[data-open-menu]'))b.onclick=openMenu;
   el('menuClose').onclick=()=>el('menuDialog').close();

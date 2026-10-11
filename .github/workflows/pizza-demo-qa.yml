@@ -11,6 +11,8 @@ on:
       - 'tests/pizza-recipe-qa.mjs'
       - 'tests/pizza-menu-qa.mjs'
       - 'tests/pizza-menu-browser-qa.cjs'
+      - 'tests/pizza-service-qa.mjs'
+      - 'tests/pizza-service-browser-qa.cjs'
       - 'tests/pizza-properties-qa.mjs'
       - 'tests/pizza-city-layout-qa.mjs'
       - 'tests/pizza-isometric-art-qa.mjs'
@@ -35,6 +37,8 @@ jobs:
           node tests/pizza-recipe-qa.mjs
           node tests/pizza-menu-qa.mjs
           node tests/pizza-menu-browser-qa.cjs
+          node tests/pizza-service-qa.mjs
+          node tests/pizza-service-browser-qa.cjs
           node tests/pizza-properties-qa.mjs
           node tests/pizza-city-layout-qa.mjs
           node tests/pizza-isometric-art-qa.mjs
