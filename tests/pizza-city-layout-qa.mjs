@@ -12,7 +12,7 @@ for(const seed of [0,1,42,0xffffffff,DEFAULT_CITY_SEED]){
   const layout=cityLayout(seed),visited=new Set([0]),pending=[0];
   while(pending.length)for(const n of layout.nodes[pending.pop()].neighbors)if(!visited.has(n)){visited.add(n);pending.push(n);}
   assert.equal(visited.size,layout.nodes.length,'Every street junction must be connected.');
-  assert(layout.streets.every(s=>s.width>=.75&&s.width<=1.1),'Residential streets stay narrower than the old two-cell roads.');
+  assert(layout.streets.every(s=>s.width>=.6&&s.width<=.95),'Residential streets stay narrower than the old two-cell roads.');
   assert(new Set(layout.blocks.map(b=>(b.x1-b.x0).toFixed(2))).size>=4,'Blocks have different widths.');
   assert(layout.nodes.some(n=>n.neighbors.length===3),'Offset streets create T-junctions.');
   for(const b of layout.blocks){assert(b.x1>b.x0&&b.y1>b.y0);assert(!layout.road((b.x0+b.x1)/2,(b.y0+b.y1)/2));}

@@ -29,18 +29,18 @@ export function cityLayout(seed=DEFAULT_CITY_SEED){
   const node=(x,y)=>{let i=nodes.findIndex(n=>Math.abs(n.x-x)<1e-7&&Math.abs(n.y-y)<1e-7);if(i<0){i=nodes.length;nodes.push({x,y,neighbors:[]});}return i;};
   const connect=(a,b,width)=>{nodes[a].neighbors.push(b);nodes[b].neighbors.push(a);links.push({a,b,width});};
   for(let row=0;row<ys.length;row++){
-    const width=row===3?1.1:.85;
+    const width=row===3?.95:.7;
     streets.push({axis:0,center:ys[row],from:-8,to:34,width});
     const junctions=[...new Set([...(xs[row-1]||xs[0]),...(xs[row]||xs.at(-1))])].sort((a,b)=>a-b);
     const ids=junctions.map(x=>node(x,ys[row]));
     for(let i=1;i<ids.length;i++)connect(ids[i-1],ids[i],width);
   }
   for(let row=0;row<xs.length;row++)for(let col=0;col<xs[row].length;col++){
-    const width=col===1||col===4?.95:.75,x=xs[row][col];
+    const width=col===1||col===4?.8:.6,x=xs[row][col];
     streets.push({axis:1,center:x,from:ys[row],to:ys[row+1],width});
     connect(node(x,ys[row]),node(x,ys[row+1]),width);
     if(col<xs[row].length-1){
-      const pad=.65;
+      const pad=.58;
       blocks.push({bx:col-1,by:row-1,x0:x+pad,x1:xs[row][col+1]-pad,y0:ys[row]+pad,y1:ys[row+1]-pad});
     }
   }

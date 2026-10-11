@@ -135,6 +135,7 @@ function block(objects,labels,b){
   const required=sites.map(site=>item(site.art,site.sprite,{site}));
   function row(which,mandatory,candidates,edge){
     const houses=frontageRow(w,mandatory,candidates,n=>cityHash(bx*11+n,by,which==='back'?81:83));
+    if(which==='front'&&!mandatory.length&&houses.length>2&&cityHash(bx,by,101)>.55)houses.pop();
     // Restaurants sit within the front rather than behind the camera controls at its end.
     if(mandatory.some(h=>h.name)&&houses.length>1){
       const start=houses[0].start,restaurant=houses.shift();houses.splice(Math.floor(houses.length/2),0,restaurant);
@@ -168,7 +169,8 @@ function block(objects,labels,b){
   // separate houses at four fixed anchors. Widths vary; each row shares an edge.
   const back=row('back',required,pool,y0+.15);
   const restaurant=bx===1&&by===1?item('buildings',4,{name:'Mamma Mia',player:true}):bx===2&&by===1?item('buildings',5,{name:"Luigi's"}):null;
-  const front=row('front',restaurant?[restaurant]:[],pool,y1-(restaurant?.85:.15));
+  const frontCandidates=pool.filter(p=>p.depth<=h-Math.max(...back.map(p=>p.depth))-.7);
+  const front=row('front',restaurant?[restaurant]:[],frontCandidates,y1-(restaurant?.85:.15));
   const innerBack=y0+.15+Math.max(...back.map(p=>p.depth));
   const innerFront=y1-(restaurant?.85:.15)-Math.max(...front.map(p=>p.depth));
   // Occasionally connect one side with a short wing, leaving the other as a
@@ -182,6 +184,7 @@ function block(objects,labels,b){
     object.frontage='wing';object.blockKey=b.bx+','+b.by;
     object.groundBounds={x0:x-wing.width,x1:x,y0:y-wing.depth,y1:y};
   }
+  if(wings.length&&gap>1.5&&cityHash(bx,by,103)>.6){const wing=wings[Math.floor(cityHash(bx,by,107)*wings.length)],x=x1-.18,y=innerFront-.1;const object=building(objects,labels,x,y,wing.index,null,false,wing.kind);object.frontage='wing';object.blockKey=b.bx+','+b.by;object.groundBounds={x0:x-wing.width,x1:x,y0:y-wing.depth,y1:y};}
   if(gap>.8){put(planter(),w*.62,(innerBack+innerFront)/2-y0);if(gap>1.3)put(bench(),w*.68,(innerBack+innerFront)/2-y0);}
   put(lamp(),.08,h-.08);
 
