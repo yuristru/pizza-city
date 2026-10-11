@@ -323,7 +323,7 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     await storagePage.addInitScript(()=>Object.defineProperty(window,'localStorage',{get(){throw new DOMException('Unavailable','SecurityError');}}));
     await loaded(storagePage,url);await storagePage.click('#restaurantBtn');await selectTool(storagePage,'plant');await placeCell(storagePage,0,3);assert.equal((await snapshot(storagePage)).items.length,model.DEFAULT_LAYOUT.length+1);await storagePage.close();
     for(const asset of ['buildings','landmarks','props']){
-      const pattern='**/assets/pizza/city/italian-'+asset+'-v2.png';
+      const pattern='**/assets/pizza/city/italian-'+asset+'-v*.png';
       await page.route(pattern,route=>route.fulfill({status:404,body:'missing'}));
       await loaded(page,url);assert.deepEqual((await snapshot(page)).assets,[asset]);
       await page.click('#restaurantBtn');assert.equal(await page.locator('#placementTitle').innerText(),'4er-Tisch mit Stühlen · 0°');
