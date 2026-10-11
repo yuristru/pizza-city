@@ -31,5 +31,5 @@ export function footprintAnchor(template){
 }
 export function projectFootprint([x,y],tileWidth=64){return [(x-y)*tileWidth/2,(x+y)*tileWidth/4];}
 export function footprintFits(template,x,y,allowed,occupied=new Set()){
-  return footprintCells(template).every(([dx,dy])=>allowed(x+dx+.5,y+dy+.5)&&!occupied.has(`${x+dx},${y+dy}`));
+  return footprintCells(template).every(([dx,dy])=>[[.001,.001],[.999,.001],[.001,.999],[.999,.999]].every(([cx,cy])=>allowed(x+dx+cx,y+dy+cy))&&!occupied.has(`${x+dx},${y+dy}`));
 }

@@ -1,11 +1,12 @@
-import {cityGround} from './pizza-city-ground.js?v=20261011g';
-import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261011g';
-import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261011f';
-import {openProperty} from './pizza-properties-ui.js?v=20261011f';
-import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261011f';
-import {citySprite} from './pizza-city-art.js?v=20261011f';
-import {personSprite} from './pizza-sprites.js?v=20261011f';
-import {carSprite} from './pizza-city-traffic.js?v=20261011f';
+import {BUILDING_FOOTPRINTS,footprintAnchor,footprintCells,footprintFits} from './pizza-city-footprints.js?v=20261011h';
+import {cityGround} from './pizza-city-ground.js?v=20261011h';
+import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261011h';
+import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261011h';
+import {openProperty} from './pizza-properties-ui.js?v=20261011h';
+import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261011h';
+import {citySprite} from './pizza-city-art.js?v=20261011h';
+import {personSprite} from './pizza-sprites.js?v=20261011h';
+import {carSprite} from './pizza-city-traffic.js?v=20261011h';
 
 let districts=districtOrder();
 function cityHash(x,y,s=0){return hash(x,y,(state.citySeed+s)>>>0);}
@@ -133,6 +134,20 @@ function block(objects,labels,b){
     building(objects,labels,x0+x,y0+y,index,null,false,kind);
   }
   const form=Math.floor(cityHash(bx,by,71)*4),left=2.25,right=w-.55,back=2.4,front=h-.7;
+  const courtIndex=bx===0&&by===2?1:((bx===0&&by===1)||(bx===1&&by===2))?0:-1;
+  if(courtIndex>=0&&state.cityArt.courtyardBuildings){
+    const template=BUILDING_FOOTPRINTS.find(t=>t.id===(courtIndex?'courtyard-u':'corner-l'));
+    const cx=x0+(w-template.width)/2,cy=y1-template.depth-.4;
+    const allowed=(x,y)=>x>=x0&&x<=x1&&y>=y0+1.85&&y<=y1&&!road(x,y)&&!water(x,y);
+    if(footprintFits(template,cx,cy,allowed)){
+      ordinary(0,left,1.85);ordinary(1,right,1.85);
+      const object=citySprite('courtyardBuildings',courtIndex),anchor=footprintAnchor(template);
+      place(objects,object,cx+anchor[0],cy+anchor[1]);object.label='city-courtyard-building';
+      object.footprintId=template.id;object.groundOrigin={x:cx,y:cy};
+      object.occupiedGroundCells=footprintCells(template).map(([x,y])=>[cx+x,cy+y]);
+      put(lamp(),.25,h-.15);return;
+    }
+  }
   // Alternating setbacks, long rows and courtyards break the repeated four-house pattern.
   ordinary(0,left,back+(form===1?.55:0));ordinary(1,right,back+(form===2?.6:0));
   if(bx===1&&by===1)building(objects,labels,x0+2.5,y0+h-1.1,4,'Mamma Mia',true);

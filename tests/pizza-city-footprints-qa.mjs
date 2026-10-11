@@ -9,6 +9,7 @@ for(const [i,template]of BUILDING_FOOTPRINTS.entries()){
     assert(Math.abs(Math.abs((b[1]-a[1])/(b[0]-a[0]))-.5)<1e-12,'All horizontal geometry follows the same 2:1 axes.');
   }
   assert(footprintFits(template,0,0,(x,y)=>x<template.width&&y<template.depth));
+  assert(!footprintFits(template,0,0,(x,y)=>x>.1),'Checking only cell centers would miss a road clipping the foundation edge.');
   assert(!footprintFits(template,0,0,()=>true,new Set(['0,0'])));
 }
 const ring=BUILDING_FOOTPRINTS.at(-1);assert(!footprintCells(ring).some(([x,y])=>x===1&&y===1),'The courtyard must remain unoccupied.');

@@ -1,5 +1,5 @@
-import {groundProjection} from './pizza-isometric-art.js?v=20261011f';
-import {Sprite,Texture,state} from './pizza-core.js?v=20261011f';
+import {groundProjection} from './pizza-isometric-art.js?v=20261011h';
+import {Sprite,Texture,state} from './pizza-core.js?v=20261011h';
 
 // Atlas coordinates isolate complete flat drawings, including their ground contact.
 // Rasterize once at the city's pixel scale instead of scaling high-resolution art per frame.
@@ -28,6 +28,10 @@ const ATLASES=[
     [797,520,352,442,124,[[800,876],[1050,956],[1146,915]]],
     [1165,524,360,467,124,[[1178,914],[1353,984],[1511,921]]]
   ]},
+  {key:'courtyardBuildings',url:'italian-courtyards-v1.png',frames:[
+    [85,200,650,590,250,[[380,651],[625,781],[720,732]],3],
+    [810,195,700,705,270,[[1118,847],[1191,890],[1492,718]],1]
+  ]},
   {key:'landmarks',url:'italian-landmarks-v3.png',frames:[
     [104,202,743,664,224],[902,87,690,794,194,[[982,777],[1199,870],[1420,758]]]
   ]},
@@ -37,8 +41,10 @@ const ATLASES=[
   ]}
 ];
 
-function frame(image,[x,y,w,h,width,corners]){
-  const scale=width/w,projection=corners?groundProjection(corners):null;
+function frame(image,[x,y,w,h,width,corners,edgeUnits]){
+  const projection=corners?groundProjection(corners):null;
+  // Calibrate a measured foundation edge in world units, independent of PNG padding.
+  const scale=edgeUnits?edgeUnits*32/(projection.scaleX*(corners[1][0]-corners[0][0])):width/w;
   const scaleX=projection?.scaleX||1,skewY=projection?.skewY||0,minY=Math.min(0,skewY*w);
   const canvas=document.createElement('canvas');canvas.width=Math.ceil(w*scaleX*scale);canvas.height=Math.ceil((h+Math.abs(skewY)*w)*scale);
   const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;

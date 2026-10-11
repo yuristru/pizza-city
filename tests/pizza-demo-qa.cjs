@@ -97,15 +97,15 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     await loaded(page,url);assert.equal((await snapshot(page)).assets.length,0);assert.equal((await snapshot(page)).worldChildren,1);
     const cityArt=await page.evaluate(async modulePath=>{
       const {state,Sprite}=await import(modulePath),objects=state.camera.children.find(c=>c.label==='city-objects'),ground=state.camera.children.find(c=>c.label==='city-ground');
-      return {ground:{sprite:ground instanceof Sprite,pixelScale:ground.pixelScale,details:ground.groundDetails,sampling:ground.texture.source.scaleMode},projected:[...state.cityArt.buildings.slice(8),...state.cityArt.buildingTypes,state.cityArt.landmarks[1]].map(a=>({projection:a.projection,anchor:a.anchor})),atlases:Object.fromEntries(Object.entries(state.cityArt).map(([key,frames])=>[key,frames.length])),properties:objects.children.filter(c=>c.label==='city-property').map(c=>c.propertyId),types:[...new Set(objects.children.filter(c=>c.label==='city-building'&&c.buildingKind==='buildingTypes').map(c=>c.buildingVariant))],variants:[...new Set(objects.children.filter(c=>c.label==='city-building'&&c.buildingKind==='buildings').map(c=>c.buildingVariant))],buildings:objects.children.filter(c=>c.label==='city-building').length,
+      return {ground:{sprite:ground instanceof Sprite,pixelScale:ground.pixelScale,details:ground.groundDetails,sampling:ground.texture.source.scaleMode},projected:[...state.cityArt.buildings.slice(8),...state.cityArt.buildingTypes,state.cityArt.landmarks[1],...state.cityArt.courtyardBuildings].map(a=>({projection:a.projection,anchor:a.anchor})),atlases:Object.fromEntries(Object.entries(state.cityArt).map(([key,frames])=>[key,frames.length])),properties:objects.children.filter(c=>c.label==='city-property').map(c=>c.propertyId),types:[...new Set(objects.children.filter(c=>c.label==='city-building'&&c.buildingKind==='buildingTypes').map(c=>c.buildingVariant))],variants:[...new Set(objects.children.filter(c=>c.label==='city-building'&&c.buildingKind==='buildings').map(c=>c.buildingVariant))],buildings:objects.children.filter(c=>c.label==='city-building').length,
         landmarks:objects.children.filter(c=>['city-colosseum','city-cathedral'].includes(c.label)).map(c=>({label:c.label,sprite:c instanceof Sprite})),
         traffic:state.movers.map(m=>({sprite:m.g instanceof Sprite,scaleX:m.g.scale.x,scaleY:m.g.scale.y})),
         terraces:objects.children.filter(c=>c.label==='city-terrace').map(c=>({sprite:c instanceof Sprite,x:(c.x/32+c.y/16)/2,y:(c.y/16-c.x/32)/2}))};
     },corePath);
-    assert.deepEqual(cityArt.atlases,{buildings:16,buildingTypes:8,landmarks:2,props:8});assert(cityArt.buildings>=30);
+    assert.deepEqual(cityArt.atlases,{buildings:16,buildingTypes:8,courtyardBuildings:2,landmarks:2,props:8});assert(cityArt.buildings>=30);
     assert(cityArt.variants.filter(i=>i>=8).length>=6);
     assert(cityArt.ground.sprite);assert.equal(cityArt.ground.pixelScale,1);assert.equal(cityArt.ground.sampling,'nearest');assert(cityArt.ground.details.asphalt>200&&cityArt.ground.details.crossings>0&&cityArt.ground.details.curbs>0&&cityArt.ground.details.manholes>0);
-    assert.equal(cityArt.projected.length,17);assert(cityArt.projected.every(a=>a.projection&&a.anchor.x>0&&a.anchor.x<1&&a.anchor.y>0&&a.anchor.y<=1));
+    assert.equal(cityArt.projected.length,19);assert(cityArt.projected.every(a=>a.projection&&a.anchor.x>0&&a.anchor.x<1&&a.anchor.y>0&&a.anchor.y<=1));
     assert.equal(cityArt.properties.length,9);assert.equal(new Set(cityArt.properties).size,9);
     assert(cityArt.types.length>=4);
     assert.equal(cityArt.landmarks.length,2);assert(cityArt.landmarks.every(item=>item.sprite));
@@ -122,11 +122,20 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     await page.click('#propertyBuy');assert.equal((await snapshot(page)).balance,215560);
     assert(await page.locator('#propertyBuy').isDisabled());
     await page.click('#propertyClose');
-    const citySignature=()=>page.evaluate(async modulePath=>{const {state}=await import(modulePath);return {seed:state.citySeed,owned:state.ownedProperties,signature:state.camera.children.find(c=>c.label==='city-objects').children.filter(c=>['city-building','city-property','player-restaurant','city-colosseum','city-cathedral'].includes(c.label)).map(c=>[c.label,c.propertyId,c.buildingKind,c.buildingVariant,c.x,c.y])};},corePath);
+    async function checkCourtyards(){
+      const courts=await page.evaluate(async modulePath=>{
+        const {state}=await import(modulePath),layout=state.cityLayout;
+        return state.camera.children.find(c=>c.label==='city-objects').children.filter(c=>c.label==='city-courtyard-building').map(c=>({id:c.footprintId,cells:c.occupiedGroundCells.length,clear:c.occupiedGroundCells.every(([x,y])=>[[.01,.01],[.99,.01],[.01,.99],[.99,.99]].every(([dx,dy])=>!layout.road(x+dx,y+dy)&&!layout.water(x+dx,y+dy)))}));
+      },corePath);
+      assert.deepEqual(courts.map(c=>c.id).sort(),['corner-l','corner-l','courtyard-u']);
+      assert(courts.every(c=>c.clear&&c.cells===(c.id==='corner-l'?6:10)),'Courtyard footprints must keep streets and water clear.');
+    }
+    await checkCourtyards();
+    const citySignature=()=>page.evaluate(async modulePath=>{const {state}=await import(modulePath);return {seed:state.citySeed,owned:state.ownedProperties,signature:state.camera.children.find(c=>c.label==='city-objects').children.filter(c=>['city-building','city-courtyard-building','city-property','player-restaurant','city-colosseum','city-cathedral'].includes(c.label)).map(c=>[c.label,c.propertyId,c.buildingKind,c.buildingVariant,c.x,c.y])};},corePath);
     const centerBounds=await page.locator('#centerBtn').boundingBox(),randomBounds=await page.locator('#randomCityBtn').boundingBox();assert(randomBounds.y>=centerBounds.y+centerBounds.height);
     let previous=await citySignature();
     for(let i=0;i<3;i++){
-      await page.click('#randomCityBtn');const current=await citySignature();assert.notEqual(current.seed,previous.seed);assert.notDeepEqual(current.signature,previous.signature);assert.deepEqual(current.owned,['san-marco']);assert.equal((await snapshot(page)).balance,215560);previous=current;
+      await page.click('#randomCityBtn');await checkCourtyards();const current=await citySignature();assert.notEqual(current.seed,previous.seed);assert.notDeepEqual(current.signature,previous.signature);assert.deepEqual(current.owned,['san-marco']);assert.equal((await snapshot(page)).balance,215560);previous=current;
     }
     await loaded(page,url);assert.deepEqual(await citySignature(),previous,'A generated map must survive reload.');
     console.log('Random city passed: button below center, distinct repeated generation, owned properties/account preservation and saved map.');
@@ -322,10 +331,10 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     const storagePage=await context.newPage();storagePage.on('pageerror',error=>errors.push(error.message));
     await storagePage.addInitScript(()=>Object.defineProperty(window,'localStorage',{get(){throw new DOMException('Unavailable','SecurityError');}}));
     await loaded(storagePage,url);await storagePage.click('#restaurantBtn');await selectTool(storagePage,'plant');await placeCell(storagePage,0,3);assert.equal((await snapshot(storagePage)).items.length,model.DEFAULT_LAYOUT.length+1);await storagePage.close();
-    for(const asset of ['buildings','landmarks','props']){
+    for(const asset of ['buildings','landmarks','props','courtyards']){
       const pattern='**/assets/pizza/city/italian-'+asset+'-v*.png';
       await page.route(pattern,route=>route.fulfill({status:404,body:'missing'}));
-      await loaded(page,url);assert.deepEqual((await snapshot(page)).assets,[asset]);
+      await loaded(page,url);assert.deepEqual((await snapshot(page)).assets,[asset==='courtyards'?'courtyardBuildings':asset]);
       await page.click('#restaurantBtn');assert.equal(await page.locator('#placementTitle').innerText(),'4er-Tisch mit Stühlen · 0°');
       await page.unroute(pattern);
     }
@@ -333,7 +342,7 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     await loaded(page,url);await page.click('#restaurantBtn');await selectTool(page,'oven');await placeCell(page,0,3);
     await capture(page,'restaurant-art-fallback.png');await page.click('#undoBtn');await page.unroute('**/assets/pizza/restaurant/*.png');
     await page.route('**/assets/pizza/city/*.png',route=>route.fulfill({status:404,body:'missing'}));
-    await loaded(page,url);assert.equal((await snapshot(page)).assets.length,6);
+    await loaded(page,url);assert.equal((await snapshot(page)).assets.length,7);
     await page.click('#restaurantBtn');await selectTool(page,'plant');await placeCell(page,0,3);
     await page.unroute('**/assets/pizza/city/*.png');
     await page.route('**/assets/pizza/vendor/pixi-8.22.0.mjs',route=>route.abort());

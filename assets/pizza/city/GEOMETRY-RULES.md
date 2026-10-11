@@ -21,7 +21,7 @@ The reference sheets show compact houses, long street fronts, L-shaped wings, U-
 
 ## Original template catalog
 
-`pizza-city-footprints.js` defines six independent geometry templates and occupied cells. `geometry/building-footprints.svg` is a precise projection guide for drawing or image generation, not a replacement game-art atlas. The existing city art remains active; these templates are the basis for subsequent Italian assets and footprint-aware placement.
+`pizza-city-footprints.js` defines six independent geometry templates and occupied cells. `geometry/building-footprints.svg` is a precise projection guide for drawing or image generation, not a replacement game-art atlas. The L and U templates now have original Italian sprites in `italian-courtyards-v1.png`. Three residential districts place them using occupied cells and front anchors, with a separate back row for purchasable properties. Measured foundation edges calibrate sprite scale and affine projection. Painted details retain small illustration deviations from the ideal construction guide. Courtyards are decorative open ground; pedestrian courtyard routing is not yet implemented. Missing courtyard art falls back to the previous individual houses.
 
 | Template | Outer dimensions | Occupied cells | First Italian variant |
 | --- | --- | --- | --- |
