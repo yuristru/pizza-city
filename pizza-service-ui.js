@@ -1,8 +1,8 @@
-import {state,Container} from './pizza-core.js?v=20261011i';
-import {project,dimensions} from './pizza-layout.js?v=20261011i';
-import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261011i';
-import {routePosition,guestSeat} from './pizza-service.js?v=20261011i';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261011i';
+import {state,Container,ensureRestaurants} from './pizza-core.js?v=20261011j';
+import {project,dimensions} from './pizza-layout.js?v=20261011j';
+import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261011j';
+import {routePosition,guestSeat} from './pizza-service.js?v=20261011j';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261011j';
 
 const maps=new WeakMap(),banners=new Map();
 export function syncServiceGuests(objects){
@@ -30,13 +30,13 @@ export function renderServiceUI(){
   const seated=groups.filter(g=>g.phase==='waiting'||g.phase==='eating').length,total=groups.reduce((sum,g)=>sum+g.size,0);
   const text=groups.length?total+(total===1?' Gast · ':' Gäste · ')+seated+(seated===1?' Tisch belegt':' Tische belegt'):active?'Geöffnet · Gäste kommen':'Speisekarte noch leer';if(status.textContent!==text)status.textContent=text;
   const host=document.getElementById('incomeBanners'),wanted=new Set();
-  for(const [index,payment]of state.service.payments.entries()){
-    wanted.add(payment.id);let b=banners.get(payment.id);if(!b){b=document.createElement('div');b.className='incomeBanner';b.dataset.paymentId=String(payment.id);b.dataset.amountCents=String(payment.amount);b.textContent='+'+(payment.amount/100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' DM';host.append(b);banners.set(payment.id,b);}
+  for(const [restaurantId,profile]of Object.entries(ensureRestaurants()))for(const [index,payment]of profile.service.payments.entries()){
+    const key=restaurantId+':'+payment.id;wanted.add(key);let b=banners.get(key);if(!b){b=document.createElement('div');b.className='incomeBanner';b.dataset.paymentId=String(payment.id);b.dataset.restaurantId=restaurantId;b.dataset.amountCents=String(payment.amount);b.textContent='+'+(payment.amount/100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' DM';host.append(b);banners.set(key,b);}
     let point=null;
-    if(state.scene==='restaurant'&&state.restaurantCamera&&!state.restaurantCamera.destroyed){const p=project(payment.position.x,payment.position.y);point=state.restaurantCamera.toGlobal({x:p.x,y:p.y-70});}
-    else if(state.scene==='city'&&state.restaurantSign&&!state.restaurantSign.destroyed)point=state.restaurantSign.toGlobal({x:0,y:-22});
+    if(state.scene==='restaurant'&&restaurantId===state.activeRestaurantId&&state.restaurantCamera&&!state.restaurantCamera.destroyed){const p=project(payment.position.x,payment.position.y);point=state.restaurantCamera.toGlobal({x:p.x,y:p.y-70});}
+    else if(state.scene==='city'){const sign=state.cityRestaurantSigns[restaurantId];if(sign&&!sign.destroyed)point=sign.toGlobal({x:0,y:-22});}
     b.hidden=!point;
-    if(point){const age=state.service.elapsed-payment.time;b.style.left=point.x+'px';b.style.top=(point.y-age*5-index*25)+'px';b.style.opacity=String(Math.min(1,(4-age)/.8));b.dataset.scene=state.scene;}
+    if(point){const age=profile.service.elapsed-payment.time;b.style.left=point.x+'px';b.style.top=(point.y-age*5-index*25)+'px';b.style.opacity=String(Math.min(1,(4-age)/.8));b.dataset.scene=state.scene;}
   }
   for(const [id,b]of banners)if(!wanted.has(id)){b.remove();banners.delete(id);}
 }

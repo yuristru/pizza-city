@@ -1,10 +1,9 @@
-import {propertySpend} from './pizza-properties.js?v=20261011i';
-import {START_MONEY,itemPrice,product,money,ROOM_PRODUCTS,roomProduct,roomPurchaseIssue,defaultFinishes} from './pizza-catalog.js?v=20261011i';
-import {app,world,state,Container,Graphics,Rectangle,clearWorld,sceneUI,sceneViewport,rememberEdit,saveLayout,updateMoney,notify,hash} from './pizza-core.js?v=20261011i';
-import {ROOM,GRID,KITCHEN,KITCHEN_DOOR,FIXED_DECOR,kitchenCell,passageCell,guestCell,project,gridCell,dimensions,occupiedCells,placementIssue,copyLayout} from './pizza-layout.js?v=20261011i';
-import {furnitureSprite,personSprite} from './pizza-sprites.js?v=20261011i';
-import {syncServiceGuests} from './pizza-service-ui.js?v=20261011i';
-import {servicePlacementIssue,tableKey} from './pizza-service.js?v=20261011i';
+import {itemPrice,product,money,ROOM_PRODUCTS,roomProduct,roomPurchaseIssue,defaultFinishes} from './pizza-catalog.js?v=20261011j';
+import {app,world,state,Container,Graphics,Rectangle,clearWorld,sceneUI,sceneViewport,rememberEdit,saveLayout,updateMoney,notify,hash,activateRestaurant,captureRestaurant,sealRestaurantEdit} from './pizza-core.js?v=20261011j';
+import {ROOM,GRID,KITCHEN,KITCHEN_DOOR,FIXED_DECOR,kitchenCell,passageCell,guestCell,project,gridCell,dimensions,occupiedCells,placementIssue,copyLayout} from './pizza-layout.js?v=20261011j';
+import {furnitureSprite,personSprite} from './pizza-sprites.js?v=20261011j';
+import {syncServiceGuests} from './pizza-service-ui.js?v=20261011j';
+import {servicePlacementIssue,tableKey} from './pizza-service.js?v=20261011j';
 
 const RTW=GRID.width,RTH=GRID.height,WALL_HEIGHT=96;
 const TOOL_NAMES={table:'Tisch',oven:'Ofen',bar:'Theke',plant:'Pflanze',jukebox:'Musikautomat',arcade:'Spielautomat'};
@@ -89,6 +88,7 @@ function renderFurniture(){
 
 function finishEdit(message){
   state.pendingPlacement=null;hoverCell=null;dragPointer=null;
+  sealRestaurantEdit();
   const saved=saveLayout();updateMoney();renderFurniture();updatePlacementPreview();
   if(saved)notify(message);
 }
@@ -262,8 +262,11 @@ export function resizeRestaurant(){
   app.stage.hitArea=new Rectangle(0,0,app.screen.width,app.screen.height);
 }
 
-export function showRestaurant(){
-  if(state.scene==='restaurant')return;
+export function showRestaurant(id){
+  id=typeof id==='string'?id:state.activeRestaurantId;
+  if(state.scene==='restaurant'&&id===state.activeRestaurantId)return;
+  if(!activateRestaurant(id)){notify('Diesen Standort musst du zuerst kaufen.');return;}
+  document.dispatchEvent(new Event('restaurants-changed'));saveLayout(true);
   clearWorld();state.scene='restaurant';sceneUI('restaurant');
   roomLayer=new Container();state.restaurantCamera=roomLayer;roomLayer.label='restaurant-room';world.addChild(roomLayer);
   roomMask=new Graphics();roomMask.eventMode='none';world.addChild(roomMask);roomLayer.mask=roomMask;
@@ -331,11 +334,14 @@ export function tickRestaurant(dt){
 
 export function undoRestaurant(){
   if(!state.history.length)return;
-  const edit=state.history.pop();state.restaurantState=edit.items;state.balance=Math.round(edit.balance*100+state.service.netCents-(edit.businessNetCents||0))/100;state.finishes=edit.finishes;rebuildSurfaces();finishEdit('Letzte Änderung rückgängig gemacht.');
+  const edit=state.history.at(-1),refund=edit.refundCents||0;
+  if(Math.round(state.balance*100)+refund<0){notify('Für das Rückgängigmachen fehlt Geld.');return;}
+  state.history.pop();state.restaurantState=edit.items;state.balance=(Math.round(state.balance*100)+refund)/100;state.finishes=edit.finishes;captureRestaurant().investmentCents=edit.investmentCents||0;rebuildSurfaces();finishEdit('Letzte Änderung rückgängig gemacht.');
 }
 
 export function resetRestaurant(){
-  const initial=copyLayout(),initialBalance=Math.max(0,Math.round((START_MONEY-propertySpend(state.ownedProperties))*100+state.service.netCents))/100;
+  if(state.service.groups.length){notify('Die Einrichtung kann zurückgesetzt werden, sobald alle Gäste gegangen sind.');return;}
+  const initial=state.activeRestaurantId==='mamma-mia'?copyLayout():[],initialBalance=state.balance+captureRestaurant().investmentCents/100;
   if(JSON.stringify(initial)!==JSON.stringify(state.restaurantState)||state.balance!==initialBalance||JSON.stringify(state.finishes)!==JSON.stringify(defaultFinishes())){rememberEdit();state.restaurantState=initial;state.balance=initialBalance;state.finishes=defaultFinishes();rebuildSurfaces();}
   state.rotation=0;state.selectedTool='table';state.selectedSeats=4;state.selectedVariant='wood';state.deleteMode=false;
   finishEdit('Start-Einrichtung wiederhergestellt.');

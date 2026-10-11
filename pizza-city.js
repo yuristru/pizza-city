@@ -1,13 +1,13 @@
-import {frontageRow} from './pizza-city-frontages.js?v=20261011i';
-import {BUILDING_FOOTPRINTS,footprintAnchor,footprintCells,footprintFits} from './pizza-city-footprints.js?v=20261011i';
-import {cityGround} from './pizza-city-ground.js?v=20261011i';
-import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261011i';
-import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261011i';
-import {openProperty} from './pizza-properties-ui.js?v=20261011i';
-import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261011i';
-import {citySprite} from './pizza-city-art.js?v=20261011i';
-import {personSprite} from './pizza-sprites.js?v=20261011i';
-import {carSprite} from './pizza-city-traffic.js?v=20261011i';
+import {frontageRow} from './pizza-city-frontages.js?v=20261011j';
+import {BUILDING_FOOTPRINTS,footprintAnchor,footprintCells,footprintFits} from './pizza-city-footprints.js?v=20261011j';
+import {cityGround} from './pizza-city-ground.js?v=20261011j';
+import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261011j';
+import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261011j';
+import {openProperty} from './pizza-properties-ui.js?v=20261011j';
+import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261011j';
+import {citySprite} from './pizza-city-art.js?v=20261011j';
+import {personSprite} from './pizza-sprites.js?v=20261011j';
+import {carSprite} from './pizza-city-traffic.js?v=20261011j';
 
 let districts=districtOrder();
 function cityHash(x,y,s=0){return hash(x,y,(state.citySeed+s)>>>0);}
@@ -53,7 +53,7 @@ function waterfront(objects){
   }
 }
 
-function openRestaurant(){if(state.scene==='city'&&!state.cityGesture?.moved)state.navigate('restaurant');}
+function openRestaurant(id='mamma-mia'){if(state.scene==='city'&&!state.cityGesture?.moved)state.navigate('restaurant',typeof id==='string'?id:'mamma-mia');}
 function pizzaBadge(g,x){
   g.circle(x,0,9).fill(0xcf9e52).stroke({color:0x75502f,width:1});g.circle(x,0,6.5).fill(0xaf3b2a);
   g.poly([x,0,x-5,-4,x-2,-6]).fill(0xf0cf82);g.poly([x,0,x+5,-4,x+6,1]).fill(0xf0cf82);g.poly([x,0,x-2,6,x-6,2]).fill(0xf0cf82);
@@ -71,7 +71,7 @@ function building(objects,labels,x,y,index=0,name=null,player=false,kind='buildi
     const bg=new Graphics();bg.roundRect(-width/2,-13,width,26,4).fill(0xf0dfbf).stroke({color:0x745238,width:2});
     bg.poly([-width/2+4,-10,width/2-4,-10]).stroke({color:0xfff1d4,width:1});pizzaBadge(bg,-width/2+13);
     text.anchor.set(0,.5);text.x=-width/2+28;tag.addChild(bg,text);
-    if(player){state.restaurantSign=tag;tag.label='restaurant-sign';tag.eventMode='static';tag.cursor='pointer';tag.hitArea=new Rectangle(-width/2,-14,width,28);tag.on('pointertap',openRestaurant);}
+    if(player){state.restaurantSign=tag;state.cityRestaurantSigns['mamma-mia']=tag;tag.label='restaurant-sign';tag.eventMode='static';tag.cursor='pointer';tag.hitArea=new Rectangle(-width/2,-14,width,28);tag.on('pointertap',openRestaurant);}
     labels.addChild(tag);
   }
   return object;
@@ -84,13 +84,13 @@ function propertyBuilding(objects,labels,x,y,site){
   const owned=state.ownedProperties.includes(site.id),size=PROPERTY_SIZES[site.size];
   building(objects,labels,x,y,site.sprite,null,false,site.art);
   const object=objects.children.at(-1);object.label='city-property';object.propertyId=site.id;
-  object.eventMode='static';object.cursor='pointer';object.on('pointertap',()=>{if(!state.cityGesture?.moved)openProperty(site.id);});
+  object.eventMode='static';object.cursor='pointer';object.on('pointertap',()=>{if(!state.cityGesture?.moved)state.ownedProperties.includes(site.id)?openRestaurant(site.id):openProperty(site.id);});
   const marker=new Container(),p=iso(x,y),bg=new Graphics(),text=label('',9,'#fff1ce');
-  marker.label='city-property-marker';marker.propertyId=site.id;marker.position.set(p.x,p.y+9);marker.zIndex=p.y+30;
+  marker.label='city-property-marker';marker.propertyId=site.id;marker.position.set(p.x,p.y+(owned?-object.height-18:9));marker.roofY=p.y-object.height-18;marker.zIndex=p.y+30;
   bg.roundRect(-43,-9,86,18,3).fill(owned?0x426440:size.color).stroke({color:0xead4a5,width:1});
   text.anchor.set(.5);text.text=(owned?'DEIN':'KAUFEN')+' · '+size.badge;
   marker.addChild(bg,text);marker.eventMode='static';marker.cursor='pointer';marker.hitArea=new Rectangle(-43,-12,86,28);
-  marker.on('pointertap',()=>{if(!state.cityGesture?.moved)openProperty(site.id);});labels.addChild(marker);return object;
+  marker.on('pointertap',()=>{if(!state.cityGesture?.moved)state.ownedProperties.includes(site.id)?openRestaurant(site.id):openProperty(site.id);});labels.addChild(marker);if(owned)state.cityRestaurantSigns[site.id]=marker;return object;
 }
 function refreshPropertyMarkers(){
   if(state.scene!=='city')return;
@@ -99,6 +99,7 @@ function refreshPropertyMarkers(){
     const site=PROPERTIES.find(p=>p.id===marker.propertyId),owned=state.ownedProperties.includes(site.id),size=PROPERTY_SIZES[site.size];
     marker.children[0].clear().roundRect(-43,-9,86,18,3).fill(owned?0x426440:size.color).stroke({color:0xead4a5,width:1});
     marker.children[1].text=(owned?'DEIN':'KAUFEN')+' · '+size.badge;
+    if(owned){marker.y=marker.roofY;state.cityRestaurantSigns[site.id]=marker;}
   }
 }
 
@@ -245,7 +246,7 @@ export function showCity(){
   if(state.scene==='city') return;
   districts=districtOrder(state.citySeed);layout=cityLayout(state.citySeed);state.cityLayout=layout;
   clearWorld();state.scene='city';sceneUI('city');
-  state.restaurantSign=null;
+  state.restaurantSign=null;state.cityRestaurantSigns={};
   state.camera=new Container();world.addChild(state.camera);
   const ground=cityGround({...layout,park,fountainCell},state.citySeed),markings=new Container(),objects=new Container(),labels=new Container();
   ground.label='city-ground';objects.label='city-objects';objects.sortableChildren=true;labels.sortableChildren=true;
@@ -262,6 +263,7 @@ export function showCity(){
     if(kind==='person')actor.g.scale.set(.33);actor.g.label=kind==='car'?'city-car':'city-pedestrian';
     objects.addChild(actor.g);state.movers.push(actor);
   }
+  state.restaurantSign=state.cityRestaurantSigns[state.activeRestaurantId]||state.cityRestaurantSigns['mamma-mia'];
   state.onPropertyChange=refreshPropertyMarkers;
   resizeCity();bindGestures();tickCity(0);
 }
