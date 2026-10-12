@@ -48,7 +48,12 @@ async function selectTool(page,type,seats){
   }
   await page.locator(selector).first().click();
 }
-async function loaded(page,url){await page.goto(url);await page.waitForSelector('#loading',{state:'hidden',timeout:15000});}
+async function loaded(page,url){
+  // Pause before the first frame so running costs cannot alter save/reload assertions.
+  const source=fs.readFileSync(path.join(root,'pizza.js'),'utf8');
+  await page.route('**/pizza.js?*',route=>route.fulfill({contentType:'text/javascript',body:source.replace('state.ready=true;','state.speed=0;state.ready=true;')}));
+  await page.goto(url);await page.waitForSelector('#loading',{state:'hidden',timeout:15000});
+}
 
 
 (async()=>{
