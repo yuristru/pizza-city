@@ -41,12 +41,12 @@ export function restoreStaff(raw,profiles){
 export function restaurantStaff(staff,id){return staff.employees.filter(p=>p.restaurantId===id);}
 export function monthlyPayroll(staff,id=undefined){return staff.employees.filter(p=>id===undefined||p.restaurantId===id).reduce((sum,p)=>sum+p.salaryCents,0);}
 export function syncStaffCounts(staff,profiles){for(const [id,p]of Object.entries(profiles)){const team=restaurantStaff(staff,id);for(const role of Object.keys(STAFF_ROLES))p.business[role]=team.filter(e=>e.role===role).length;p.business.staffMonthlyCents=team.reduce((sum,e)=>sum+e.salaryCents,0);}return profiles;}
-export function employeeBusy(employee,profiles){if(!employee.restaurantId)return false;return !!profiles[employee.restaurantId]?.service.groups.some(g=>g.phase==='waiting'&&g.work&&(employee.role==='cook'?g.work.stage<3&&g.work.cookId===employee.id:g.work.stage===3&&g.work.started&&g.work.waiterId===employee.id));}
+export function employeeBusy(employee,profiles){if(!employee.restaurantId)return false;const service=profiles[employee.restaurantId]?.service;return !!(service?.waiterTasks?.some(t=>t.employeeId===employee.id)||service?.groups.some(g=>g.phase==='waiting'&&g.work&&(employee.role==='cook'?g.work.stage<3&&g.work.cookId===employee.id:g.work.stage===3&&g.work.started&&g.work.waiterId===employee.id)));}
 export function assignmentIssue(staff,employee,id,profiles){
  if(!employee)return 'Diese Personalakte existiert nicht.';
  if(id!==null&&!Object.hasOwn(profiles,id))return 'Diesen Standort musst du zuerst kaufen.';
  if(employee.restaurantId===id)return null;
- if(employeeBusy(employee,profiles))return 'Diese Person arbeitet gerade an einer Bestellung. Neue Gäste stoppen und die Bestellung fertig werden lassen.';
+ if(employeeBusy(employee,profiles))return 'Diese Person arbeitet gerade an einer Bestellung oder räumt Teller ab. Neue Gäste stoppen und den Arbeitsgang fertig werden lassen.';
  if(id!==null&&staff.employees.filter(p=>p.id!==employee.id&&p.restaurantId===id&&p.role===employee.role).length>=MAX_TEAM)return 'In diesem Restaurant sind bereits vier Personen aus diesem Fachbereich.';
  return null;
 }

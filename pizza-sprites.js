@@ -1,7 +1,7 @@
-import {avatarTraits} from './pizza-staff-avatar.js?v=20261012c';
-import {Sprite,Texture,Rectangle} from './pizza-core.js?v=20261012c';
-import {restaurantSprite,restaurantIcon} from './pizza-restaurant-art.js?v=20261012c';
-import {project,tableChairs} from './pizza-layout.js?v=20261012c';
+import {avatarTraits} from './pizza-staff-avatar.js?v=20261012d';
+import {Sprite,Texture,Rectangle} from './pizza-core.js?v=20261012d';
+import {restaurantSprite,restaurantIcon} from './pizza-restaurant-art.js?v=20261012d';
+import {project,tableChairs} from './pizza-layout.js?v=20261012d';
 
 // Pixel bitmaps with four fixed views. The scene places only flat 2D sprites.
 const WIDTH=256,HEIGHT=192,FOOT={x:128,y:144},cache=new Map();
@@ -131,8 +131,12 @@ function drawFurniture(type,a,seats,variant){
       a.line([[x,-.39,5],[x,-.39,30]],'#ba8650');
     }
     a.box(-.98,-.44,1.96,.88,34,4,variant==='marble'?{top:'#e7dbc5',x:'#b0a58e',y:'#cdc1a5'}:variant==='tiled'?{top:'#708b79',x:'#405d50',y:'#5d7763'}:{top:'#b8814a',x:'#68412a',y:'#87532f'});
-    for(const x of [-.55,.5]){a.disc(x,0,.14,39,'#ede3ca');a.disc(x,0,.1,40,'#c9bca0');}
-    a.box(-.12,.04,.13,.13,38,9,{top:'#78834a',x:'#33452b',y:'#4b6237'});
+    if(type==='bar'){
+      a.surface([[-.89,-.34],[-.08,-.34],[-.08,.34],[-.89,.34]],39,'#e4c28a');
+      a.surface([[.08,-.34],[.89,-.34],[.89,.34],[.08,.34]],39,'#c3d4c3');
+      a.line([[0,-.38,39],[0,.38,39]],'#554532',2);a.box(-.8,-.28,.18,.12,39,3,{top:'#b55337',x:'#793723',y:'#964630'});
+      a.disc(.52,0,.17,40,'#eee3c9');a.disc(.52,0,.12,41,'#c3ad88');
+    }else{for(const x of [-.55,.5]){a.disc(x,0,.14,39,'#ede3ca');a.disc(x,0,.1,40,'#c9bca0');}a.box(-.12,.04,.13,.13,38,9,{top:'#78834a',x:'#33452b',y:'#4b6237'});}
   }else if(type==='jukebox'){
     a.shadow(.7,.7);a.box(-.32,-.32,.64,.64,0,53,{top:'#b34329',x:'#713523',y:'#952c22'});
     a.box(-.22,-.22,.44,.44,53,6,{top:'#d8a44d',x:'#8b6033',y:'#b6853e'});

@@ -1,7 +1,7 @@
-import {state,ensureRestaurants,restaurantName,saveLayout,notify} from './pizza-core.js?v=20261012c';
-import {STAFF_ROLES,LEVEL_NAMES,skillLevel,averageSkill,monthlyPayroll,restaurantStaff,hireEmployee,assignEmployee,dismissEmployee,employeeBusy} from './pizza-staff.js?v=20261012c';
-import {drawStaffAvatar} from './pizza-staff-avatar.js?v=20261012c';
-import {money} from './pizza-catalog.js?v=20261012c';
+import {state,ensureRestaurants,restaurantName,saveLayout,notify} from './pizza-core.js?v=20261012d';
+import {STAFF_ROLES,LEVEL_NAMES,skillLevel,averageSkill,monthlyPayroll,restaurantStaff,hireEmployee,assignEmployee,dismissEmployee,employeeBusy} from './pizza-staff.js?v=20261012d';
+import {drawStaffAvatar} from './pizza-staff-avatar.js?v=20261012d';
+import {money} from './pizza-catalog.js?v=20261012d';
 const el=id=>document.getElementById(id),portraits=new Map(),roles={market:'all',files:'all',restaurants:'all'};
 let view='market',restaurant=null,stamp=0;
 function node(tag,text,className){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(className)e.className=className;return e;}

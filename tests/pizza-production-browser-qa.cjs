@@ -1,0 +1,35 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http');
+const {chromium}=require('playwright');
+const root=process.cwd(),out=path.join(root,'qa/pizza');fs.mkdirSync(out,{recursive:true});
+const source=fs.readFileSync(path.join(root,'pizza.js'),'utf8'),corePath=source.match(/from ['"](.\/pizza-core\.js[^'"]*)['"]/)[1].replace('./','/');
+const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));if(!file.startsWith(root+path.sep)){res.writeHead(403).end();return;}fs.readFile(file,(error,data)=>{if(error){res.writeHead(404).end();return;}res.setHeader('Content-Type',({'.html':'text/html','.css':'text/css','.js':'text/javascript','.mjs':'text/javascript','.png':'image/png'})[path.extname(file)]||'application/octet-stream');res.end(data);});});
+(async()=>{
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox','--disable-dev-shm-usage','--enable-unsafe-swiftshader']});
+ try{
+ const {restaurantPlan}=await import(path.join(root,'pizza-floorplans.js')),{legacyKitchen}=await import(path.join(root,'pizza-kitchen.js'));
+ const k=legacyKitchen(restaurantPlan('san-marco')),p={items:[...k.items,{type:'table',x:1,y:5,r:0,seats:2},{type:'table',x:5,y:5,r:0,seats:2}],kitchenTiles:k.tiles,kitchenVersion:1,floorPlanVersion:1,business:{cook:2,waiter:1}};
+ const page=await browser.newPage({viewport:{width:1100,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route('**/pizza.js?*',r=>r.fulfill({contentType:'text/javascript',body:source.replace('state.ready=true;','app.ticker.stop();state.speed=0;state.ready=true;')}));
+ await page.addInitScript(p=>{if(!localStorage.getItem('pizza-city-layout-v1')){localStorage.setItem('pizza-city-layout-v1',JSON.stringify({version:10,items:p.items,kitchenTiles:p.kitchenTiles,activeRestaurantId:'san-marco',ownedProperties:['san-marco'],restaurants:{'san-marco':p},balanceCents:10000000}));localStorage.setItem('pizza-menu-v1',JSON.stringify({version:1,items:[{active:true,recipe:{name:'Pizza',sauce:'tomato',toppings:[]},price:850}]}));}},p);
+ const url=`http://127.0.0.1:${server.address().port}/pizza.html`,loaded=async()=>{await page.goto(url);await page.waitForSelector('#loading',{state:'hidden',timeout:15000});await page.click('#restaurantBtn');};await loaded();
+ const data=()=>page.evaluate(async p=>{const {state}=await import(p),{kitchenWorkFlow}=await import('/pizza-kitchen.js'+p.slice(p.indexOf('?'))),{activePlan}=await import(p);const objects=state.restaurantCamera.children.find(c=>c.label==='restaurant-objects');return {service:structuredClone(state.service),flow:kitchenWorkFlow(state.kitchenTiles,state.restaurantState,activePlan()),staff:state.staff.employees,balanceCents:Math.round(state.balance*100),all:Object.values(state.restaurants).map(p=>structuredClone(p.service)),nodes:objects.children.filter(n=>n.label.startsWith('service-')).map(n=>({label:n.label,employeeId:n.employeeId,stage:n.stage,carry:n.carry,task:n.task,cell:n.cell,groupId:n.groupId,facing:n.facing,children:n.children.length}))};},corePath);
+ const tick=seconds=>page.evaluate(async({p,seconds})=>{const {state,app}=await import(p),{tickService}=await import('/pizza-service-runtime.js'+p.slice(p.indexOf('?'))),{syncServiceGuests,renderServiceUI}=await import('/pizza-service-ui.js'+p.slice(p.indexOf('?')));tickService(seconds);syncServiceGuests(state.restaurantCamera.children.find(c=>c.label==='restaurant-objects'));renderServiceUI();app.render();},{p:corePath,seconds});
+ const seen=new Set();let reloaded=false;
+ for(let i=0;i<900;i++){
+  await tick(.5);const s=await data();
+  for(const n of s.nodes){if(n.label==='service-worker'){assert(s.staff.some(e=>e.id===n.employeeId));assert(n.facing>=0&&n.facing<=3);if(n.carry)assert(n.children>1,'Carried pizza or plates must be visible.');}
+   const milestone=n.label==='service-worker'&&n.carry?'carry-'+n.carry:n.label;
+   if(['service-preparation','service-baking','service-ready-pizza','service-dirty-plate','service-returned-plate','carry-pizza','carry-plates'].includes(milestone)&&!seen.has(milestone)){seen.add(milestone);await page.screenshot({path:path.join(out,'production-'+milestone+'.png'),style:'#toast {visibility:hidden}'});}
+   if(n.label==='service-preparation')assert.deepEqual(n.cell,s.flow.prepSurface);if(n.label==='service-ready-pizza')assert.deepEqual(n.cell,s.flow.readySurface);
+  }
+  if(!reloaded&&s.service.waiterTasks.some(t=>t.plates>0)){
+   const task=s.service.waiterTasks.find(t=>t.plates>0);const blocked=await page.evaluate(async({p,id})=>{const {state,ensureRestaurants,saveLayout}=await import(p),{assignEmployee}=await import('/pizza-staff.js'+p.slice(p.indexOf('?')));const result=assignEmployee(state.staff,id,null,ensureRestaurants());saveLayout(true);return result;},{p:corePath,id:task.employeeId});assert.equal(blocked.ok,false);assert.match(blocked.issue,/Teller/);
+   await loaded();const restored=await data();assert.deepEqual(restored.service.waiterTasks,s.service.waiterTasks);assert.deepEqual(restored.service.dirtyTables,s.service.dirtyTables);assert.deepEqual(restored.service.groups,s.service.groups);assert.equal(restored.balanceCents,s.balanceCents);reloaded=true;
+  }
+  if(reloaded&&seen.size>=7&&s.service.cleanedTables>5)break;
+ }
+ assert(reloaded,'Reload a server while returning plates.');for(const label of ['service-preparation','service-baking','service-ready-pizza','service-dirty-plate','service-returned-plate','carry-pizza','carry-plates'])assert(seen.has(label),'Missing visible chain state '+label);
+ await page.evaluate(async p=>{const {state}=await import(p);state.restaurants['san-marco'].business.open=false;},corePath);await tick(180);const ended=await data();assert.equal(ended.service.groups.length,0);assert.equal(ended.service.dirtyTables.length,0);assert.equal(ended.service.waiterTasks.length,0);assert.equal(ended.balanceCents,10000000+ended.all.reduce((sum,s)=>sum+s.netCents-(s.operatingCents||0),0));
+ for(const [width,height]of [[320,568],[393,852],[844,390]]){await page.setViewportSize({width,height});await page.waitForTimeout(100);await page.click('[data-category="oven"]');await page.locator('[data-kitchen-check]').click();assert.equal(await page.locator('.productionSteps li').count(),5);assert.match(await page.locator('#kitchenDialog').innerText(),/zwei Flächen/);const b=await page.locator('#kitchenDialog').boundingBox();assert(b.x>=0&&b.x+b.width<=width+1);await page.screenshot({path:path.join(out,`production-guide-${width}.png`)});await page.click('#kitchenClose');}
+ assert.deepEqual(errors,[]);console.log('Production browser passed: separate preparation/ready surfaces, visible baking, carried pizza, dirty plates, pickup/return trays, saved active round, busy guard, clean drain/accounting and mobile five-step guide.');
+ }finally{await browser.close();server.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;server.close();});
