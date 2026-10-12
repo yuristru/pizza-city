@@ -1,7 +1,7 @@
-import {restaurantPlan} from './pizza-floorplans.js?v=20261012b';
-import {state,saveLayout,updateMoney,notify,ensureRestaurants} from './pizza-core.js?v=20261012b';
-import {money} from './pizza-catalog.js?v=20261012b';
-import {PROPERTIES,PROPERTY_SIZES,property,buyProperty,propertyPurchaseIssue} from './pizza-properties.js?v=20261012b';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261012c';
+import {state,saveLayout,updateMoney,notify,ensureRestaurants} from './pizza-core.js?v=20261012c';
+import {money} from './pizza-catalog.js?v=20261012c';
+import {PROPERTIES,PROPERTY_SIZES,property,buyProperty,propertyPurchaseIssue} from './pizza-properties.js?v=20261012c';
 const el=id=>document.getElementById(id);
 let selected=null,filter='small';
 function render(){

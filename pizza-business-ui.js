@@ -1,11 +1,15 @@
-import {state,ensureRestaurants,restaurantName,saveLayout,notify} from './pizza-core.js?v=20261012b';
-import {restaurantPlan} from './pizza-floorplans.js?v=20261012b';
-import {STAFF,businessMetrics} from './pizza-business.js?v=20261012b';
-import {money} from './pizza-catalog.js?v=20261012b';
-const el=id=>document.getElementById(id);let stamp=0;
+import {state,ensureRestaurants,restaurantName,saveLayout,notify} from './pizza-core.js?v=20261012c';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261012c';
+import {STAFF,businessMetrics} from './pizza-business.js?v=20261012c';
+import {money} from './pizza-catalog.js?v=20261012c';
+import {mountDailyUI,renderDailyUI,openDailyReport} from './pizza-daily-ui.js?v=20261012c';
+const el=id=>document.getElementById(id);let stamp=0,view='daily';
 function text(tag,value){const e=document.createElement(tag);e.textContent=value;return e;}
 export function renderBusinessUI(force=false){
  const d=el('businessDialog');if(!d.open)return;if(!force&&performance.now()-stamp<750)return;stamp=performance.now();
+ for(const tab of document.querySelectorAll('[data-finance-view]')){const active=tab.dataset.financeView===view;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;}
+ el('dailyContent').hidden=view!=='daily';el('financeLifetimeContent').hidden=view!=='lifetime';
+ if(view==='daily'){renderDailyUI(force);return;}
  const profiles=ensureRestaurants(),profile=profiles[state.activeRestaurantId],host=el('businessControls');host.replaceChildren(text('h3',restaurantName()));
  const accepting=text('button',profile.business.open===false?'Restaurant öffnen':'Neue Gäste stoppen');accepting.id='acceptGuests';accepting.type='button';accepting.onclick=()=>{profile.business.open=profile.business.open===false;saveLayout();renderBusinessUI(true);};host.append(accepting,text('p','„Neue Gäste stoppen“ lässt laufende Bestellungen fertig werden. Danach kannst du Personal und Geräte umstellen.'));
  const table=el('branchRows');table.replaceChildren();
@@ -18,6 +22,11 @@ export function renderBusinessUI(force=false){
  const rates=businessMetrics(profile,restaurantPlan(state.activeRestaurantId)).rates;el('businessRates').textContent='Aktuelle Filiale pro Spielstunde: Personal '+money(rates.staff)+', Gebäude '+money(rates.property)+', Strom '+money(rates.electricity)+'. Monatsgehälter werden über 30 Spieltage verteilt. Eine Spielstunde dauert bei Tempo 1 fünf Minuten. Kosten laufen auch bei geschlossenem Restaurant weiter; Pause hält alles an.';
 }
 export function mountBusinessUI(){
- for(const id of ['financeBtn'])el(id).onclick=()=>{el('businessDialog').showModal();renderBusinessUI(true);};
+ mountDailyUI();
+ el('financeBtn').onclick=()=>{if(el('staffDialog').open)el('staffDialog').close();view='daily';openDailyReport();el('businessDialog').showModal();renderBusinessUI(true);};
  el('businessClose').onclick=()=>el('businessDialog').close();
+ for(const tab of document.querySelectorAll('[data-finance-view]')){
+  tab.onclick=()=>{view=tab.dataset.financeView;renderBusinessUI(true);};
+  tab.onkeydown=event=>{const tabs=[...document.querySelectorAll('[data-finance-view]')];let target;if(event.key==='ArrowLeft'||event.key==='ArrowRight')target=tabs.find(t=>t!==tab);if(event.key==='Home')target=tabs[0];if(event.key==='End')target=tabs.at(-1);if(target){event.preventDefault();view=target.dataset.financeView;renderBusinessUI(true);target.focus();}};
+ }
 }

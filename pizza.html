@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#dec9a5">
   <title>Pizza City · Mamma Mia</title>
-  <link rel="stylesheet" href="pizza.css?v=20261012b">
+  <link rel="stylesheet" href="pizza.css?v=20261012c">
 </head>
 <body>
 <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -81,11 +81,32 @@
     <p class="staffFootnote">Je Fachbereich gibt es drei Kompetenzen. Sie beeinflussen Arbeitsdauer und Gästezufriedenheit. Level 1 bis 5 entspricht dem Durchschnitt der Kompetenzwerte. Gehälter werden anteilig über 30 Spieltage abgerechnet, auch ohne Restaurantzuordnung. Pause hält die Abrechnung an.</p>
   </dialog>
   <dialog id="businessDialog" aria-labelledby="businessTitle">
-    <header class="propertyHeader"><h2 id="businessTitle">Finanzen und Filialen</h2><button id="businessClose" type="button" aria-label="Betrieb schließen">×</button></header>
+    <div class="financeTop">
+    <header class="propertyHeader"><h2 id="businessTitle">Finanzen</h2><button id="businessClose" type="button" aria-label="Finanzen schließen">×</button></header>
+    <nav class="financeTabs" role="tablist" aria-label="Finanzansicht">
+      <button id="finance-tab-daily" type="button" role="tab" aria-selected="true" aria-controls="dailyContent" data-finance-view="daily">Tagesabschluss</button>
+      <button id="finance-tab-lifetime" type="button" role="tab" aria-selected="false" aria-controls="financeLifetimeContent" tabindex="-1" data-finance-view="lifetime">Filialvergleich</button>
+    </nav>
+    </div>
+    <section id="dailyContent" role="tabpanel" aria-labelledby="finance-tab-daily">
+      <button id="dailyNotice" class="dailyNotice" type="button" hidden></button>
+      <div class="dailyFilters">
+        <label>Spieltag<select id="reportDay" aria-label="Spieltag für Tagesabschluss"></select></label>
+        <label>Restaurant<select id="reportRestaurant" aria-label="Restaurant für Tagesabschluss"></select></label>
+      </div>
+      <h3 id="dailyTitle"></h3><p id="dailyPeriod"></p>
+      <div id="dailyOverview" class="dailyOverview"></div>
+      <div class="dailyDetails"><section id="dailyCosts" class="dailyPanel"></section><section id="dailyGuests" class="dailyPanel"></section></div>
+      <section id="dailyBranches"></section>
+      <section id="dailyTrend"></section>
+      <p class="dailyFootnote">Der Abschluss entsteht automatisch um 00:00 Uhr. Die letzten 30 abgeschlossenen Spieltage bleiben gespeichert. Gewinn ist Umsatz minus Zutaten, Löhne, Gebäude und Strom. Immobilien und Einrichtung gelten als Investitionen. Offene Kosten sind bereits im Ergebnis enthalten; ihre spätere Zahlung zählt nicht erneut als Aufwand. Zufriedenheit und Wartezeit beziehen sich auf die Bewertungen und Zahlungen dieses Tages. Pause hält den Tag und die Kosten an.</p>
+    </section>
+    <section id="financeLifetimeContent" role="tabpanel" aria-labelledby="finance-tab-lifetime" hidden>
     <div id="businessControls"></div><p id="businessRates"></p>
     <h3>Filialvergleich seit Spielbeginn</h3><p id="financeSummary"></p>
     <div class="financeScroll"><table class="financeTable"><thead><tr><th>Restaurant</th><th>Umsatz</th><th>Zutaten</th><th>Personal</th><th>Gebäude</th><th>Strom</th><th>Gewinn</th><th>Auslastung</th><th>Bewertung</th><th>Wartezeit</th><th>Bedient / verloren</th><th>Offene Kosten</th></tr></thead><tbody id="branchRows"></tbody></table></div>
     <p>Auslastung zählt belegte Sitzplätze über die gesamte Spielzeit. Offene Kosten werden aus dem nächsten Guthaben beglichen. Standort, Preise, Auswahl, Einrichtung und Bewertungen bestimmen die Nachfrage. Lange Wartezeiten kosten Gäste und Sterne.</p>
+    </section>
   </dialog>
   <dialog id="kitchenDialog" aria-labelledby="kitchenTitle">
     <header class="propertyHeader"><h2 id="kitchenTitle">Küche einrichten</h2><button id="kitchenClose" type="button" aria-label="Küchenprüfung schließen">×</button></header>
@@ -156,7 +177,7 @@
 </div>
 <noscript>Bitte JavaScript aktivieren, um die Pizza-Demo zu starten.</noscript>
 <script type="module">
-  import('./pizza.js?v=20261012b').catch(error=>{
+  import('./pizza.js?v=20261012c').catch(error=>{
     console.error('Pizza demo could not start',error);
     const loading=document.querySelector('#loading');loading.hidden=false;loading.replaceChildren();
     const message=document.createElement('p');message.textContent='Die Demo konnte nicht starten. Bitte erneut laden.';

@@ -18,7 +18,7 @@ Die Personalseite hat drei Ansichten:
 
 Die drei Kompetenzen der Küche sind Zubereitung, Backen und Organisation. Sie steuern Vorbereitungs-/Backdauer, Qualität und Bewegungstempo. Im Service sind es Tempo, Aufmerksamkeit und Freundlichkeit; sie steuern Laufgeschwindigkeit, Übergabezeit und den Einfluss auf Gästebewertungen. Werte liegen zwischen 0 und 100. Das Level von 1 bis 5 entspricht dem Durchschnitt, in Schritten von 20. Höhere Werte führen auf dem Arbeitsmarkt zu höheren Monatsgehältern.
 
-Jede Filiale hat unabhängig null bis vier Personen je Fachbereich. Mindestens je eine Kraft ist zum Öffnen nötig. Neue Filialen beginnen ohne Personal. Bestehende anonyme Personalzahlen werden einmalig in benannte Mitarbeitende mit 50er-Kompetenzen umgewandelt. Das neue Speicherschema (Version 9) erhält Restaurantlayout, bestehende Einnahmen und Kosten sowie die komplette Personalliste und die Bewerbungen.
+Jede Filiale hat unabhängig null bis vier Personen je Fachbereich. Mindestens je eine Kraft ist zum Öffnen nötig. Neue Filialen beginnen ohne Personal. Bestehende anonyme Personalzahlen werden einmalig in benannte Mitarbeitende mit 50er-Kompetenzen umgewandelt. Das Speicherschema Version 10 erhält Restaurantlayout, bestehende Einnahmen und Kosten sowie die komplette Personalliste und die Bewerbungen.
 
 Ein Koch bearbeitet eine Bestellung gleichzeitig: Kühlschrank > Tresen > Ofen > Tresen. Eine Servicekraft bringt die fertige Bestellung vom Tresen zum Tisch. Die Aufgabe wird einer konkreten Person zugeteilt; ihr persönliches Aussehen und die Drehung in Laufrichtung sind im Raum sichtbar. Bewegung folgt freien Zellen und tatsächlichen Türen. Entfernungen, Portionsanzahl, Kompetenzen und verfügbare Kräfte bestimmen die Wartezeit.
 
@@ -49,10 +49,22 @@ Ein Gehaltsmonat umfasst 30 Spieltage mit je 24 Stunden. Personen ohne Restauran
 
 Personal / Finanzen zeigt pro Filiale Umsatz, Zutaten, Löhne, Gebäude, Strom, Gewinn, Auslastung, Bewertung, mittlere Wartezeit in Spielminuten, bediente / verlorene Gäste und offene Kosten seit Spielbeginn. Gewinn = Umsatz minus Zutaten und laufende Kosten. Immobilienkäufe und Einrichtung sind Investitionen und nicht in diesem Betriebsergebnis enthalten. Gemeinsames Konto und Speisekarte bleiben erhalten. Einrichtungs-Undo erstattet nur die konkrete Änderung und lässt Betriebskosten und andere Filialen bestehen.
 
+## Tagesabschluss
+
+Die Finanzansicht öffnet zuerst den Tagesabschluss. „Heute“ zeigt laufende Werte; eine Auswahl enthält die letzten 30 abgeschlossenen Spieltage. Über den Restaurantfilter lassen sich eine Filiale oder alle Restaurants zusammen auswerten. Der bisherige Vergleich seit Spielbeginn bleibt unter „Filialvergleich“ verfügbar.
+
+Um 00:00 Uhr werden alle Filialen und die Gehälter nicht zugeordneter Personen gemeinsam abgeschlossen. Ein Simulationsschritt über Mitternacht wird geteilt, bevor die Abrechnung gespeichert wird. Bestellungen und Gäste laufen weiter. Es gibt einen Hinweis und eine Markierung bei „Finanzen“. Der nächste Tag beginnt mit neuen Tageswerten, die Gesamtsummen bleiben bestehen.
+
+Erfasst werden Umsatz, Zutaten, Löhne, Gebäude, Strom, Gewinn, bediente und verlorene Gäste, Wartezeit, Sitzplatzauslastung und Gästezufriedenheit. Die Bewertung eines Tages ergibt sich aus den Bewertungen an diesem Tag, nicht aus dem bisherigen Durchschnitt. Der Gesamtwert gewichtet Bewertungen, Wartezeiten und Auslastung nach den tatsächlichen Bewertungen, Gästen und Sitzplatzzeiten. Ohne Bewertungen erscheint kein erfundener Zufriedenheitswert.
+
+Offene Kosten am Tagesende sind schon als Aufwand enthalten. Ihre spätere Bezahlung wird nicht nochmals als Kosten gebucht. Einrichtungs- und Immobilienkäufe sind Investitionen und verändern den Betriebsgewinn nicht. Gehälter ohne Restaurantzuordnung erscheinen separat im Gesamtergebnis. Eine untertags gekaufte Filiale wird ab dem Kauf erfasst. Ein begonnenes Spiel startet die Erfassung zu seiner aktuellen Uhrzeit; frühere Gesamtsummen werden nicht als Tagesumsatz übernommen. Der erste Abschluss ist entsprechend als Teil des Tages gekennzeichnet.
+
+Das Speicherschema Version 10 erhält Tagesbeginn, Vergleichswerte, abgeschlossene Berichte und den zuletzt gelesenen Abschluss zusätzlich zu allen bisherigen Daten. Laden erzeugt keine nachträglichen Kosten oder zusätzlichen Abschlüsse. Eine Grafik zeigt Gewinn und Verlust der letzten sieben abgeschlossenen Spieltage mit direkt auswählbaren Tagen.
+
 ## Stadt
 
 Die Fahrbahnen sind 0,60 bis 0,95 Weltzellen breit. Häuser verwenden ihre kalibrierten Fundamentmaße. Unterschiedlich lange Fronten, ausgesparte Endhäuser und zusätzliche Hofseiten bilden offene L-Gruppen und Hofgruppen mit mehreren Seiten. Drei eigenständige Hofgebäude, Plätze und neun kaufbare Standorte bleiben erhalten. Die Prüfung kontrolliert acht Karten auf Straßen-/Wasserkollisionen, Fundamentüberschneidungen und gemeinsame Gebäudekanten.
 
 ## Prüfung
 
-Personaltests: `pizza-staff-qa.mjs` und `pizza-staff-browser-qa.cjs` prüfen Arbeitsmarkt, Gehaltsabstufungen, drei Kompetenzen, Zuordnung, laufende Aufgaben, Avatare, Monatsabrechnung und Speichermigration. Die Betriebsprüfungen `pizza-business-qa.mjs` und `pizza-business-browser-qa.cjs` bleiben erhalten. Dazu bestehen weiterhin die Prüfungen für Küchen, Laufwege, Speichermigration, Restaurantwechsel, Grundrisse, Preise, Stadt und responsive Bedienung. Browserprüfungen starten mit gestoppter Simulation, damit zeitabhängige Kosten die Kauf- und Undo-Prüfungen nicht verfälschen.
+Personaltests: `pizza-staff-qa.mjs` und `pizza-staff-browser-qa.cjs` prüfen Arbeitsmarkt, Gehaltsabstufungen, drei Kompetenzen, Zuordnung, laufende Aufgaben, Avatare, Monatsabrechnung und Speichermigration. `pizza-daily-qa.mjs` und `pizza-daily-browser-qa.cjs` prüfen Tagesgrenzen, eine Zahlung über Mitternacht, korrekte Kosten und Gewichtung, neue Filialen, 30-Tage-Historie, Filter, Gewinnkurve, alte Spielstände und erneutes Laden. Die Betriebsprüfungen `pizza-business-qa.mjs` und `pizza-business-browser-qa.cjs` bleiben erhalten. Dazu bestehen weiterhin die Prüfungen für Küchen, Laufwege, Speichermigration, Restaurantwechsel, Grundrisse, Preise, Stadt und responsive Bedienung. Browserprüfungen starten mit gestoppter Simulation, damit zeitabhängige Kosten die Kauf- und Undo-Prüfungen nicht verfälschen.
