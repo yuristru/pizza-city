@@ -68,12 +68,33 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
  await selectTool(page,'table',2);await placeCell(page,6,5);await tick(30);assert.equal((await data()).profiles['san-marco'].service.groups.length,0);assert.match(await page.locator('#restaurantServiceStatus').innerText(),/Koch einstellen/);
  await page.click('#staffBtn');await page.click('[data-staff="cook"][data-delta="1"]');await page.click('[data-staff="waiter"][data-delta="1"]');assert.equal((await data()).profiles['san-marco'].business.cook,1);await page.click('#businessClose');
  let worker=false;for(let i=0;i<80;i++){await tick(2);worker=worker||await page.evaluate(async p=>(await import(p)).state.restaurantCamera.children.find(c=>c.label==='restaurant-objects').children.some(c=>c.label==='service-worker'),corePath);}s=await data();assert(worker);assert(s.profiles['san-marco'].service.servedGuests>0);assert(s.profiles['san-marco'].service.operatingCents>0);assert(s.profiles['mamma-mia'].service.propertyCents>0);
+ // Check the rendered cook and waiter at turns and stops, including cached sprite reuse.
+ const directions=await page.evaluate(async p=>{
+  const {state}=await import(p),{syncServiceGuests}=await import('/pizza-service-ui.js'+p.slice(p.indexOf('?')));
+  const objects=state.restaurantCamera.children.find(c=>c.label==='restaurant-objects'),saved=state.service.groups;
+  const group={id:9000,size:1,table:state.restaurantState.find(i=>i.type==='table'),phase:'waiting',work:{stage:0,started:true,route:[{x:3,y:3},{x:4,y:3},{x:4,y:4},{x:3,y:4},{x:3,y:3}],progress:0}};
+  const records=[];state.service.groups=[group];
+  for(const stage of [0,3]){
+   group.work.stage=stage;
+   for(const progress of [.25,.95,1,1.25,2.25,3.25,4]){
+    group.work.progress=progress;syncServiceGuests(objects);
+    const worker=objects.children.find(c=>c.label==='service-worker'&&c.groupId===9000);
+    records.push({stage,progress,facing:worker.facing,art:worker.children[0].texture.source.resource.toDataURL()});
+   }
+  }
+  const worker=objects.children.find(c=>c.label==='service-worker'&&c.groupId===9000),previous=worker.children[0];
+  group.work.route=[{x:3,y:3}];group.work.progress=0;syncServiceGuests(objects);
+  const idle={facing:worker.facing,reused:worker.children[0]===previous};
+  state.service.groups=saved;syncServiceGuests(objects);return {records,idle};
+ },corePath);
+ for(const stage of [0,3]){const samples=directions.records.filter(r=>r.stage===stage);assert.deepEqual(samples.map(r=>r.facing),[0,0,1,1,2,3,3]);assert.equal(new Set(samples.map(r=>r.art)).size,4,'All four walking directions need distinct staff art.');assert.equal(samples[0].art,samples[1].art);}
+ assert.deepEqual(directions.idle,{facing:3,reused:true});
  await page.click('#financeBtn');assert.equal(await page.locator('#branchRows tr').count(),2);assert.match(await page.locator('#financeSummary').innerText(),/Ergebnis aller Filialen/);await page.click('#acceptGuests');assert.equal((await data()).profiles['san-marco'].business.open,false);await page.click('#businessClose');await tick(120);assert.equal((await data()).profiles['san-marco'].service.groups.length,0);
  const saved=await data();await loaded(page,url);await page.click('#restaurantBtn');assert.equal((await data()).balance,saved.balance);assert.deepEqual((await data()).profiles['san-marco'].business,saved.profiles['san-marco'].business);assert.equal((await data()).profiles['san-marco'].service.operatingCents,saved.profiles['san-marco'].service.operatingCents);
  for(const [width,height]of [[320,568],[393,852],[844,390]]){await page.setViewportSize({width,height});await page.waitForTimeout(100);await page.click('#financeBtn');const bounds=await page.locator('#businessDialog').boundingBox();assert(bounds.x>=0&&bounds.x+bounds.width<=width+1);await capture(page,'business-'+width+'.png');await page.click('#businessClose');}
  // A free legacy appliance must retain its missing purchase-price field when moved.
  await page.evaluate(async p=>{const {state,saveLayout}=await import(p);const item=state.restaurantState.find(i=>i.type==='fridge');delete item.paid;saveLayout();},corePath);
  await page.click('#moveBtn');await tapCell(page,2,4);await tapCell(page,3,4);await page.click('#placeBtn');assert.equal((await data()).items.find(i=>i.type==='fridge').paid,undefined);const freeItems=(await data()).items;await loaded(page,url);await page.click('#restaurantBtn');assert.deepEqual((await data()).items,freeItems);
- await page.click('#cityBtn');await page.click('#propertiesBtn');await page.click('[data-property="san-marco"]');assert(await page.locator('#propertyFloorplan').isVisible());await capture(page,'property-floorplan.png');assert.deepEqual(errors,[]);console.log('Business browser passed: area brush, one-step undo, free device moves, hiring, work sprites, background bills, branch comparison, stop/drain, persistence and mobile UI.');
+ await page.click('#cityBtn');await page.click('#propertiesBtn');await page.click('[data-property="san-marco"]');assert(await page.locator('#propertyFloorplan').isVisible());await capture(page,'property-floorplan.png');assert.deepEqual(errors,[]);console.log('Business browser passed: area brush, one-step undo, free device moves, hiring, work sprites in all four directions with exact turns and stable stops, background bills, branch comparison, stop/drain, persistence and mobile UI.');
  }finally{await browser.close();server.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;server.close();});

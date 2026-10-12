@@ -1,12 +1,12 @@
-import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261011m';
-import {state,Container,ensureRestaurants,activePlan} from './pizza-core.js?v=20261011m';
-import {project,dimensions} from './pizza-layout.js?v=20261011m';
-import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261011m';
-import {routePosition,guestSeat} from './pizza-service.js?v=20261011m';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261011m';
+import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261012a';
+import {state,Container,ensureRestaurants,activePlan} from './pizza-core.js?v=20261012a';
+import {project,dimensions} from './pizza-layout.js?v=20261012a';
+import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261012a';
+import {routePosition,guestSeat} from './pizza-service.js?v=20261012a';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261012a';
 
-import {businessIssue} from './pizza-business.js?v=20261011m';
-import {personSprite} from './pizza-sprites.js?v=20261011m';
+import {businessIssue} from './pizza-business.js?v=20261012a';
+import {personSprite} from './pizza-sprites.js?v=20261012a';
 const maps=new WeakMap(),banners=new Map();
 export function syncServiceGuests(objects){
   let nodes=maps.get(objects);if(!nodes){nodes=new Map();maps.set(objects,nodes);}
@@ -26,7 +26,22 @@ export function syncServiceGuests(objects){
       meal.position.set(point.x,point.y);meal.zIndex=center.y+.2;meal.groupId=group.id;
     }
   }
-  for(const group of state.service.groups)if(group.phase==='waiting'&&group.work){const w=group.work;if(w.stage===3&&!w.started)continue;const g=get('worker-'+group.id,'service-worker'),position=routePosition({route:w.route,progress:w.progress});if(g.stage!==w.stage){g.removeChildren().forEach(c=>c.destroy());g.addChild(personSprite(w.stage===3?1:0));g.stage=w.stage;}const p=project(position.x,position.y);g.position.set(p.x,p.y);g.zIndex=p.y+.6;g.cell=position;g.task=['Kühlschrank → Tresen','Tresen → Ofen','Ofen → Tresen','Zum Tisch'][w.stage];}
+  for(const group of state.service.groups)if(group.phase==='waiting'&&group.work){
+    const w=group.work;if(w.stage===3&&!w.started)continue;
+    const g=get('worker-'+group.id,'service-worker'),position=routePosition({route:w.route,progress:w.progress});
+    // Use the current grid segment, including the incoming direction at its end.
+    const segment=Math.min(Math.floor(w.progress),w.route.length-2);
+    let rotation=g.facing??0;
+    if(segment>=0){
+      const a=w.route[segment],b=w.route[segment+1],dx=b.x-a.x,dy=b.y-a.y;
+      rotation=dx?(dx>0?0:2):dy?(dy>0?1:3):rotation;
+    }
+    const artKey=w.stage+':'+rotation;
+    if(g.artKey!==artKey){g.removeChildren().forEach(c=>c.destroy());g.addChild(personSprite(w.stage===3?1:0,rotation));g.artKey=artKey;}
+    const p=project(position.x,position.y);g.position.set(p.x,p.y);g.zIndex=p.y+.6;
+    g.stage=w.stage;g.facing=rotation;g.groupId=group.id;g.cell=position;
+    g.task=['Kühlschrank → Tresen','Tresen → Ofen','Ofen → Tresen','Zum Tisch'][w.stage];
+  }
   for(const [key,g]of nodes)if(!wanted.has(key)){g.destroy({children:true});nodes.delete(key);}
 }
 export function renderServiceUI(){

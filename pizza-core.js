@@ -1,13 +1,13 @@
-import {profilePlan} from './pizza-kitchen.js?v=20261011m';
-import {restaurantPlan,DEFAULT_PLAN,withKitchen} from './pizza-floorplans.js?v=20261011m';
-import {DEFAULT_CITY_SEED} from './pizza-city-layout.js?v=20261011m';
-import {restoreProperties,propertySpend} from './pizza-properties.js?v=20261011m';
+import {profilePlan} from './pizza-kitchen.js?v=20261012a';
+import {restaurantPlan,DEFAULT_PLAN,withKitchen} from './pizza-floorplans.js?v=20261012a';
+import {DEFAULT_CITY_SEED} from './pizza-city-layout.js?v=20261012a';
+import {restoreProperties,propertySpend} from './pizza-properties.js?v=20261012a';
 import {Application,Container,Graphics,Sprite,Texture,Text,Rectangle} from './assets/pizza/vendor/pixi-8.22.0.mjs';
-import {copyLayout,upgradeLayout} from './pizza-layout.js?v=20261011m';
-import {START_MONEY,money,defaultFinishes,restoreFinishes} from './pizza-catalog.js?v=20261011m';
-import {freshService,restoreService} from './pizza-service.js?v=20261011m';
-import {MAIN_RESTAURANT,freshRestaurant,restoreRestaurants} from './pizza-restaurant-profiles.js?v=20261011m';
-import {property} from './pizza-properties.js?v=20261011m';
+import {copyLayout,upgradeLayout} from './pizza-layout.js?v=20261012a';
+import {START_MONEY,money,defaultFinishes,restoreFinishes} from './pizza-catalog.js?v=20261012a';
+import {freshService,restoreService} from './pizza-service.js?v=20261012a';
+import {MAIN_RESTAURANT,freshRestaurant,restoreRestaurants} from './pizza-restaurant-profiles.js?v=20261012a';
+import {property} from './pizza-properties.js?v=20261012a';
 export {Container,Graphics,Sprite,Texture,Text,Rectangle};
 
 export const root=document.querySelector('#app');
@@ -161,9 +161,9 @@ async function loadCityAtlas(){
 }
 
 export async function loadAssets(){
-  const {loadCityArt}=await import('./pizza-city-art.js?v=20261011m');
-  const {loadRestaurantArt}=await import('./pizza-restaurant-art.js?v=20261011m');
-  const {loadIngredientArt}=await import('./pizza-ingredient-art.js?v=20261011m');
+  const {loadCityArt}=await import('./pizza-city-art.js?v=20261012a');
+  const {loadRestaurantArt}=await import('./pizza-restaurant-art.js?v=20261012a');
+  const {loadIngredientArt}=await import('./pizza-ingredient-art.js?v=20261012a');
   await Promise.all([loadCityArt(),loadRestaurantArt(),loadIngredientArt()]);
   if(!state.cityArt.buildings) await loadCityAtlas();
   loading.hidden=true;

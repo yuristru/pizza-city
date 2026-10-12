@@ -1,7 +1,7 @@
-import {profilePlan} from './pizza-kitchen.js?v=20261011m';
-import {state,saveLayout,updateMoney,ensureRestaurants} from './pizza-core.js?v=20261011m';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261011m';
-import {advanceService} from './pizza-service.js?v=20261011m';
+import {profilePlan} from './pizza-kitchen.js?v=20261012a';
+import {state,saveLayout,updateMoney,ensureRestaurants} from './pizza-core.js?v=20261012a';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261012a';
+import {advanceService} from './pizza-service.js?v=20261012a';
 
 let checkpoint=0;
 export function tickService(seconds){

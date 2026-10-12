@@ -1,5 +1,5 @@
-import {product,itemPrice} from './pizza-catalog.js?v=20261011m';
-import {DEFAULT_PLAN,roomCell,roomStep,kitchenCell,passageCell} from './pizza-floorplans.js?v=20261011m';
+import {product,itemPrice} from './pizza-catalog.js?v=20261012a';
+import {DEFAULT_PLAN,roomCell,roomStep,kitchenCell,passageCell} from './pizza-floorplans.js?v=20261012a';
 export {roomCell,kitchenCell,passageCell};
 export const ROOM={w:DEFAULT_PLAN.w,h:DEFAULT_PLAN.h};
 export const KITCHEN=DEFAULT_PLAN.kitchen;

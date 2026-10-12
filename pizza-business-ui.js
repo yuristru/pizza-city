@@ -1,7 +1,7 @@
-import {state,ensureRestaurants,restaurantName,saveLayout,notify} from './pizza-core.js?v=20261011m';
-import {restaurantPlan} from './pizza-floorplans.js?v=20261011m';
-import {STAFF,businessMetrics} from './pizza-business.js?v=20261011m';
-import {money} from './pizza-catalog.js?v=20261011m';
+import {state,ensureRestaurants,restaurantName,saveLayout,notify} from './pizza-core.js?v=20261012a';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261012a';
+import {STAFF,businessMetrics} from './pizza-business.js?v=20261012a';
+import {money} from './pizza-catalog.js?v=20261012a';
 const el=id=>document.getElementById(id);let stamp=0;
 function text(tag,value){const e=document.createElement(tag);e.textContent=value;return e;}
 export function renderBusinessUI(force=false){
