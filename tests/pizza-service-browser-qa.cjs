@@ -1,5 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const {chromium}=require('playwright');
+const {undoEdit,resetEdit}=require('./pizza-editor-helpers.cjs');
 const root=process.cwd(),out=path.join(root,'qa/pizza/service');fs.mkdirSync(out,{recursive:true});
 const source=fs.readFileSync(path.join(root,'pizza.js'),'utf8'),core=source.match(/from ['"](.\/pizza-core\.js[^'"]*)['"]/)[1].replace('./','/');
 const recipe={name:'Margherita',sauce:'tomato',toppings:Array.from({length:8},(_,i)=>({id:'mozzarella',form:1,x:160+Math.cos(i*Math.PI/4)*60,y:160+Math.sin(i*Math.PI/4)*60,angle:0}))};
@@ -38,7 +39,7 @@ const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+deco
     await page.click('[data-speed="0"]');await render();const banner=page.locator('[data-payment-id="1"]');assert(await banner.isVisible());assert.equal(await banner.getAttribute('data-scene'),'city');assert.equal(await banner.getAttribute('data-amount-cents'),'1700');assert.equal(await banner.innerText(),'+17,00 DM');
     const alignment=await page.evaluate(async p=>{const {state,root}=await import(p),point=state.restaurantSign.toGlobal({x:0,y:-22}),b=document.querySelector('[data-payment-id="1"]').getBoundingClientRect(),base=root.getBoundingClientRect();return {x:Math.abs((b.left+b.right)/2-(point.x+base.left)),y:Math.abs(b.bottom-(point.y+base.top))};},core);assert(alignment.x<1&&alignment.y<4,JSON.stringify(alignment));await capture('guests-income-city.png');
     await page.click('#restaurantBtn');await render();assert.equal(await banner.getAttribute('data-scene'),'restaurant');assert.equal((await snapshot()).service.revenueCents,paid.service.revenueCents);await capture('guests-income-restaurant.png');
-    await page.click('#undoBtn');const undone=await snapshot();assert.equal(Math.round(undone.balance*100),Math.round(beforeFloor.balance*100)+undone.service.netCents-beforeFloor.service.netCents-(undone.service.operatingCents||0)+(beforeFloor.service.operatingCents||0),'Undo must retain earned revenue and ingredient costs.');
+    await undoEdit(page);const undone=await snapshot();assert.equal(Math.round(undone.balance*100),Math.round(beforeFloor.balance*100)+undone.service.netCents-beforeFloor.service.netCents-(undone.service.operatingCents||0)+(beforeFloor.service.operatingCents||0),'Undo must retain earned revenue and ingredient costs.');
     for(const [width,height]of [[320,568],[393,852],[844,390]]){
       await page.setViewportSize({width,height});await page.waitForTimeout(120);await render();assert(await banner.isVisible());
       const moneyFits=await page.locator('.money').evaluate(e=>{const box=e.getBoundingClientRect(),cell=e.parentElement.getBoundingClientRect();return e.scrollWidth<=e.clientWidth+1&&box.left>=cell.left&&box.right<=cell.right;});assert(moneyFits,'Cash including Pfennig must fit at '+width+'px');

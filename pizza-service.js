@@ -1,10 +1,10 @@
-import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261012e';
-import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261012e';
-import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261012e';
-import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261012e';
+import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261012f';
+import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261012f';
+import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261012f';
+import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261012f';
 
-import {businessIssue,demandScore,operatingRates} from './pizza-business.js?v=20261012e';
-import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable} from './pizza-production.js?v=20261012e';
+import {businessIssue,demandScore,operatingRates} from './pizza-business.js?v=20261012f';
+import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable} from './pizza-production.js?v=20261012f';
 export const SERVICE_PHASES=['arriving','waiting','eating','leaving','paying'];
 export const tableKey=t=>[t.x,t.y,t.r,t.seats,t.variant||'wood'].join(':');
 export function freshService(){return {version:1,chainVersion:1,elapsed:0,untilArrival:2,nextId:1,groups:[],payments:[],dirtyTables:[],waiterTasks:[],staffPositions:{},plateReturns:[],cleanedTables:0,netCents:0,revenueCents:0,costCents:0,servedGuests:0};}

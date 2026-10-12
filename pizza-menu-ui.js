@@ -1,7 +1,7 @@
-import {notify} from './pizza-core.js?v=20261012e';
-import {INGREDIENTS,copyRecipe} from './pizza-recipe.js?v=20261012e';
-import {savedRecipes,drawRecipePreview,showPizza} from './pizza-editor.js?v=20261012e';
-import {parseMenuPrice,menuContribution,restoreMenu,putOnMenu} from './pizza-menu.js?v=20261012e';
+import {notify} from './pizza-core.js?v=20261012f';
+import {INGREDIENTS,copyRecipe} from './pizza-recipe.js?v=20261012f';
+import {savedRecipes,drawRecipePreview,showPizza} from './pizza-editor.js?v=20261012f';
+import {parseMenuPrice,menuContribution,restoreMenu,putOnMenu} from './pizza-menu.js?v=20261012f';
 
 const el=id=>document.getElementById(id),KEY='pizza-menu-v1';
 const money=cents=>(cents/100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' DM';

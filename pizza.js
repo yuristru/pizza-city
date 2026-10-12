@@ -1,23 +1,21 @@
-import {mountStaffUI,renderStaffUI} from './pizza-staff-ui.js?v=20261012e';
-import {mountBusinessUI,renderBusinessUI} from './pizza-business-ui.js?v=20261012e';
-import {mountKitchenUI,renderKitchenUI} from './pizza-kitchen-ui.js?v=20261012e';
-import {restaurantPlan} from './pizza-floorplans.js?v=20261012e';
-import {mountProperties} from './pizza-properties-ui.js?v=20261012e';
-import {mountMenu} from './pizza-menu-ui.js?v=20261012e';
-import {tickService} from './pizza-service-runtime.js?v=20261012e';
-import {renderServiceUI} from './pizza-service-ui.js?v=20261012e';
-import {showPizza} from './pizza-editor.js?v=20261012e';
-import {app,root,state,loadAssets,updateMoney,restaurantName} from './pizza-core.js?v=20261012e';
-import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261012e';
-import {showRestaurant,tickRestaurant,resizeRestaurant,resetRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView,toggleMove} from './pizza-restaurant.js?v=20261012e';
-
-import {furnitureIcon} from './pizza-sprites.js?v=20261012e';
+import {mountStaffUI,renderStaffUI} from './pizza-staff-ui.js?v=20261012f';
+import {mountBusinessUI,renderBusinessUI} from './pizza-business-ui.js?v=20261012f';
+import {mountKitchenUI,renderKitchenUI} from './pizza-kitchen-ui.js?v=20261012f';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261012f';
+import {mountProperties} from './pizza-properties-ui.js?v=20261012f';
+import {mountMenu} from './pizza-menu-ui.js?v=20261012f';
+import {tickService} from './pizza-service-runtime.js?v=20261012f';
+import {renderServiceUI} from './pizza-service-ui.js?v=20261012f';
+import {showPizza} from './pizza-editor.js?v=20261012f';
+import {app,root,state,loadAssets,updateMoney,restaurantName} from './pizza-core.js?v=20261012f';
+import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261012f';
+import {showRestaurant,tickRestaurant,resizeRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView,toggleMove,clearSelection,rotateSelection,sellSelection} from './pizza-restaurant.js?v=20261012f';
 
 const rotateBtn=document.querySelector('#rotateBtn'),deleteBtn=document.querySelector('#deleteBtn');
-import {mountCatalog,renderCatalog,showCatalogSizes} from './pizza-catalog-ui.js?v=20261012e';
+import {mountCatalog,renderCatalog} from './pizza-catalog-ui.js?v=20261012f';
 mountProperties();mountKitchenUI();mountBusinessUI();mountStaffUI();
 mountMenu();
-mountCatalog(()=>{if(restaurantView().panMode)toggleRestaurantPan();cancelPlacement();syncEditUI();});
+mountCatalog(()=>{if(restaurantView().panMode)toggleRestaurantPan();clearSelection();syncEditUI();});
 document.addEventListener('staff-changed',()=>{renderServiceUI();renderKitchenUI();renderBusinessUI(true);});
 state.navigate=(where,id)=>where==='restaurant'?showRestaurant(id):showCity();
 function renderRestaurantPicker(){
@@ -32,23 +30,15 @@ document.querySelector('#restaurantBtn').onclick=showRestaurant;
 document.querySelector('#pizzaBtn').onclick=showPizza;
 
 function syncEditUI(){
-  rotateBtn.textContent=`Drehen ${state.rotation*90}°`;
-  rotateBtn.setAttribute('aria-label',`Möbelstück um 90 Grad drehen. Aktuell ${state.rotation*90} Grad.`);
-  deleteBtn.classList.toggle('active',state.deleteMode);deleteBtn.setAttribute('aria-pressed',String(state.deleteMode));
-  rotateBtn.disabled=['floor','renovation','kitchenFloor'].includes(state.selectedTool);
-  document.querySelector('#moveBtn').setAttribute('aria-pressed',String(!!state.moveMode));
   renderCatalog();renderServiceUI();renderKitchenUI();
-  document.querySelector('#undoBtn').disabled=!state.history.length;
   updatePlacementPreview();resizeRestaurant();
 }
 state.onEditChange=syncEditUI;
-rotateBtn.onclick=()=>{state.rotation=(state.rotation+1)%4;state.deleteMode=false;syncEditUI();};
+rotateBtn.onclick=rotateSelection;
 document.querySelector('#moveBtn').onclick=toggleMove;
-deleteBtn.onclick=()=>{state.moveMode=false;state.deleteMode=!state.deleteMode;cancelPlacement();syncEditUI();};
-document.querySelector('#resetBtn').onclick=()=>{showCatalogSizes();resetRestaurant();};
-document.querySelector('#undoBtn').onclick=undoRestaurant;
+deleteBtn.onclick=sellSelection;
 document.querySelector('#placeBtn').onclick=confirmPlacement;
-document.querySelector('#cancelBtn').onclick=cancelPlacement;
+document.querySelector('#cancelBtn').onclick=()=>{cancelPlacement();syncEditUI();};
 
 
 for(const button of document.querySelectorAll('[data-speed]')) button.onclick=()=>{
@@ -108,7 +98,7 @@ window.addEventListener('keydown',event=>{
   if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='z'){event.preventDefault();undoRestaurant();}
   else if(!event.ctrlKey&&!event.metaKey&&event.key.toLowerCase()==='r') rotateBtn.click();
   else if(event.key==='Enter'&&state.pendingPlacement){event.preventDefault();confirmPlacement();}
-  else if(event.key==='Escape'){state.deleteMode=false;cancelPlacement();syncEditUI();}
+  else if(event.key==='Escape'){if(state.selectMode&&!state.moveMode)clearSelection();else cancelPlacement();syncEditUI();}
 });
 
 await loadAssets();renderCatalog();state.ready=true;showCity();

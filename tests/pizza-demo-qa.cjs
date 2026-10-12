@@ -2,6 +2,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const {pathToFileURL}=require('node:url');
 const {chromium}=require('playwright');
+const {undoEdit,resetEdit}=require('./pizza-editor-helpers.cjs');
 
 const root=process.cwd(),out=path.join(root,'qa/pizza');fs.mkdirSync(out,{recursive:true});
 const corePath=fs.readFileSync(path.join(root,'pizza.js'),'utf8').match(/from ['"](.\/pizza-core\.js[^'"]*)['"]/)[1].replace('./','/');
@@ -40,7 +41,7 @@ async function capture(page,name){
   await page.screenshot({path:path.join(out,name),style:'#toast { visibility: hidden; }'});
 }
 async function selectTool(page,type,seats){
-  const category=type==='table'?'table':type==='oven'?'oven':type==='bar'?'bar':'decor';
+  const category=type==='table'?'table':['oven','bar','fridge'].includes(type)?'oven':'decor';
   const selector=seats?`[data-seats="${seats}"]`:`[data-tool="${type}"]`;
   if(!await page.locator(selector).first().isVisible()){
     await page.click(`[data-category="${category}"]`);
@@ -140,7 +141,7 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     await loaded(page,url);assert.deepEqual(await citySignature(),previous,'A generated map must survive reload.');
     console.log('Random city passed: button below center, distinct repeated generation, owned properties/account preservation and saved map.');
     const owned=await page.evaluate(async modulePath=>(await import(modulePath)).state.ownedProperties,corePath);assert.deepEqual(owned,['san-marco']);
-    await page.click('#restaurantBtn');await page.click('#resetBtn');assert.equal((await snapshot(page)).balance,215560,'Restaurant reset must not refund a property.');
+    await page.click('#restaurantBtn');await resetEdit(page);assert.equal((await snapshot(page)).balance,215560,'Restaurant reset must not refund a property.');
     await page.evaluate(()=>localStorage.removeItem('pizza-city-layout-v1'));await loaded(page,url);
     console.log('Properties passed: nine map sites, three sizes, purchase debit, duplicate protection, reload and reset accounting.');
     assert.match(await page.locator('#gameDate').innerText(),/Do\./);
@@ -225,28 +226,28 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     await page.click('#restaurantBtn');await page.evaluate(async source=>{const {app}=await import(source);app.ticker.stop();app.render();},corePath);
     const surfaces=await page.evaluate(async source=>{const {world}=await import(source);return world.children[0].children.filter(c=>['restaurant-floor','restaurant-walls'].includes(c.label)).map(c=>({label:c.label,finish:c.finish,renovation:c.renovation}));},corePath);
     assert(surfaces.some(c=>c.finish==='parquet'));assert(surfaces.some(c=>c.renovation===3));
-    await page.click('#resetBtn');assert.deepEqual((await snapshot(page)).finishes,{floor:'terracotta',renovation:0});assert.equal((await snapshot(page)).balance,finishBudget);
-    await page.click('#undoBtn');assert.deepEqual((await snapshot(page)).finishes,finished.finishes);assert.equal((await snapshot(page)).balance,finished.balance);
+    await resetEdit(page);assert.deepEqual((await snapshot(page)).finishes,{floor:'terracotta',renovation:0});assert.equal((await snapshot(page)).balance,finishBudget);
+    await undoEdit(page);assert.deepEqual((await snapshot(page)).finishes,finished.finishes);assert.equal((await snapshot(page)).balance,finished.balance);
     await page.click('[data-category="finish"]');await page.click('[data-finish="stone"]');
     await page.evaluate(async source=>{const {state}=await import(source);state.balance=0;},corePath);
     await page.click('[data-finish="stone"]');assert(!await page.locator('#placeBtn').isEnabled());assert.match(await page.locator('#placementStatus').innerText(),/Geld/);
-    await page.click('#resetBtn');
+    await resetEdit(page);
     console.log('Room upgrades passed: floor purchases, three sequential renovation levels, duplicate/funds guards, visual surfaces, reload and undo/reset.');
 
     await page.click('[data-category="table"]');assert.equal(await page.locator('[data-quality]').count(),3);
     await page.click('[data-quality="premium"]');assert.equal(await page.locator('[data-seats]').count(),4);
     await page.click('[data-seats="2"]');const beforeBuy=await snapshot(page);await placeCell(page,5,0);
     let purchased=await snapshot(page);assert.equal(purchased.balance,beforeBuy.balance-1040);assert(purchased.items.some(p=>p.variant==='premium'&&p.paid===1040));
-    await page.click('#deleteBtn');await tapCell(page,5,0);assert.equal((await snapshot(page)).balance,beforeBuy.balance-520);
-    await page.click('#undoBtn');assert.equal((await snapshot(page)).balance,beforeBuy.balance-1040);
-    await page.click('#undoBtn');assert.deepEqual((await snapshot(page)).items,beforeBuy.items);assert.equal((await snapshot(page)).balance,beforeBuy.balance);
-    await selectTool(page,'arcade');await placeCell(page,5,0);assert((await snapshot(page)).items.some(p=>p.type==='arcade'&&p.paid===2800));await page.click('#undoBtn');
-    await page.click('#resetBtn');
+    await page.click('[data-category="select"]');await tapCell(page,5,0);await page.click('#deleteBtn');assert.equal((await snapshot(page)).balance,beforeBuy.balance-520);
+    await undoEdit(page);assert.equal((await snapshot(page)).balance,beforeBuy.balance-1040);
+    await undoEdit(page);assert.deepEqual((await snapshot(page)).items,beforeBuy.items);assert.equal((await snapshot(page)).balance,beforeBuy.balance);
+    await selectTool(page,'arcade');await placeCell(page,5,0);assert((await snapshot(page)).items.some(p=>p.type==='arcade'&&p.paid===2800));await undoEdit(page);
+    await resetEdit(page);
     const budget=(await snapshot(page)).balance;
     await page.evaluate(async source=>{const {state,updateMoney}=await import(source);state.balance=0;updateMoney();},corePath);
     await selectTool(page,'plant');await tapCell(page,6,0);assert.equal(await page.locator('#placeBtn').isEnabled(),false);assert.match(await page.locator('#placementStatus').innerText(),/Nicht genügend/);
     await page.evaluate(async ({source,budget})=>{const {state,updateMoney}=await import(source);state.balance=budget;updateMoney();},{source:corePath,budget});
-    await page.click('#resetBtn');
+    await resetEdit(page);
     // Each capacity is one sprite and one placement, including its chairs.
     for(const [seats,x,y]of [[2,0,2],[4,5,2],[6,5,0],[8,0,5]]){
       await selectTool(page,'table',seats);const before=await snapshot(page);await tapCell(page,x,y);
@@ -255,14 +256,14 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
       assert((await snapshot(page)).items.some(item=>item.type==='table'&&item.seats===seats&&item.x===x&&item.y===y));
       const groups=await page.evaluate(async modulePath=>{const {world,Sprite}=await import(modulePath);return world.children[0].children.find(c=>c.label==='restaurant-objects').children.filter(c=>c.label==='placed-furniture').map(c=>({children:c.children.length,isSprite:c.children[0] instanceof Sprite,label:c.children[0].label}));},corePath);
       assert(groups.every(g=>g.children===1&&g.isSprite&&g.label==='furniture-sprite'),'Furniture must consist of one flat sprite.');
-      await page.click('#undoBtn');assert.deepEqual((await snapshot(page)).items,before.items);
+      await undoEdit(page);assert.deepEqual((await snapshot(page)).items,before.items);
     }
     await selectTool(page,'table',8);await page.click('#rotateBtn');await placeCell(page,6,2);
-    assert((await snapshot(page)).items.some(item=>item.seats===8&&item.r===1&&item.x===6&&item.y===2));await capture(page,'table-8-rotated.png');await page.click('#undoBtn');
-    await page.click('#resetBtn');await selectTool(page,'plant');await tapCell(page,0,3);
+    assert((await snapshot(page)).items.some(item=>item.seats===8&&item.r===1&&item.x===6&&item.y===2));await capture(page,'table-8-rotated.png');await undoEdit(page);
+    await resetEdit(page);await selectTool(page,'plant');await tapCell(page,0,3);
     assert.equal((await snapshot(page)).items.length,model.DEFAULT_LAYOUT.length);await page.click('#cancelBtn');assert.equal((await snapshot(page)).pending,null);
     await tapCell(page,0,3);await page.keyboard.press('Escape');assert.equal((await snapshot(page)).pending,null);assert.equal((await snapshot(page)).items.length,model.DEFAULT_LAYOUT.length);
-    await tapCell(page,0,3);await page.keyboard.press('Enter');assert((await snapshot(page)).items.some(item=>item.type==='plant'&&item.x===0&&item.y===3));await page.click('#undoBtn');
+    await tapCell(page,0,3);await page.keyboard.press('Enter');assert((await snapshot(page)).items.some(item=>item.type==='plant'&&item.x===0&&item.y===3));await undoEdit(page);
     // A touch drag moves only the snapped preview until Setzen is pressed.
     const start=await nodePoint(page,'floor-0-2'),end=await nodePoint(page,'floor-0-3');
     await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:start.x,y:start.y,id:1}]});
@@ -278,25 +279,25 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     await tapCell(page,11,8);assert.equal((await snapshot(page)).items.length,count+1);assert.equal(await page.locator('#placeBtn').isEnabled(),false);assert.match(await page.locator('#placementStatus').innerText(),/Eingang/);
     await placeCell(page,9,1);assert((await snapshot(page)).items.some(item=>item.type==='bar'&&item.x===9&&item.y===1&&item.r===1));
     await capture(page,'custom-furniture.png');
-    await page.click('#deleteBtn');assert.equal(await page.locator('.toolbtn.active').count(),0);
+    await page.click('[data-category="select"]');assert.equal(await page.locator('.toolbtn.active').count(),0);
     const chairPoint=await page.evaluate(async modulePath=>{
       const {world,root,app}=await import(modulePath);app.render();
       const group=world.children[0].children.find(c=>c.label==='restaurant-objects').children.find(c=>c.label==='placed-furniture'&&c.position.x===96&&c.position.y===128);
       const sprite=group.children[0];if(!sprite.hitArea.contains(-30,-54))throw new Error('Chair pixel is not opaque.');
       const point=sprite.toGlobal({x:-30,y:-54}),base=root.getBoundingClientRect();return {x:point.x+base.left,y:point.y+base.top};
     },corePath);
-    await page.mouse.click(chairPoint.x,chairPoint.y);assert(!(await snapshot(page)).items.some(item=>item.type==='table'&&item.x===5&&item.y===2),'Tapping a baked chair must remove its whole table group.');
-    await page.click('#undoBtn');assert((await snapshot(page)).items.some(item=>item.type==='table'&&item.x===5&&item.y===2));
-    const custom=(await snapshot(page)).items;await page.click('#resetBtn');current=await snapshot(page);
+    await page.mouse.click(chairPoint.x,chairPoint.y);await page.click('#deleteBtn');assert(!(await snapshot(page)).items.some(item=>item.type==='table'&&item.x===5&&item.y===2),'Tapping a baked chair must remove its whole table group.');
+    await undoEdit(page);assert((await snapshot(page)).items.some(item=>item.type==='table'&&item.x===5&&item.y===2));
+    const custom=(await snapshot(page)).items;await resetEdit(page);current=await snapshot(page);
     assert.deepEqual(current.items,model.DEFAULT_LAYOUT);assert.equal(current.rotation,0);assert.equal(current.deleteMode,false);assert.equal(current.tool,'table');
-    assert.equal(current.seats,4);assert.equal(await page.locator('#deleteBtn').getAttribute('aria-pressed'),'false');assert.equal(await page.locator('[data-seats="4"]').getAttribute('aria-pressed'),'true');
-    await page.click('#undoBtn');assert.deepEqual((await snapshot(page)).items,custom);
+    assert.equal(current.seats,4);assert.equal(await page.locator('#deleteBtn').isVisible(),false);assert.equal(await page.locator('[data-seats="4"]').getAttribute('aria-pressed'),'true');
+    await undoEdit(page);assert.deepEqual((await snapshot(page)).items,custom);
     await loaded(page,url);assert.deepEqual((await snapshot(page)).items,custom);
     await page.click('#restaurantBtn');await page.click('[data-speed="1"]');
     await page.evaluate(async modulePath=>{const {app}=await import(modulePath);app.ticker.stop();app.ticker.maxFPS=0;for(let i=0;i<480;i++)app.ticker.update(app.ticker.lastTime+1000/60);},corePath);
     current=await snapshot(page);const occupied=new Set(current.items.flatMap(model.occupiedCells));
     for(const actor of current.movers.filter(actor=>actor.visible)){assert(!occupied.has(`${Math.round(actor.x)},${Math.round(actor.y)}`),'Guest walked through furniture.');assert(model.guestCell(Math.round(actor.x),Math.round(actor.y)),'Guest entered the separate kitchen.');}
-    await page.click('[data-speed="0"]');await page.click('#resetBtn');
+    await page.click('[data-speed="0"]');await resetEdit(page);
     await page.evaluate(async modulePath=>{const {app}=await import(modulePath);app.ticker.maxFPS=0;app.ticker.stop();},corePath);
     console.log('Restaurant passed: combined 2D table sprites, all capacities, touch preview/confirm/cancel, kitchen/entrance/overlap checks, rotation, deletion, undo/reset, reload and guest paths.');
 
@@ -318,7 +319,7 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
       assert.equal(geometry.screen.width,geometry.base.width);assert.equal(geometry.screen.height,geometry.base.height);
       assert(geometry.room.left>=geometry.area.left-2&&geometry.room.right<=geometry.area.right+2&&geometry.room.top>=geometry.area.top-2&&geometry.room.bottom<=geometry.area.bottom+2,JSON.stringify({width,height,...geometry}));
       await capture(page,`restaurant-${width}x${height}.png`);
-      await selectTool(page,'plant');await placeCell(page,7,3);assert((await snapshot(page)).items.some(item=>item.type==='plant'&&item.x===7&&item.y===3));await page.click('#undoBtn');
+      await selectTool(page,'plant');await placeCell(page,7,3);assert((await snapshot(page)).items.some(item=>item.type==='plant'&&item.x===7&&item.y===3));await undoEdit(page);
       await page.click('#cityBtn');await capture(page,`city-${width}x${height}.png`);
     }
     console.log('Responsive views passed: 320, 393, 430, tablet, desktop and landscape, including real placement after resize.');
@@ -336,12 +337,12 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
       const pattern='**/assets/pizza/city/italian-'+asset+'-v*.png';
       await page.route(pattern,route=>route.fulfill({status:404,body:'missing'}));
       await loaded(page,url);assert.deepEqual((await snapshot(page)).assets,[asset==='courtyards'?'courtyardBuildings':asset]);
-      await page.click('#restaurantBtn');assert.equal(await page.locator('#placementTitle').innerText(),'4er-Tisch mit Stühlen · 0°');
+      await page.click('#restaurantBtn');assert.equal(await page.locator('#placementTitle').innerText(),'Objekte auswählen');
       await page.unroute(pattern);
     }
     await page.route('**/assets/pizza/restaurant/*.png',route=>route.fulfill({status:404,body:'missing'}));
     await loaded(page,url);await page.click('#restaurantBtn');await selectTool(page,'oven');await placeCell(page,8,1);
-    await capture(page,'restaurant-art-fallback.png');await page.click('#undoBtn');await page.unroute('**/assets/pizza/restaurant/*.png');
+    await capture(page,'restaurant-art-fallback.png');await undoEdit(page);await page.unroute('**/assets/pizza/restaurant/*.png');
     await page.route('**/assets/pizza/city/*.png',route=>route.fulfill({status:404,body:'missing'}));
     await loaded(page,url);assert.equal((await snapshot(page)).assets.length,7);
     await page.click('#restaurantBtn');await selectTool(page,'plant');await placeCell(page,0,3);

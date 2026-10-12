@@ -1,8 +1,8 @@
-import {state,ensureRestaurants,restaurantName,saveLayout,notify} from './pizza-core.js?v=20261012e';
-import {STAFF_ROLES,LEVEL_NAMES,skillLevel,averageSkill,monthlyPayroll,restaurantStaff,hireEmployee,assignEmployee,assignShift,dismissEmployee,employeeBusy} from './pizza-staff.js?v=20261012e';
-import {SHIFTS,shiftLabel,staffSchedule} from './pizza-shifts.js?v=20261012e';
-import {drawStaffAvatar} from './pizza-staff-avatar.js?v=20261012e';
-import {money} from './pizza-catalog.js?v=20261012e';
+import {state,ensureRestaurants,restaurantName,saveLayout,notify} from './pizza-core.js?v=20261012f';
+import {STAFF_ROLES,LEVEL_NAMES,skillLevel,averageSkill,monthlyPayroll,restaurantStaff,hireEmployee,assignEmployee,assignShift,dismissEmployee,employeeBusy} from './pizza-staff.js?v=20261012f';
+import {SHIFTS,shiftLabel,staffSchedule} from './pizza-shifts.js?v=20261012f';
+import {drawStaffAvatar} from './pizza-staff-avatar.js?v=20261012f';
+import {money} from './pizza-catalog.js?v=20261012f';
 const el=id=>document.getElementById(id),portraits=new Map(),roles={market:'all',files:'all',restaurants:'all'};
 let view='market',restaurant=null,stamp=0,shiftFilter='all';
 function node(tag,text,className){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(className)e.className=className;return e;}

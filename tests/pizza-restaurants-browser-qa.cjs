@@ -2,6 +2,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const {pathToFileURL}=require('node:url');
 const {chromium}=require('playwright');
+const {undoEdit,resetEdit}=require('./pizza-editor-helpers.cjs');
 
 const root=process.cwd(),out=path.join(root,'qa/pizza');fs.mkdirSync(out,{recursive:true});
 const corePath=fs.readFileSync(path.join(root,'pizza.js'),'utf8').match(/from ['"](.\/pizza-core\.js[^'"]*)['"]/)[1].replace('./','/');
@@ -40,7 +41,7 @@ async function capture(page,name){
   await page.screenshot({path:path.join(out,name),style:'#toast { visibility: hidden; }'});
 }
 async function selectTool(page,type,seats){
-  const category=type==='table'?'table':type==='oven'?'oven':type==='bar'?'bar':'decor';
+  const category=type==='table'?'table':['oven','bar','fridge'].includes(type)?'oven':'decor';
   const selector=seats?`[data-seats="${seats}"]`:`[data-tool="${type}"]`;
   if(!await page.locator(selector).first().isVisible()){
     await page.click(`[data-category="${category}"]`);
@@ -67,14 +68,14 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
   assert.equal(await page.locator('#restaurantSelect option').count(),3);
   await page.selectOption('#restaurantSelect','san-marco');await selectTool(page,'plant');await placeCell(page,0,3);const san=await profiles(),cost=148360-san.balance;
   await page.selectOption('#restaurantSelect','via-roma');await selectTool(page,'plant');await placeCell(page,0,3);const via=await profiles();assert.equal(via.profiles['san-marco'].items.length,1);assert.equal(via.profiles['via-roma'].items.length,1);
-  await page.selectOption('#restaurantSelect','san-marco');await page.click('#undoBtn');s=await profiles();assert.equal(s.balance,via.balance+cost);assert.equal(s.profiles['san-marco'].items.length,0);assert.equal(s.profiles['via-roma'].items.length,1);
-  await page.selectOption('#restaurantSelect','mamma-mia');const beforeReset=await profiles();await page.click('#resetBtn');s=await profiles();assert.equal(s.balance,beforeReset.balance+3200);assert.equal(s.profiles['via-roma'].items.length,1);await page.click('#undoBtn');assert.equal((await profiles()).balance,beforeReset.balance);
+  await page.selectOption('#restaurantSelect','san-marco');await undoEdit(page);s=await profiles();assert.equal(s.balance,via.balance+cost);assert.equal(s.profiles['san-marco'].items.length,0);assert.equal(s.profiles['via-roma'].items.length,1);
+  await page.selectOption('#restaurantSelect','mamma-mia');const beforeReset=await profiles();await resetEdit(page);s=await profiles();assert.equal(s.balance,beforeReset.balance+3200);assert.equal(s.profiles['via-roma'].items.length,1);await undoEdit(page);assert.equal((await profiles()).balance,beforeReset.balance);
   await page.selectOption('#restaurantSelect','san-marco');await page.click('[data-category="finish"]');await page.click('[data-finish="parquet"]');await page.click('#placeBtn');
   await page.selectOption('#restaurantSelect','via-roma');await page.click('[data-category="finish"]');await page.click('[data-finish="stone"]');await page.click('#placeBtn');const floorBefore=await profiles();
   await page.selectOption('#restaurantSelect','san-marco');await selectTool(page,'plant');await placeCell(page,0,3);const otherSpent=await profiles();
-  await page.selectOption('#restaurantSelect','via-roma');await page.click('#undoBtn');s=await profiles();assert.equal(s.balance,otherSpent.balance+3200);assert.equal(s.profiles['san-marco'].finishes.floor,'parquet');assert.equal(s.profiles['via-roma'].finishes.floor,'terracotta');
+  await page.selectOption('#restaurantSelect','via-roma');await undoEdit(page);s=await profiles();assert.equal(s.balance,otherSpent.balance+3200);assert.equal(s.profiles['san-marco'].finishes.floor,'parquet');assert.equal(s.profiles['via-roma'].finishes.floor,'terracotta');
   const beforeReload=await profiles();await loaded(page,url);await page.click('[data-speed="0"]');await page.click('#restaurantBtn');s=await profiles();assert.equal(s.id,'via-roma');assert.equal(s.balance,beforeReload.balance);assert.deepEqual(s.profiles['san-marco'].items,beforeReload.profiles['san-marco'].items);assert.equal(s.profiles['mamma-mia'].finishes.floor,'stone');
-  const beforeViaReset=await profiles();await page.click('#resetBtn');s=await profiles();assert.equal(s.balance,beforeViaReset.balance+cost);assert.equal(s.profiles['via-roma'].items.length,0);assert.equal(s.profiles['san-marco'].finishes.floor,'parquet');
+  const beforeViaReset=await profiles();await resetEdit(page);s=await profiles();assert.equal(s.balance,beforeViaReset.balance+cost);assert.equal(s.profiles['via-roma'].items.length,0);assert.equal(s.profiles['san-marco'].finishes.floor,'parquet');
   for(const id of ['san-marco','via-roma']){await page.selectOption('#restaurantSelect',id);await selectTool(page,'table',4);await placeCell(page,3,4);}
   await page.evaluate(()=>localStorage.setItem('pizza-menu-v1',JSON.stringify({version:1,items:[{recipe:{name:'Testpizza',sauce:'tomato',toppings:[]},price:850,active:true}]})));
   await loaded(page,url);await page.click('[data-speed="1"]');

@@ -7,6 +7,8 @@ on:
       - 'pizza*.css'
       - 'assets/pizza/**'
       - 'tests/pizza-demo-qa.cjs'
+      - 'tests/pizza-editor-browser-qa.cjs'
+      - 'tests/pizza-editor-helpers.cjs'
       - 'tests/pizza-catalog-qa.mjs'
       - 'tests/pizza-recipe-qa.mjs'
       - 'tests/pizza-menu-qa.mjs'
@@ -77,6 +79,7 @@ jobs:
           node tests/pizza-city-study-qa.cjs
           node tests/pizza-city-mix-qa.cjs
           node tests/pizza-demo-qa.cjs
+          node tests/pizza-editor-browser-qa.cjs
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4

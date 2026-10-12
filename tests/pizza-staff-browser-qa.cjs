@@ -40,7 +40,7 @@ async function capture(page,name){
   await page.screenshot({path:path.join(out,name),style:'#toast { visibility: hidden; }'});
 }
 async function selectTool(page,type,seats){
-  const category=type==='table'?'table':type==='oven'?'oven':type==='bar'?'bar':'decor';
+  const category=type==='table'?'table':['oven','bar','fridge'].includes(type)?'oven':'decor';
   const selector=seats?`[data-seats="${seats}"]`:`[data-tool="${type}"]`;
   if(!await page.locator(selector).first().isVisible()){
     await page.click(`[data-category="${category}"]`);

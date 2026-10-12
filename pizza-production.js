@@ -1,6 +1,6 @@
-import {workPath} from './pizza-business.js?v=20261012e';
-import {roomCell,roomStep} from './pizza-floorplans.js?v=20261012e';
-import {dimensions} from './pizza-layout.js?v=20261012e';
+import {workPath} from './pizza-business.js?v=20261012f';
+import {roomCell,roomStep} from './pizza-floorplans.js?v=20261012f';
+import {dimensions} from './pizza-layout.js?v=20261012f';
 const key=t=>[t.x,t.y,t.r,t.seats,t.variant||'wood'].join(':');
 const personId=id=>typeof id==='string'&&/^[a-z0-9-]{1,80}$/.test(id);
 const cell=(p,plan)=>p&&Number.isInteger(p.x)&&Number.isInteger(p.y)&&roomCell(p.x,p.y,plan);

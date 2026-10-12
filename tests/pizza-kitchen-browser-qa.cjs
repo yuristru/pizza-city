@@ -2,6 +2,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const {pathToFileURL}=require('node:url');
 const {chromium}=require('playwright');
+const {undoEdit,resetEdit}=require('./pizza-editor-helpers.cjs');
 
 const root=process.cwd(),out=path.join(root,'qa/pizza');fs.mkdirSync(out,{recursive:true});
 const corePath=fs.readFileSync(path.join(root,'pizza.js'),'utf8').match(/from ['"](.\/pizza-core\.js[^'"]*)['"]/)[1].replace('./','/');
@@ -40,7 +41,7 @@ async function capture(page,name){
   await page.screenshot({path:path.join(out,name),style:'#toast { visibility: hidden; }'});
 }
 async function selectTool(page,type,seats){
-  const category=type==='table'?'table':type==='oven'?'oven':type==='bar'?'bar':'decor';
+  const category=type==='table'?'table':['oven','bar','fridge'].includes(type)?'oven':'decor';
   const selector=seats?`[data-seats="${seats}"]`:`[data-tool="${type}"]`;
   if(!await page.locator(selector).first().isVisible()){
     await page.click(`[data-category="${category}"]`);
@@ -70,14 +71,14 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
   await placeCell(page,4,4);assert.equal((await data()).tiles.length,9);assert(!(await data()).ready);
   await device('oven',2,2);await device('bar',3,2);assert(!(await data()).ready);await device('fridge',2,4);assert((await data()).ready);
   const operating=await page.evaluate(async p=>Object.values((await import(p)).state.restaurants).reduce((s,r)=>s+(r.service.operatingCents||0),0),corePath);assert.equal(Math.round((await data()).balance*100),10000000-60000-9*5000-90000-65000-80000-operating);
-  await page.click('#undoBtn');assert(!(await data()).ready);await device('fridge',2,4);assert((await data()).ready);
-  await floor();const protectedFloor=await data();await page.click('#deleteBtn');await tapCell(page,4,2);assert.deepEqual((await data()).tiles,protectedFloor.tiles);assert.equal((await data()).balance,protectedFloor.balance);
-  await tapCell(page,4,4);assert.equal((await data()).tiles.length,8);assert(!(await data()).ready);assert.equal((await data()).balance,protectedFloor.balance+25);await page.click('#undoBtn');assert((await data()).ready);assert.equal((await data()).balance,protectedFloor.balance);
+  await undoEdit(page);assert(!(await data()).ready);await device('fridge',2,4);assert((await data()).ready);
+  await page.click('[data-category="select"]');const protectedFloor=await data();await tapCell(page,4,2);assert.match(await page.locator('#placementTitle').innerText(),/theke/i);assert.deepEqual((await data()).tiles,protectedFloor.tiles);assert.equal((await data()).balance,protectedFloor.balance);
+  await tapCell(page,4,4);await page.click('#deleteBtn');assert.equal((await data()).tiles.length,8);assert(!(await data()).ready);assert.equal((await data()).balance,protectedFloor.balance+25);await undoEdit(page);assert((await data()).ready);assert.equal((await data()).balance,protectedFloor.balance);
   await capture(page,'kitchen-custom-san-marco.png');
   const saved=await data();await loaded(page,url);await page.click('[data-speed="0"]');await page.click('#restaurantBtn');assert.deepEqual((await data()).tiles,saved.tiles);assert.deepEqual((await data()).items,saved.items);assert.equal((await data()).balance,saved.balance);assert((await data()).ready);
   await page.selectOption('#restaurantSelect','via-roma');assert.deepEqual((await data()).tiles,[]);assert(!(await data()).ready);await floor();for(let i=0;i<9;i++)await placeCell(page,10+i%3,2+Math.floor(i/3));await device('oven',10,2);await device('bar',11,2);await device('fridge',10,4);await selectTool(page,'table',4);await placeCell(page,3,4);assert((await data()).ready);await capture(page,'kitchen-custom-via-roma.png');
   await page.selectOption('#restaurantSelect','san-marco');assert.deepEqual((await data()).tiles,saved.tiles);await page.click('[data-speed="1"]');await advance(110);assert((await data()).service.servedGuests>0);assert((await data()).service.groups.length>0);await page.click('[data-speed="0"]');
-  await page.click('[data-category="oven"]');await page.click('[data-tool="fridge"][data-variant="compact"]');await page.click('#deleteBtn');const busy=await data();await tapCell(page,2,4);assert.deepEqual((await data()).items,busy.items);assert((await data()).ready);
+  await page.click('[data-category="select"]');const busy=await data();await tapCell(page,2,4);assert.equal(await page.locator('#deleteBtn').isEnabled(),false);assert.deepEqual((await data()).items,busy.items);assert((await data()).ready);
   await page.click('#cityBtn');await advance(.02);await page.click('#restaurantBtn');
   for(const [width,height]of [[320,568],[393,852],[844,390]]){await page.setViewportSize({width,height});await page.waitForTimeout(150);await page.click('[data-category="oven"]');await page.locator('[data-kitchen-check]').click();const r=await page.locator('#kitchenDialog').boundingBox();assert(r.x>=0&&r.x+r.width<=width+1);await page.click('#kitchenClose');}
   assert.deepEqual(errors,[]);console.log('Kitchen browser passed: manual plates/devices, complete footprints, minimum floor, closed/open operation, tile/device removal guards, undo/refunds, reload, independent side-room kitchen and responsive checklist.');

@@ -1,14 +1,14 @@
 export const START_MONEY=243560;
-export const CATEGORIES=[{id:'oven',name:'Küche'},{id:'bar',name:'Theke'},{id:'decor',name:'Deko'},{id:'table',name:'Tische'},{id:'finish',name:'Ausbau'}];
+export const CATEGORIES=[{id:'oven',name:'Küche'},{id:'select',name:'Auswählen'},{id:'decor',name:'Deko'},{id:'table',name:'Tische'},{id:'finish',name:'Ausbau'}];
 export const PRODUCTS=[
   {id:'electric',type:'oven',category:'oven',name:'Elektroofen',price:900},
   {id:'brick',type:'oven',category:'oven',name:'Steinofen',price:2400},
   {id:'professional',type:'oven',category:'oven',name:'Profi-Ofen',price:5800},
   {id:'compact',type:'fridge',category:'oven',name:'Kühlschrank',price:800},
   {id:'coldroom',type:'fridge',category:'oven',name:'Profi-Kühlschrank',price:1800},
-  {id:'rustic',type:'bar',category:'bar',name:'Holztheke',price:650},
-  {id:'tiled',type:'bar',category:'bar',name:'Fliesentheke',price:1100},
-  {id:'marble',type:'bar',category:'bar',name:'Marmortheke',price:2200},
+  {id:'rustic',type:'bar',category:'oven',name:'Holztheke',price:650},
+  {id:'tiled',type:'bar',category:'oven',name:'Fliesentheke',price:1100},
+  {id:'marble',type:'bar',category:'oven',name:'Marmortheke',price:2200},
   {id:'olive',type:'plant',category:'decor',name:'Olivenbaum',price:180},
   {id:'fern',type:'plant',category:'decor',name:'Farn',price:90},
   {id:'palm',type:'plant',category:'decor',name:'Palme',price:260},

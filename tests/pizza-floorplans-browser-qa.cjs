@@ -2,6 +2,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const {pathToFileURL}=require('node:url');
 const {chromium}=require('playwright');
+const {undoEdit,resetEdit}=require('./pizza-editor-helpers.cjs');
 
 const root=process.cwd(),out=path.join(root,'qa/pizza');fs.mkdirSync(out,{recursive:true});
 const corePath=fs.readFileSync(path.join(root,'pizza.js'),'utf8').match(/from ['"](.\/pizza-core\.js[^'"]*)['"]/)[1].replace('./','/');
@@ -40,7 +41,7 @@ async function capture(page,name){
   await page.screenshot({path:path.join(out,name),style:'#toast { visibility: hidden; }'});
 }
 async function selectTool(page,type,seats){
-  const category=type==='table'?'table':type==='oven'?'oven':type==='bar'?'bar':'decor';
+  const category=type==='table'?'table':['oven','bar','fridge'].includes(type)?'oven':'decor';
   const selector=seats?`[data-seats="${seats}"]`:`[data-tool="${type}"]`;
   if(!await page.locator(selector).first().isVisible()){
     await page.click(`[data-category="${category}"]`);
@@ -73,7 +74,7 @@ async function loaded(page,url){
   }
   for(const id of ['san-marco','via-roma','palazzo-sole','teatro']){
    await page.setViewportSize({width:393,height:852});await page.selectOption('#restaurantSelect',id);await selectTool(page,'table',4);
-   await placeCell(page,2,4);await page.click('#undoBtn');await capture(page,'floorplan-mobile-'+id+'.png');
+   await placeCell(page,2,4);await undoEdit(page);await capture(page,'floorplan-mobile-'+id+'.png');
   }
   await page.selectOption('#restaurantSelect','teatro');await selectTool(page,'plant');await placeCell(page,13,12);const largeSaved=await snapshot(page);await page.reload();await page.waitForSelector('#loading',{state:'hidden'});await page.click('[data-speed="0"]');await page.click('#restaurantBtn');assert.deepEqual((await snapshot(page)).items,largeSaved.items);assert.equal((await snapshot(page)).balance,largeSaved.balance);
   await page.selectOption('#restaurantSelect','san-marco');await selectTool(page,'plant');await tapCell(page,5,2);assert.equal(await page.locator('#placeBtn').isEnabled(),true);await page.click('#cancelBtn');
