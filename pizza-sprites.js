@@ -1,6 +1,7 @@
-import {Sprite,Texture,Rectangle} from './pizza-core.js?v=20261012a';
-import {restaurantSprite,restaurantIcon} from './pizza-restaurant-art.js?v=20261012a';
-import {project,tableChairs} from './pizza-layout.js?v=20261012a';
+import {avatarTraits} from './pizza-staff-avatar.js?v=20261012b';
+import {Sprite,Texture,Rectangle} from './pizza-core.js?v=20261012b';
+import {restaurantSprite,restaurantIcon} from './pizza-restaurant-art.js?v=20261012b';
+import {project,tableChairs} from './pizza-layout.js?v=20261012b';
 
 // Pixel bitmaps with four fixed views. The scene places only flat 2D sprites.
 const WIDTH=256,HEIGHT=192,FOOT={x:128,y:144},cache=new Map();
@@ -200,15 +201,16 @@ export function furnitureSprite(type,rotation=0,seats=4,variant){
 }
 export function furnitureIcon(type,seats=4,variant){return (detailedVariant(type,variant)&&restaurantIcon(type))||furnitureArt(type,0,seats,variant).icon;}
 
-export function personSprite(index,rotation=0){
-  const shirt=[{top:'#efe6ce',x:'#b6b9a7',y:'#ded8bf'},{top:'#c56349',x:'#803b30',y:'#a94b39'},{top:'#5b93a4',x:'#315f73',y:'#427c94'},{top:'#729563',x:'#3d613c',y:'#58834f'}][index%4],art=bitmap('person-'+index,rotation,a=>{
+export function staffPersonSprite(employee,rotation=0){return personSprite(employee.role==='cook'?0:1,rotation,avatarTraits(employee.avatarSeed,employee.role));}
+export function personSprite(index,rotation=0,appearance=null){
+  const shirt=appearance?.shirt||[{top:'#efe6ce',x:'#b6b9a7',y:'#ded8bf'},{top:'#c56349',x:'#803b30',y:'#a94b39'},{top:'#5b93a4',x:'#315f73',y:'#427c94'},{top:'#729563',x:'#3d613c',y:'#58834f'}][index%4],art=bitmap('person-'+index+':'+(appearance?.seed??'default'),rotation,a=>{
     a.shadow(.35,.32);
     for(const y of [-.095,.095]){a.box(-.11,y-.055,.22,.11,0,3,{top:'#5a4d3c',x:'#302b24',y:'#403a2e'});a.box(-.08,y-.045,.13,.09,3,19,{top:'#584d3a',x:'#3c3930',y:'#514a38'});}
     a.box(-.12,-.14,.24,.28,22,22,shirt);
-    for(const y of [-.22,.14]){a.box(-.1,y,.16,.08,23,19,shirt);a.box(-.1,y,.16,.08,19,4,{top:'#d9ac78',x:'#b8855d',y:'#c99869'});}
-    a.box(-.06,-.09,.12,.18,44,3,{top:'#d9ac78',x:'#b8855d',y:'#c99869'});
-    a.box(-.09,-.11,.18,.22,47,11,{top:'#d2a16e',x:'#b68457',y:'#d0a16e'});
-    a.box(-.095,-.115,.19,.23,58,3,{top:index===0?'#f1ead5':'#634a31',x:'#765335',y:'#906a44'});
+    for(const y of [-.22,.14]){a.box(-.1,y,.16,.08,23,19,shirt);a.box(-.1,y,.16,.08,19,4,appearance?.skin||{top:'#d9ac78',x:'#b8855d',y:'#c99869'});}
+    a.box(-.06,-.09,.12,.18,44,3,appearance?.skin||{top:'#d9ac78',x:'#b8855d',y:'#c99869'});
+    a.box(-.09,-.11,.18,.22,47,11,appearance?.skin||{top:'#d2a16e',x:'#b68457',y:'#d0a16e'});
+    a.box(-.095,-.115,.19,.23,58,3,{top:index===0?'#f1ead5':appearance?.hair||'#634a31',x:appearance?.hair||'#765335',y:appearance?.hair||'#906a44'});
     if(a.rotation===0||a.rotation===1){a.front(.093,-.08,-.04,52,54,'#413428');a.front(.093,.04,.08,52,54,'#413428');}
   });
   return sprite(art,'person-sprite');

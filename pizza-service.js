@@ -1,9 +1,9 @@
-import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261012a';
-import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261012a';
-import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261012a';
-import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261012a';
+import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261012b';
+import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261012b';
+import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261012b';
+import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261012b';
 
-import {businessIssue,demandScore,workPath,operatingRates} from './pizza-business.js?v=20261012a';
+import {businessIssue,demandScore,workPath,operatingRates} from './pizza-business.js?v=20261012b';
 export const SERVICE_PHASES=['arriving','waiting','eating','leaving','paying'];
 export const tableKey=t=>[t.x,t.y,t.r,t.seats,t.variant||'wood'].join(':');
 export function freshService(){return {version:1,elapsed:0,untilArrival:2,nextId:1,groups:[],payments:[],netCents:0,revenueCents:0,costCents:0,servedGuests:0};}
@@ -61,7 +61,7 @@ function leave(group,layout,plan){
   for(const start of starts){const route=routeBetween(free,start,plan.entrance,plan);if(route){group.phase='leaving';group.route=route;group.progress=0;return;}}
 }
 function admit(service,layout,menu,balance,plan,business){
-  if(business&&(business.staff.open===false||businessIssue(business.staff,business.workflow)||(service.debtCents||0)>0))return;
+  if(business&&(business.staff.open===false||business.companyDebt>0||businessIssue(business.staff,business.workflow)||(service.debtCents||0)>0))return;
   if(service.groups.length>=12||plan.kitchenKeys&&!kitchenReadiness([...plan.kitchenKeys].map(key=>{const [x,y]=key.split(',').map(Number);return {x,y};}),layout,plan).ready)return;
   const sizes=[2,1,3,2,4,2,6,1,8,3],reserved=new Set(service.groups.filter(g=>!['leaving','paying'].includes(g.phase)).map(g=>tableKey(g.table)));
   const available=layout.filter(t=>t.type==='table'&&!reserved.has(tableKey(t))).map(table=>({table,route:tableRoute(layout,table,plan)})).filter(t=>t.route);
@@ -104,23 +104,30 @@ export function advanceService(service,seconds,layout,menu,balanceCents,plan=DEF
           balanceCents-=cost;service.costCents+=cost;service.netCents-=cost;g.charged=true;g.phase='waiting';g.timer=3+g.id%3;g.waited=0;events.push({type:'cost',groupId:g.id,amount:cost});
         }else if(g.ate&&!g.paid){
           const amount=g.order.price*g.size;balanceCents+=amount;service.revenueCents+=amount;service.netCents+=amount;service.servedGuests+=g.size;g.paid=true;g.phase='paying';g.timer=1.8;
-          if(business){const score=Math.max(1,Math.min(5,5-(g.waited||0)/30-Math.max(0,g.order.price-1000)/800+Math.min(.4,layout.filter(i=>i.type==='plant').length*.08)));recordReview(service,score);service.totalWaitingSeconds=(service.totalWaitingSeconds||0)+(g.waited||0)*g.size;}
+          if(business){const score=Math.max(1,Math.min(5,5-(g.waited||0)/30-Math.max(0,g.order.price-1000)/800+Math.min(.4,layout.filter(i=>i.type==='plant').length*.08)+(Number.isFinite(g.staffQuality)?g.staffQuality:0)+(Number.isFinite(g.staffFriendliness)?g.staffFriendliness:0)));recordReview(service,score);service.totalWaitingSeconds=(service.totalWaitingSeconds||0)+(g.waited||0)*g.size;}
           const payment={id:g.id,amount,time:service.elapsed,position:{...plan.entrance}};service.payments.push(payment);service.payments=service.payments.slice(-4);events.push({type:'payment',...payment});
         }else service.groups=service.groups.filter(other=>other!==g);
       }else{
         if(g.phase==='waiting'&&business){
           g.waited=(g.waited||0)+dt;
           if(g.waited>90){service.lostGuests=(service.lostGuests||0)+g.size;recordReview(service,1);delete g.work;leave(g,layout,plan);continue;}
-          if(!g.work){const cooks=service.groups.filter(other=>other!==g&&other.work&&other.work.stage<3).length;
-            if(!business.workflow||!business.staff.cook||cooks>=business.staff.cook)continue;
-            g.work={flow:business.workflow,stage:0,route:business.workflow.prep,progress:0,hold:2+g.size*.6};}
+          if(!g.work){const cooks=service.groups.filter(other=>other!==g&&other.work&&other.work.stage<3);
+            if(!business.workflow||!business.staff.cook||cooks.length>=business.staff.cook)continue;
+            const cook=business.employees?.filter(p=>p.role==='cook'&&!cooks.some(other=>other.work.cookId===p.id)).sort((a,b)=>b.skills.organization-a.skills.organization)[0];
+            if(business.employees&&!cook)continue;
+            const skills=cook?.skills;g.work={cookId:cook?.id,cookSkills:skills,flow:business.workflow,stage:0,route:business.workflow.prep,progress:0,hold:(2+g.size*.6)*(skills?.preparation!==undefined?.7+(100-skills.preparation)/100:1),speed:skills?.organization!==undefined?.85+skills.organization/100*.75:1.2};}
           const w=g.work;
-          if(w.stage===3&&!w.started){const delivering=service.groups.filter(other=>other!==g&&other.work?.stage===3&&other.work.started).length;if(!business.staff.waiter||delivering>=business.staff.waiter)continue;w.started=true;}
-          w.progress=Math.min(w.route.length-1,w.progress+dt*1.2);
+          if(w.stage===3&&!w.started){const delivering=service.groups.filter(other=>other!==g&&other.work?.stage===3&&other.work.started);
+            if(!business.staff.waiter||delivering.length>=business.staff.waiter)continue;
+            const waiter=business.employees?.filter(p=>p.role==='waiter'&&!delivering.some(other=>other.work.waiterId===p.id)).sort((a,b)=>b.skills.pace-a.skills.pace)[0];
+            if(business.employees&&!waiter)continue;
+            w.waiterId=waiter?.id;w.speed=waiter?.skills.pace!==undefined?.85+waiter.skills.pace/100*.75:1.2;w.hold=waiter?.skills.attention!==undefined?.6+(100-waiter.skills.attention)/100:1;
+            g.staffQuality=w.cookSkills?((w.cookSkills.preparation+w.cookSkills.baking)/2-50)/100:0;g.staffFriendliness=waiter?(waiter.skills.friendliness-50)/200:0;w.started=true;}
+          w.progress=Math.min(w.route.length-1,w.progress+dt*(w.speed||1.2));
           if(w.progress<w.route.length-1)continue;w.hold=Math.max(0,w.hold-dt);if(w.hold>0)continue;
           if(w.stage===3){delete g.work;g.phase='eating';g.timer=g.eatDuration;continue;}
           w.stage++;w.progress=0;
-          if(w.stage===1){w.route=w.flow.bake;w.hold=3+g.size*.7;}
+          if(w.stage===1){w.route=w.flow.bake;w.hold=(3+g.size*.7)*(w.cookSkills?.baking!==undefined?.7+(100-w.cookSkills.baking)/100:1);}
           else if(w.stage===2){w.route=w.flow.pickup;w.hold=1;}
           else {w.route=workPath(layout,w.flow.counter,g.route.at(-1),plan);w.hold=1;if(!w.route){delete g.work;continue;}}
           continue;

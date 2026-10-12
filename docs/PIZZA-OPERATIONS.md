@@ -10,9 +10,21 @@ Mindestens neun orthogonal zusammenhängende Platten, mindestens drei breit **od
 
 ## Personal und Abläufe
 
-Jede Filiale hat unabhängig null bis vier Köche und Servicekräfte. Mindestens je eine Kraft ist zum Öffnen nötig. Neue Filialen beginnen ohne Personal. Bestehende eingerichtete Küchen bekommen bei der Migration je eine Kraft; die Auswahl wird danach gespeichert.
+Die Personalseite hat drei Ansichten:
 
-Ein Koch bearbeitet eine Bestellung gleichzeitig: Kühlschrank > Tresen > Ofen > Tresen. Eine Servicekraft bringt die fertige Bestellung vom Tresen zum Tisch. Bewegung folgt freien Zellen und tatsächlichen Türen. Entfernungen, Portionsanzahl und verfügbare Kräfte bestimmen die Wartezeit. Die Arbeit ist im Raum sichtbar. Es gibt aktuell keine individuelle Namens- oder Schichtverwaltung.
+- **Arbeitsmarkt:** Bewerbungen aus Küche und Service, mit eigenem generiertem Avatar, Monatsgehalt, Level und genau drei Kompetenzen. Das Zielrestaurant wird bei der Einstellung gewählt. Neue Bewerbungen ersetzen eingestellte Kandidaten.
+- **Personalakten:** Liste aller eigenen Mitarbeitenden mit Fachbereichsfilter. Jede Person hat ein Dropdown für ihre Restaurantzuordnung, einschließlich „Ohne Restaurant“. Avatar, Gehalt und Kompetenzen bleiben bei Wechseln und beim Neuladen erhalten.
+- **Restaurants:** Restaurantfilter, Übersicht der zugeordneten Leute und Monatskosten. Neue Gäste können hier pro Restaurant gestoppt werden, damit laufende Bestellungen fertig werden.
+
+Die drei Kompetenzen der Küche sind Zubereitung, Backen und Organisation. Sie steuern Vorbereitungs-/Backdauer, Qualität und Bewegungstempo. Im Service sind es Tempo, Aufmerksamkeit und Freundlichkeit; sie steuern Laufgeschwindigkeit, Übergabezeit und den Einfluss auf Gästebewertungen. Werte liegen zwischen 0 und 100. Das Level von 1 bis 5 entspricht dem Durchschnitt, in Schritten von 20. Höhere Werte führen auf dem Arbeitsmarkt zu höheren Monatsgehältern.
+
+Jede Filiale hat unabhängig null bis vier Personen je Fachbereich. Mindestens je eine Kraft ist zum Öffnen nötig. Neue Filialen beginnen ohne Personal. Bestehende anonyme Personalzahlen werden einmalig in benannte Mitarbeitende mit 50er-Kompetenzen umgewandelt. Das neue Speicherschema (Version 9) erhält Restaurantlayout, bestehende Einnahmen und Kosten sowie die komplette Personalliste und die Bewerbungen.
+
+Ein Koch bearbeitet eine Bestellung gleichzeitig: Kühlschrank > Tresen > Ofen > Tresen. Eine Servicekraft bringt die fertige Bestellung vom Tresen zum Tisch. Die Aufgabe wird einer konkreten Person zugeteilt; ihr persönliches Aussehen und die Drehung in Laufrichtung sind im Raum sichtbar. Bewegung folgt freien Zellen und tatsächlichen Türen. Entfernungen, Portionsanzahl, Kompetenzen und verfügbare Kräfte bestimmen die Wartezeit.
+
+Wer gerade an einer Bestellung arbeitet, kann bis zum Abschluss nicht umverteilt oder entlassen werden. Bereits fertig gekochte Bestellungen behalten ihre Qualitätswerte, wenn der Koch anschließend die Filiale wechselt. Entlassene Mitarbeiter sind erneut auf dem Arbeitsmarkt verfügbar.
+
+Avatare entstehen deterministisch aus einem gespeicherten Seed: Hautfarbe, Haarfarbe, Frisur, Gesicht, Brille, Bart und Kleidung. Die Farben werden auch für die isometrischen Personal-Sprites verwendet. Es werden keine externen Bilddienste oder Portraitdateien benötigt.
 
 ## Nachfrage und Zufriedenheit
 
@@ -28,13 +40,12 @@ Kosten pro Spielstunde:
 
 | Position | Kosten |
 | --- | --- |
-| Koch | 12 DM je Kraft |
-| Service | 8 DM je Kraft |
+| Personal | Summe der individuellen Monatsgehälter / 720 Spielstunden |
 | Gebäudeunterhalt | 0,015 DM pro m² |
 | Strom | 0,80 DM plus 0,35 DM je Ofen oder Kühlschrank |
 | Zutaten | Rezeptkosten pro bestellter Pizza |
 
-Die Abrechnung erfolgt in Pfennig; Bruchteile werden bis zur nächsten Abbuchung gesammelt und gespeichert. Bei Geldmangel bleiben Kosten offen. Sie werden mit neuem Guthaben bezahlt; solange Kosten offen sind, kommen keine neuen Gäste. Der Kontostand wird dadurch nicht negativ.
+Ein Gehaltsmonat umfasst 30 Spieltage mit je 24 Stunden. Personen ohne Restaurantzuordnung werden weiter bezahlt; ihre Kosten und offenen Gehälter erscheinen separat in der Finanzübersicht und im Gesamtergebnis. Die Abrechnung erfolgt in Pfennig; Bruchteile werden bis zur nächsten Abbuchung gesammelt und gespeichert. Bei Geldmangel bleiben Kosten offen. Sie werden mit neuem Guthaben bezahlt; solange Kosten offen sind, kommen keine neuen Gäste. Der Kontostand wird dadurch nicht negativ.
 
 Personal / Finanzen zeigt pro Filiale Umsatz, Zutaten, Löhne, Gebäude, Strom, Gewinn, Auslastung, Bewertung, mittlere Wartezeit in Spielminuten, bediente / verlorene Gäste und offene Kosten seit Spielbeginn. Gewinn = Umsatz minus Zutaten und laufende Kosten. Immobilienkäufe und Einrichtung sind Investitionen und nicht in diesem Betriebsergebnis enthalten. Gemeinsames Konto und Speisekarte bleiben erhalten. Einrichtungs-Undo erstattet nur die konkrete Änderung und lässt Betriebskosten und andere Filialen bestehen.
 
@@ -44,4 +55,4 @@ Die Fahrbahnen sind 0,60 bis 0,95 Weltzellen breit. Häuser verwenden ihre kalib
 
 ## Prüfung
 
-Neue Tests: `pizza-business-qa.mjs` und `pizza-business-browser-qa.cjs`. Dazu bestehen weiterhin die Prüfungen für Küchen, Laufwege, Speichermigration, Restaurantwechsel, Grundrisse, Preise, Stadt und responsive Bedienung. Browserprüfungen starten mit gestoppter Simulation, damit zeitabhängige Kosten die Kauf- und Undo-Prüfungen nicht verfälschen.
+Personaltests: `pizza-staff-qa.mjs` und `pizza-staff-browser-qa.cjs` prüfen Arbeitsmarkt, Gehaltsabstufungen, drei Kompetenzen, Zuordnung, laufende Aufgaben, Avatare, Monatsabrechnung und Speichermigration. Die Betriebsprüfungen `pizza-business-qa.mjs` und `pizza-business-browser-qa.cjs` bleiben erhalten. Dazu bestehen weiterhin die Prüfungen für Küchen, Laufwege, Speichermigration, Restaurantwechsel, Grundrisse, Preise, Stadt und responsive Bedienung. Browserprüfungen starten mit gestoppter Simulation, damit zeitabhängige Kosten die Kauf- und Undo-Prüfungen nicht verfälschen.

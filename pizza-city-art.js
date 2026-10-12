@@ -1,5 +1,5 @@
-import {groundProjection} from './pizza-isometric-art.js?v=20261012a';
-import {Sprite,Texture,state} from './pizza-core.js?v=20261012a';
+import {groundProjection} from './pizza-isometric-art.js?v=20261012b';
+import {Sprite,Texture,state} from './pizza-core.js?v=20261012b';
 
 // Atlas coordinates isolate complete flat drawings, including their ground contact.
 // Rasterize once at the city's pixel scale instead of scaling high-resolution art per frame.

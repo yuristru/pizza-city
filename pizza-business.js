@@ -1,9 +1,10 @@
-import {roomCell,roomStep} from './pizza-floorplans.js?v=20261012a';
-import {occupiedCells} from './pizza-layout.js?v=20261012a';
+import {MONTH_HOURS} from './pizza-staff.js?v=20261012b';
+import {roomCell,roomStep} from './pizza-floorplans.js?v=20261012b';
+import {occupiedCells} from './pizza-layout.js?v=20261012b';
 export const STAFF={cook:{name:'Koch',hourly:12},waiter:{name:'Service',hourly:8}};
 export function freshBusiness(){return {cook:0,waiter:0};}
 export function restoreBusiness(raw,legacy=false){return {...Object.fromEntries(Object.keys(STAFF).map(k=>[k,Number.isInteger(raw?.[k])&&raw[k]>=0&&raw[k]<=4?raw[k]:legacy?1:0])),open:raw?.open!==false};}
-export function operatingRates(business,items,area){return {staff:business.cook*12+business.waiter*8,property:area*.015,electricity:.8+items.filter(i=>i.type==='oven'||i.type==='fridge').length*.35};}
+export function operatingRates(business,items,area){return {staff:Number.isSafeInteger(business.staffMonthlyCents)?business.staffMonthlyCents/100/MONTH_HOURS:business.cook*12+business.waiter*8,property:area*.015,electricity:.8+items.filter(i=>i.type==='oven'||i.type==='fridge').length*.35};}
 // Staff may cross kitchen floors, guests use the separate dining paths.
 export function workPath(items,start,goal,plan,kitchenOnly=false){
  const used=new Set([...items,...plan.decor].flatMap(occupiedCells)),valid=(x,y)=>roomCell(x,y,plan)&&!used.has(`${x},${y}`)&&(!kitchenOnly||plan.kitchenKeys?.has(`${x},${y}`));

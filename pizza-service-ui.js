@@ -1,12 +1,12 @@
-import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261012a';
-import {state,Container,ensureRestaurants,activePlan} from './pizza-core.js?v=20261012a';
-import {project,dimensions} from './pizza-layout.js?v=20261012a';
-import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261012a';
-import {routePosition,guestSeat} from './pizza-service.js?v=20261012a';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261012a';
+import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261012b';
+import {state,Container,ensureRestaurants,activePlan} from './pizza-core.js?v=20261012b';
+import {project,dimensions} from './pizza-layout.js?v=20261012b';
+import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261012b';
+import {routePosition,guestSeat} from './pizza-service.js?v=20261012b';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261012b';
 
-import {businessIssue} from './pizza-business.js?v=20261012a';
-import {personSprite} from './pizza-sprites.js?v=20261012a';
+import {businessIssue} from './pizza-business.js?v=20261012b';
+import {personSprite,staffPersonSprite} from './pizza-sprites.js?v=20261012b';
 const maps=new WeakMap(),banners=new Map();
 export function syncServiceGuests(objects){
   let nodes=maps.get(objects);if(!nodes){nodes=new Map();maps.set(objects,nodes);}
@@ -36,10 +36,11 @@ export function syncServiceGuests(objects){
       const a=w.route[segment],b=w.route[segment+1],dx=b.x-a.x,dy=b.y-a.y;
       rotation=dx?(dx>0?0:2):dy?(dy>0?1:3):rotation;
     }
-    const artKey=w.stage+':'+rotation;
-    if(g.artKey!==artKey){g.removeChildren().forEach(c=>c.destroy());g.addChild(personSprite(w.stage===3?1:0,rotation));g.artKey=artKey;}
+    const employeeId=w.stage===3?w.waiterId:w.cookId,employee=state.staff.employees.find(p=>p.id===employeeId);
+    const artKey=w.stage+':'+rotation+':'+(employee?.avatarSeed??'default');
+    if(g.artKey!==artKey){g.removeChildren().forEach(c=>c.destroy());g.addChild(employee?staffPersonSprite(employee,rotation):personSprite(w.stage===3?1:0,rotation));g.artKey=artKey;}
     const p=project(position.x,position.y);g.position.set(p.x,p.y);g.zIndex=p.y+.6;
-    g.stage=w.stage;g.facing=rotation;g.groupId=group.id;g.cell=position;
+    g.employeeId=employeeId;g.stage=w.stage;g.facing=rotation;g.groupId=group.id;g.cell=position;
     g.task=['Kühlschrank → Tresen','Tresen → Ofen','Ofen → Tresen','Zum Tisch'][w.stage];
   }
   for(const [key,g]of nodes)if(!wanted.has(key)){g.destroy({children:true});nodes.delete(key);}
@@ -48,7 +49,7 @@ export function renderServiceUI(){
   const groups=state.service.groups,active=serviceMenu().some(item=>item.active),status=document.getElementById('restaurantServiceStatus');
   const seated=groups.filter(g=>g.phase==='waiting'||g.phase==='eating').length,total=groups.reduce((sum,g)=>sum+g.size,0);
   const readiness=kitchenReadiness(state.kitchenTiles,state.restaurantState,activePlan());status.title=readiness.issue||'Küche betriebsbereit';status.dataset.kitchenReady=String(readiness.ready);
-  const profile=ensureRestaurants()[state.activeRestaurantId],plan=activePlan(),issue=(profile.service.debtCents||0)>0?'Offene Betriebskosten':profile.business.open===false?'Neue Gäste gestoppt':readiness.issue||businessIssue(profile.business,readiness.ready?kitchenWorkFlow(state.kitchenTiles,state.restaurantState,plan):null);
+  const profile=ensureRestaurants()[state.activeRestaurantId],plan=activePlan(),issue=(profile.service.debtCents||0)>0||state.staff.reserveDebtCents>0?'Offene Betriebskosten':profile.business.open===false?'Neue Gäste gestoppt':readiness.issue||businessIssue(profile.business,readiness.ready?kitchenWorkFlow(state.kitchenTiles,state.restaurantState,plan):null);
   const stars=document.querySelector('.stars'),rating=state.service.rating||4;stars.textContent='★'.repeat(Math.round(rating))+'☆'.repeat(5-Math.round(rating));stars.setAttribute('aria-label',rating.toFixed(1)+' von 5 Sternen');
   const text=groups.length?total+(total===1?' Gast · ':' Gäste · ')+seated+(seated===1?' Tisch belegt':' Tische belegt'):issue?'Geschlossen · '+issue:active?'Geöffnet · Gäste kommen':'Speisekarte noch leer';if(status.textContent!==text)status.textContent=text;
   const host=document.getElementById('incomeBanners'),wanted=new Set();
