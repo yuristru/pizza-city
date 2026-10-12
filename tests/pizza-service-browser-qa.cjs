@@ -43,8 +43,24 @@ const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+deco
     }
     const beforeReload=await snapshot();await page.evaluate(async p=>(await import(p)).saveLayout(),core);await loaded();await page.click('[data-speed="0"]');await render();const resumed=await snapshot();assert.equal(resumed.balance,beforeReload.balance);assert.equal(resumed.service.revenueCents,beforeReload.service.revenueCents);assert.equal(resumed.service.groups.find(g=>g.id===1).paid,true);
     await page.click('#restaurantBtn');await page.click('.restaurantMenuButton');await page.click('[data-menu-toggle]');await page.click('#menuClose');
-    const pending=await snapshot(),expectedRevenue=pending.service.revenueCents+pending.service.groups.filter(g=>!g.paid).reduce((sum,g)=>sum+g.order.price*g.size,0);
-    await page.click('#cityBtn');await page.click('[data-speed="1"]');await advance(120);const finished=await snapshot();assert.equal(finished.service.groups.length,0);assert.equal(finished.service.revenueCents,expectedRevenue,'Persisted customers must pay exactly once.');assert.equal(Math.round(finished.balance*100),24356000+finished.service.netCents-(finished.service.operatingCents||0));assert(finished.balance>243560);
+    const pending=await snapshot(),orders=new Map(pending.service.groups.filter(g=>!g.paid).map(g=>[g.id,g])),payments=new Map(),initialAbandoned=new Set([...orders].filter(([,g])=>g.phase==='leaving'&&!g.ate).map(([id])=>id)),abandoned=new Set(initialAbandoned);
+    await page.click('#cityBtn');await page.click('[data-speed="1"]');
+    // Observe every checkout, including orders abandoned under the existing 90-second rule.
+    // The physical kitchen and return routes can leave a backlog after restoring a full room.
+    for(let i=0;i<240;i++){
+      await advance(.5);const current=await snapshot();
+      for(const p of current.service.payments)if(orders.has(p.id)){
+        const previous=payments.get(p.id);if(previous)assert.deepEqual(p,previous,'A checkout ID must never be charged again.');else payments.set(p.id,p);
+        const order=orders.get(p.id);assert.equal(p.amount,order.order.price*order.size,'Persisted order prices stay locked.');
+      }
+      for(const g of current.service.groups)if(orders.has(g.id)&&g.phase==='leaving'&&!g.ate){assert(g.waited>90,'Unpaid departures must be recorded order abandonments.');abandoned.add(g.id);}
+    }
+    const finished=await snapshot();assert.equal(finished.service.groups.length,0);
+    for(const [id,g]of orders){assert.notEqual(payments.has(id),abandoned.has(id),'Each persisted order must have exactly one outcome.');if(g.ate||g.phase==='eating')assert(payments.has(id),'Customers who ate must pay once.');}
+    const expectedRevenue=pending.service.revenueCents+[...payments.values()].reduce((sum,p)=>sum+p.amount,0);
+    assert.equal(finished.service.revenueCents,expectedRevenue,'All observed checkouts must match revenue exactly.');
+    assert.equal((finished.service.lostGuests||0)-(pending.service.lostGuests||0),[...abandoned].filter(id=>!initialAbandoned.has(id)).reduce((sum,id)=>sum+orders.get(id).size,0),'Abandoned orders must be counted as lost guests.');
+    assert.equal(Math.round(finished.balance*100),24356000+finished.service.netCents-(finished.service.operatingCents||0));assert(finished.balance>243560);
     await page.evaluate(async p=>(await import(p)).saveLayout(),core);await loaded();assert.equal((await snapshot()).balance,finished.balance,'Earnings above the starting balance must survive reload.');assert.equal((await snapshot()).service.groups.length,0);
     assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
     console.log('Guest browser passed: real ticker/pause, walking, reserved seats, eating sprites/pizzas, production costs, locked order prices, background city payments, both banner anchors, undo preserving earnings, responsive views and single-payment reload above starting funds.');
