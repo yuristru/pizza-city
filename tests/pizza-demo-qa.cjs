@@ -75,8 +75,8 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
   assert.equal(model.upgradeLayout([{type:'table',seats:3,x:2,y:3,r:0}],2),null);
   const independent=model.copyLayout();independent[0].x=0;assert.equal(model.DEFAULT_LAYOUT[0].x,2);
   assert.equal(model.ROOM.w*model.ROOM.h,120);
-  assert.match(model.placementIssue({type:'plant',x:0,y:0,r:0},[]),/Wanddekoration/);
-  assert(!model.guestCell(0,0));
+  assert.equal(model.placementIssue({type:'plant',x:0,y:0,r:0},[]),null,'Former fixed furniture must no longer block this cell.');
+  assert(model.guestCell(0,0));
   assert.equal(model.KITCHEN.w*model.KITCHEN.h,16);
   assert.equal(model.placementIssue({type:'table',seats:4,x:6,y:0,r:0},[]),null,'The former kitchen strip must be available to guests.');
   assert.match(model.placementIssue({type:'plant',...model.KITCHEN_DOOR,r:0},[]),/Küchendurchgang/);

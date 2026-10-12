@@ -79,7 +79,7 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
   await page.evaluate(()=>localStorage.setItem('pizza-menu-v1',JSON.stringify({version:1,items:[{recipe:{name:'Testpizza',sauce:'tomato',toppings:[]},price:850,active:true}]})));
   await loaded(page,url);await page.click('[data-speed="1"]');
   await page.evaluate(async p=>{const {app}=await import(p);for(let i=0;i<600;i++)app.ticker.update(app.ticker.lastTime+50);app.render();},corePath);
-  s=await profiles();for(const id of ['mamma-mia','san-marco','via-roma']){assert(s.profiles[id].service.elapsed>=29);assert(id==='mamma-mia'?s.profiles[id].service.groups.length>0:s.profiles[id].service.groups.length===0,'New restaurants need a manually equipped kitchen.');}
+  s=await profiles();for(const id of ['mamma-mia','san-marco','via-roma']){assert(s.profiles[id].service.elapsed>=29);assert.equal(s.profiles[id].service.groups.length,0,'Restaurants need a manually equipped kitchen.');}
   await page.click('[data-speed="0"]');const sanGuests=JSON.stringify(s.profiles['san-marco'].service.groups);
   await page.click('#restaurantBtn');await page.selectOption('#restaurantSelect','san-marco');assert.equal(JSON.stringify((await profiles()).profiles['san-marco'].service.groups),sanGuests);
   await page.screenshot({path:path.join(out,'restaurant-switch-san-marco.png')});

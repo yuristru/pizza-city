@@ -1,10 +1,10 @@
-import {restoreKitchenTiles,legacyKitchen,KITCHEN_TYPES,kitchenReadiness} from './pizza-kitchen.js?v=20261012d';
-import {restaurantPlan,DEFAULT_PLAN,withKitchen} from './pizza-floorplans.js?v=20261012d';
-import {copyLayout,validLayout,placementIssue} from './pizza-layout.js?v=20261012d';
-import {defaultFinishes,restoreFinishes} from './pizza-catalog.js?v=20261012d';
-import {freshService,restoreService,rehomeService,tableKey,serviceLayoutIssue} from './pizza-service.js?v=20261012d';
+import {restoreKitchenTiles,legacyKitchen,KITCHEN_TYPES,kitchenReadiness} from './pizza-kitchen.js?v=20261012e';
+import {restaurantPlan,DEFAULT_PLAN,withKitchen} from './pizza-floorplans.js?v=20261012e';
+import {copyLayout,validLayout,placementIssue} from './pizza-layout.js?v=20261012e';
+import {defaultFinishes,restoreFinishes} from './pizza-catalog.js?v=20261012e';
+import {freshService,restoreService,rehomeService,tableKey,serviceLayoutIssue} from './pizza-service.js?v=20261012e';
 
-import {freshBusiness,restoreBusiness} from './pizza-business.js?v=20261012d';
+import {freshBusiness,restoreBusiness} from './pizza-business.js?v=20261012e';
 export const MAIN_RESTAURANT='mamma-mia';
 export function freshRestaurant(id){return {business:freshBusiness(),items:id===MAIN_RESTAURANT?copyLayout():[],finishes:defaultFinishes(),service:freshService(),investmentCents:0,floorPlanVersion:1,kitchenVersion:1,kitchenTiles:[],history:[]};}
 export function restoreRestaurants(raw,owned,legacy){
@@ -30,7 +30,7 @@ export function restoreRestaurants(raw,owned,legacy){
     const activePlan=withKitchen(building,kitchenTiles);
     if(saved.kitchenVersion!==1){
       const devices=items.filter(item=>KITCHEN_TYPES.includes(item.type));items=items.filter(item=>!KITCHEN_TYPES.includes(item.type));
-      for(const device of [...devices,...legacyKitchen(building).items.filter(item=>!devices.some(d=>d.type===item.type))]){
+      for(const device of devices){
         const preferred=legacyKitchen(building).items.find(i=>i.type===device.type),position=[{...preferred,r:preferred.r},device,...kitchenTiles].find(pos=>!placementIssue({...device,x:pos.x,y:pos.y,r:pos.r??device.r},items,activePlan));
         if(position)items.push({...device,x:position.x,y:position.y,r:position.r??device.r});else refund+=device.paid||0;
       }

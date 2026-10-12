@@ -1,5 +1,5 @@
-import {state,activePlan,ensureRestaurants} from './pizza-core.js?v=20261012d';
-import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261012d';
+import {state,activePlan,ensureRestaurants} from './pizza-core.js?v=20261012e';
+import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261012e';
 export function renderKitchenUI(){
   const dialog=document.getElementById('kitchenDialog');if(!dialog.open)return;
   const status=kitchenReadiness(state.kitchenTiles,state.restaurantState,activePlan()),names={oven:'Ofen',bar:'Tresen',fridge:'Kühlschrank'};

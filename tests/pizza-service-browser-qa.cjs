@@ -9,7 +9,10 @@ const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+deco
   try{
     browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined,args:process.env.PIZZA_BROWSER_ARGS?JSON.parse(process.env.PIZZA_BROWSER_ARGS):['--no-sandbox','--disable-dev-shm-usage','--enable-unsafe-swiftshader']});
     const context=await browser.newContext({viewport:{width:393,height:852},hasTouch:true,deviceScaleFactor:2}),page=await context.newPage(),errors=[],external=[];
-    const {copyLayout}=await import(path.join(root,'pizza-layout.js'));await context.addInitScript(items=>{if(!localStorage.getItem('pizza-city-layout-v1'))localStorage.setItem('pizza-city-layout-v1',JSON.stringify({version:5,items,balanceCents:24356000}));},copyLayout());
+    const {copyLayout}=await import(path.join(root,'pizza-layout.js')),{restaurantPlan}=await import(path.join(root,'pizza-floorplans.js')),{legacyKitchen}=await import(path.join(root,'pizza-kitchen.js')),k=legacyKitchen(restaurantPlan('mamma-mia'));
+    // This service test starts with an explicitly equipped restaurant; the game creates no devices.
+    const fixture={items:[...copyLayout(),...k.items],kitchenTiles:k.tiles,kitchenVersion:1,floorPlanVersion:1,business:{cook:1,waiter:1},investmentCents:0};
+    await context.addInitScript(p=>{if(!localStorage.getItem('pizza-city-layout-v1'))localStorage.setItem('pizza-city-layout-v1',JSON.stringify({version:10,items:p.items,kitchenTiles:p.kitchenTiles,restaurants:{'mamma-mia':p},balanceCents:24356000}));},fixture);
     await context.addInitScript(r=>{if(!localStorage.getItem('pizza-menu-v1')){localStorage.setItem('pizza-recipes-v1',JSON.stringify({draft:r,recipes:[r]}));localStorage.setItem('pizza-menu-v1',JSON.stringify({version:1,items:[{recipe:r,price:850,active:true}]}));}},recipe);
     // Stop automatic time before the restored service can advance; this test drives the real ticker explicitly.
     assert(source.includes('state.ready=true;'));

@@ -33,7 +33,7 @@ assert(service.servedGuests>0);assert.equal(balance,10000000+service.netCents);
 assert.deepEqual(freshRestaurant('san-marco').kitchenTiles,[]);
 for(const p of Object.values(FLOORPLANS)){
  const k=legacyKitchen(p),profile=restoreRestaurants({[p.id]:{items:[],floorPlanVersion:1}},p.id==='mamma-mia'?[]:[p.id],null)[p.id];
- assert(validLayout(profile.items,withKitchen(p,profile.kitchenTiles)));assert(kitchenReadiness(profile.kitchenTiles,profile.items,p).ready);
+ assert(validLayout(profile.items,withKitchen(p,profile.kitchenTiles)));assert.equal(profile.items.length,0,'An old empty restaurant must not receive free kitchen devices.');assert(!kitchenReadiness(profile.kitchenTiles,profile.items,p).ready);assert.equal(p.decor.length,0);
  const next=restoreRestaurants({[p.id]:profile},p.id==='mamma-mia'?[]:[p.id],null)[p.id];assert.deepEqual(next.kitchenTiles,profile.kitchenTiles);assert.deepEqual(next.items,profile.items);
 }
 console.log('Kitchen model passed: connected floor, minimum size, one-component equipment, complete device footprints, walls/doors, closed/open service and saved migration.');

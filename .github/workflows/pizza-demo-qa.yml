@@ -26,6 +26,8 @@ on:
       - 'tests/pizza-daily-browser-qa.cjs'
       - 'tests/pizza-production-qa.mjs'
       - 'tests/pizza-production-browser-qa.cjs'
+      - 'tests/pizza-shifts-qa.mjs'
+      - 'tests/pizza-shifts-browser-qa.cjs'
       - 'tests/pizza-kitchen-qa.mjs'
       - 'tests/pizza-kitchen-browser-qa.cjs'
       - 'tests/pizza-floorplans-qa.mjs'
@@ -63,6 +65,8 @@ jobs:
           node tests/pizza-daily-browser-qa.cjs
           node tests/pizza-production-qa.mjs
           node tests/pizza-production-browser-qa.cjs
+          node tests/pizza-shifts-qa.mjs
+          node tests/pizza-shifts-browser-qa.cjs
           node tests/pizza-kitchen-qa.mjs
           node tests/pizza-kitchen-browser-qa.cjs
           node tests/pizza-floorplans-qa.mjs

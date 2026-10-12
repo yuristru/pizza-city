@@ -1,15 +1,16 @@
-import {restoreStaff,syncStaffCounts} from './pizza-staff.js?v=20261012d';
-import {restoreDaily,ensureDaily} from './pizza-daily.js?v=20261012d';
-import {profilePlan} from './pizza-kitchen.js?v=20261012d';
-import {restaurantPlan,DEFAULT_PLAN,withKitchen} from './pizza-floorplans.js?v=20261012d';
-import {DEFAULT_CITY_SEED} from './pizza-city-layout.js?v=20261012d';
-import {restoreProperties,propertySpend} from './pizza-properties.js?v=20261012d';
+import {restoreStaff,syncStaffCounts} from './pizza-staff.js?v=20261012e';
+import {shiftAt} from './pizza-shifts.js?v=20261012e';
+import {restoreDaily,ensureDaily} from './pizza-daily.js?v=20261012e';
+import {profilePlan} from './pizza-kitchen.js?v=20261012e';
+import {restaurantPlan,DEFAULT_PLAN,withKitchen} from './pizza-floorplans.js?v=20261012e';
+import {DEFAULT_CITY_SEED} from './pizza-city-layout.js?v=20261012e';
+import {restoreProperties,propertySpend} from './pizza-properties.js?v=20261012e';
 import {Application,Container,Graphics,Sprite,Texture,Text,Rectangle} from './assets/pizza/vendor/pixi-8.22.0.mjs';
-import {copyLayout,upgradeLayout} from './pizza-layout.js?v=20261012d';
-import {START_MONEY,money,defaultFinishes,restoreFinishes} from './pizza-catalog.js?v=20261012d';
-import {freshService,restoreService} from './pizza-service.js?v=20261012d';
-import {MAIN_RESTAURANT,freshRestaurant,restoreRestaurants} from './pizza-restaurant-profiles.js?v=20261012d';
-import {property} from './pizza-properties.js?v=20261012d';
+import {copyLayout,upgradeLayout} from './pizza-layout.js?v=20261012e';
+import {START_MONEY,money,defaultFinishes,restoreFinishes} from './pizza-catalog.js?v=20261012e';
+import {freshService,restoreService} from './pizza-service.js?v=20261012e';
+import {MAIN_RESTAURANT,freshRestaurant,restoreRestaurants} from './pizza-restaurant-profiles.js?v=20261012e';
+import {property} from './pizza-properties.js?v=20261012e';
 export {Container,Graphics,Sprite,Texture,Text,Rectangle};
 
 export const root=document.querySelector('#app');
@@ -39,7 +40,7 @@ let savedProfiles=null;
 try{const saved=JSON.parse(localStorage.getItem(SAVE_KEY));if([6,7,8,9,10].includes(saved?.version))savedProfiles=saved;}catch{}
 const legacy=restored.hasLegacy?{items:restored.items,finishes:restored.finishes,service:restored.service,investmentCents:Math.max(0,Math.round((START_MONEY-propertySpend(restored.ownedProperties)-restored.balance)*100)+restored.service.netCents),history:[]}:null;
 const restaurants=restoreRestaurants(savedProfiles?.restaurants,restored.ownedProperties,savedProfiles?null:legacy);
-const staff=restoreStaff(savedProfiles?.staff,restaurants);syncStaffCounts(staff,restaurants);
+const staff=restoreStaff(savedProfiles?.staff,restaurants,shiftAt(restored.gameMinutes)||(restored.gameMinutes%1440>=960&&restored.gameMinutes%1440<1020?'lunch':'evening'));syncStaffCounts(staff,restaurants);
 const daily=restoreDaily(savedProfiles?.daily,restored.gameMinutes,restaurants,staff);
 const activeRestaurantId=Object.hasOwn(restaurants,savedProfiles?.activeRestaurantId)?savedProfiles.activeRestaurantId:MAIN_RESTAURANT;
 const active=restaurants[activeRestaurantId];
@@ -166,9 +167,9 @@ async function loadCityAtlas(){
 }
 
 export async function loadAssets(){
-  const {loadCityArt}=await import('./pizza-city-art.js?v=20261012d');
-  const {loadRestaurantArt}=await import('./pizza-restaurant-art.js?v=20261012d');
-  const {loadIngredientArt}=await import('./pizza-ingredient-art.js?v=20261012d');
+  const {loadCityArt}=await import('./pizza-city-art.js?v=20261012e');
+  const {loadRestaurantArt}=await import('./pizza-restaurant-art.js?v=20261012e');
+  const {loadIngredientArt}=await import('./pizza-ingredient-art.js?v=20261012e');
   await Promise.all([loadCityArt(),loadRestaurantArt(),loadIngredientArt()]);
   if(!state.cityArt.buildings) await loadCityAtlas();
   loading.hidden=true;

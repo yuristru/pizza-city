@@ -1,6 +1,6 @@
-import {workPath} from './pizza-business.js?v=20261012d';
-import {roomCell,roomStep} from './pizza-floorplans.js?v=20261012d';
-import {dimensions} from './pizza-layout.js?v=20261012d';
+import {workPath} from './pizza-business.js?v=20261012e';
+import {roomCell,roomStep} from './pizza-floorplans.js?v=20261012e';
+import {dimensions} from './pizza-layout.js?v=20261012e';
 const key=t=>[t.x,t.y,t.r,t.seats,t.variant||'wood'].join(':');
 const personId=id=>typeof id==='string'&&/^[a-z0-9-]{1,80}$/.test(id);
 const cell=(p,plan)=>p&&Number.isInteger(p.x)&&Number.isInteger(p.y)&&roomCell(p.x,p.y,plan);
@@ -24,7 +24,7 @@ function team(business,role){return business.employees?business.employees.filter
 function speed(person){return person.skills?.[person.role==='cook'?'organization':'pace']!==undefined?.85+person.skills[person.role==='cook'?'organization':'pace']/100*.75:1.2;}
 function duration(value,skill){return value*(skill!==undefined?.7+(100-skill)/100:1);}
 function remembered(service,id,point){service.staffPositions[id]={x:point.x,y:point.y};}
-function fromPosition(service,id,goal,layout,plan,kitchen=false,fallback=goal){const old=service.staffPositions[id],start=old&&workPath(layout,old,old,plan,kitchen)?old:fallback;return workPath(layout,start,goal,plan,kitchen);}
+function fromPosition(service,id,goal,layout,plan,kitchen=false,fallback=goal){const old=service.staffPositions[id],start=old&&workPath(layout,old,old,plan)?old:fallback;return workPath(layout,start,goal,plan,kitchen&&plan.kitchenKeys?.has(`${start.x},${start.y}`));}
 function advance(w,dt){w.progress=Math.min(w.route.length-1,w.progress+dt*w.speed);if(w.progress<w.route.length-1)return false;w.hold=Math.max(0,w.hold-dt);return w.hold<=1e-8;}
 function waiterBusy(service,id){return service.waiterTasks.some(t=>t.employeeId===id)||service.groups.some(g=>g.work?.stage===3&&g.work.started&&g.work.waiterId===id);}
 export function addDirtyTable(service,g){if(!dirtyTable(service,g.table))service.dirtyTables.push({id:g.id,table:{...g.table},size:g.size});}

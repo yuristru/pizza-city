@@ -1,19 +1,21 @@
-import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261012d';
-import {state,Container,ensureRestaurants,activePlan,label} from './pizza-core.js?v=20261012d';
-import {project,dimensions} from './pizza-layout.js?v=20261012d';
-import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261012d';
-import {routePosition,guestSeat} from './pizza-service.js?v=20261012d';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261012d';
+import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261012e';
+import {state,Container,ensureRestaurants,activePlan,label} from './pizza-core.js?v=20261012e';
+import {project,dimensions} from './pizza-layout.js?v=20261012e';
+import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261012e';
+import {routePosition,guestSeat} from './pizza-service.js?v=20261012e';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261012e';
 
-import {businessIssue} from './pizza-business.js?v=20261012d';
-import {personSprite,staffPersonSprite} from './pizza-sprites.js?v=20261012d';
+import {businessIssue,workPath} from './pizza-business.js?v=20261012e';
+import {staffSchedule,shiftLabel} from './pizza-shifts.js?v=20261012e';
+import {personSprite,staffPersonSprite} from './pizza-sprites.js?v=20261012e';
 const maps=new WeakMap(),banners=new Map();
 export function syncServiceGuests(objects){
   let nodes=maps.get(objects);if(!nodes){nodes=new Map();maps.set(objects,nodes);}
-  const wanted=new Set();
+  const wanted=new Set(),workingIds=new Set();
   function get(key,label){wanted.add(key);let g=nodes.get(key);if(!g){g=new Container();g.label=label;g.eventMode='none';objects.addChild(g);nodes.set(key,g);}return g;}
   function worker(key,w,employeeId,stage,task,groupId,carry){
-    const g=get(key,'service-worker'),position=routePosition(w),segment=Math.min(Math.floor(w.progress),w.route.length-2);let rotation=g.facing??0;
+    if(employeeId)workingIds.add(employeeId);
+    const g=get(employeeId?'employee-'+employeeId:key,'service-worker'),position=routePosition(w),segment=Math.min(Math.floor(w.progress),w.route.length-2);let rotation=g.facing??0;
     if(segment>=0){const a=w.route[segment],b=w.route[segment+1],dx=b.x-a.x,dy=b.y-a.y;rotation=dx?(dx>0?0:2):dy?(dy>0?1:3):rotation;}
     const employee=state.staff.employees.find(p=>p.id===employeeId),artKey=stage+':'+rotation+':'+(employee?.avatarSeed??'default')+':'+(carry||'empty');
     if(g.artKey!==artKey){g.removeChildren().forEach(c=>c.destroy());g.addChild(employee?staffPersonSprite(employee,rotation):personSprite(stage>=3?1:0,rotation));if(carry){const tray=mealSprite(carry==='plates'?4:0);tray.position.set(rotation===0?8:rotation===2?-8:0,rotation===1?7:rotation===3?-5:0);g.addChild(tray);}g.artKey=artKey;}
@@ -46,6 +48,13 @@ export function syncServiceGuests(objects){
   }
   for(const d of state.service.dirtyTables||[])for(let i=0;i<d.size;i++){const seat=guestSeat(d,i);plate('dirty-'+d.id+'-'+i,{x:seat.mealX,y:seat.mealY},4,'service-dirty-plate',d.id);}
   for(const t of state.service.waiterTasks||[])worker('returner-'+t.employeeId,t,t.employeeId,t.kind==='clear'?4:5,t.kind==='clear'?'Teller am Tisch abräumen':t.plates?'Teller zum Tresen zurückbringen':'Zur Abholfläche zurückgehen',t.dirtyId,t.plates?'plates':null);
+  const plan=activePlan(),flow=kitchenWorkFlow(state.kitchenTiles,state.restaurantState,plan),schedule=staffSchedule(state.staff,state.activeRestaurantId,state.gameMinutes,state.service),taken=new Set([...nodes.values()].filter(g=>workingIds.has(g.employeeId)&&wanted.has('employee-'+g.employeeId)).map(g=>`${Math.round(g.cell.x)},${Math.round(g.cell.y)}`));
+  for(const employee of schedule.working)if(!workingIds.has(employee.id)){
+    const old=state.service.staffPositions[employee.id],preferred=old||((employee.role==='cook'?flow?.fridge:flow?.handoff)||plan.entrance);
+    const cells=plan.cells.slice().sort((a,b)=>Math.abs(a.x-preferred.x)+Math.abs(a.y-preferred.y)-Math.abs(b.x-preferred.x)-Math.abs(b.y-preferred.y));
+    const point=old&&workPath(state.restaurantState,old,old,plan)?old:cells.find(p=>!taken.has(`${p.x},${p.y}`)&&workPath(state.restaurantState,plan.entrance,p,plan));
+    if(point){taken.add(`${point.x},${point.y}`);state.service.staffPositions[employee.id]={...point};worker('idle-'+employee.id,{route:[point],progress:0},employee.id,employee.role==='cook'?0:3,schedule.closing?'Schichtende, auf Abschluss warten':'Einsatzbereit · '+shiftLabel(employee.shift),null,null);}
+  }
   for(const [i,p]of (state.service.plateReturns||[]).entries())plate('plate-return-'+i,{x:p.position.x+.2,y:p.position.y+.1},4,'service-returned-plate',null,3);
   for(const [key,g]of nodes)if(!wanted.has(key)){g.destroy({children:true});nodes.delete(key);}
 }
@@ -53,7 +62,7 @@ export function renderServiceUI(){
   const groups=state.service.groups,active=serviceMenu().some(item=>item.active),status=document.getElementById('restaurantServiceStatus');
   const seated=groups.filter(g=>g.phase==='waiting'||g.phase==='eating').length,total=groups.reduce((sum,g)=>sum+g.size,0);
   const readiness=kitchenReadiness(state.kitchenTiles,state.restaurantState,activePlan());status.title=readiness.issue||'Küche betriebsbereit';status.dataset.kitchenReady=String(readiness.ready);
-  const profile=ensureRestaurants()[state.activeRestaurantId],plan=activePlan(),issue=(profile.service.debtCents||0)>0||state.staff.reserveDebtCents>0?'Offene Betriebskosten':profile.business.open===false?'Neue Gäste gestoppt':readiness.issue||businessIssue(profile.business,readiness.ready?kitchenWorkFlow(state.kitchenTiles,state.restaurantState,plan):null);
+  const profile=ensureRestaurants()[state.activeRestaurantId],plan=activePlan(),schedule=staffSchedule(state.staff,state.activeRestaurantId,state.gameMinutes,state.service),staff={...profile.business,cook:schedule.working.filter(p=>p.role==='cook').length,waiter:schedule.working.filter(p=>p.role==='waiter').length},issue=(profile.service.debtCents||0)>0||state.staff.reserveDebtCents>0?'Offene Betriebskosten':profile.business.open===false?'Neue Gäste gestoppt':!schedule.active?(schedule.closing?'Schichtende, Bestellungen abschließen':'Außerhalb der Schichten'):readiness.issue||businessIssue(staff,readiness.ready?kitchenWorkFlow(state.kitchenTiles,state.restaurantState,plan):null);
   const stars=document.querySelector('.stars'),rating=state.service.rating||4;stars.textContent='★'.repeat(Math.round(rating))+'☆'.repeat(5-Math.round(rating));stars.setAttribute('aria-label',rating.toFixed(1)+' von 5 Sternen');
   const dirty=state.service.dirtyTables?.length||0,text=(groups.length?total+(total===1?' Gast · ':' Gäste · ')+seated+(seated===1?' Tisch belegt':' Tische belegt'):issue?'Geschlossen · '+issue:active?'Geöffnet · Gäste kommen':'Speisekarte noch leer')+(dirty?' · '+dirty+(dirty===1?' Tisch abräumen':' Tische abräumen'):'');if(status.textContent!==text)status.textContent=text;
   const host=document.getElementById('incomeBanners'),wanted=new Set();

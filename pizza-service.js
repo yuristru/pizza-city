@@ -1,10 +1,10 @@
-import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261012d';
-import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261012d';
-import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261012d';
-import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261012d';
+import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261012e';
+import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261012e';
+import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261012e';
+import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261012e';
 
-import {businessIssue,demandScore,operatingRates} from './pizza-business.js?v=20261012d';
-import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable} from './pizza-production.js?v=20261012d';
+import {businessIssue,demandScore,operatingRates} from './pizza-business.js?v=20261012e';
+import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable} from './pizza-production.js?v=20261012e';
 export const SERVICE_PHASES=['arriving','waiting','eating','leaving','paying'];
 export const tableKey=t=>[t.x,t.y,t.r,t.seats,t.variant||'wood'].join(':');
 export function freshService(){return {version:1,chainVersion:1,elapsed:0,untilArrival:2,nextId:1,groups:[],payments:[],dirtyTables:[],waiterTasks:[],staffPositions:{},plateReturns:[],cleanedTables:0,netCents:0,revenueCents:0,costCents:0,servedGuests:0};}
@@ -64,7 +64,7 @@ function leave(group,layout,plan){
   for(const start of starts){const route=routeBetween(free,start,plan.entrance,plan);if(route){group.phase='leaving';group.route=route;group.progress=0;return;}}
 }
 function admit(service,layout,menu,balance,plan,business){
-  if(business&&(business.staff.open===false||business.companyDebt>0||businessIssue(business.staff,business.workflow)||(service.debtCents||0)>0))return;
+  if(business&&(business.accepting===false||business.staff.open===false||business.companyDebt>0||businessIssue(business.staff,business.workflow)||(service.debtCents||0)>0))return;
   if(service.groups.length>=12||plan.kitchenKeys&&!kitchenReadiness([...plan.kitchenKeys].map(key=>{const [x,y]=key.split(',').map(Number);return {x,y};}),layout,plan).ready)return;
   const sizes=[2,1,3,2,4,2,6,1,8,3],reserved=new Set(service.groups.filter(g=>!['leaving','paying'].includes(g.phase)).map(g=>tableKey(g.table)));
   const available=layout.filter(t=>t.type==='table'&&!reserved.has(tableKey(t))&&!dirtyTable(service,t)).map(table=>({table,route:tableRoute(layout,table,plan)})).filter(t=>t.route);

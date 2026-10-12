@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import {SHIFTS,shiftAt,nextShiftBoundary,staffSchedule} from '../pizza-shifts.js';
+import {freshStaff,hireEmployee,assignShift,restoreStaff} from '../pizza-staff.js';
+import {FLOORPLANS} from '../pizza-floorplans.js';
+import {freshRestaurant,restoreRestaurants} from '../pizza-restaurant-profiles.js';
+import {copyLayout} from '../pizza-layout.js';
+import {legacyKitchen} from '../pizza-kitchen.js';
+const profiles={'mamma-mia':freshRestaurant('mamma-mia')},staff=freshStaff();
+for(const shift of Object.keys(SHIFTS))for(const role of ['cook','waiter'])assert(hireEmployee(staff,staff.market.find(p=>p.role===role).id,'mamma-mia',profiles,shift).ok);
+assert.deepEqual(Object.keys(SHIFTS),['lunch','evening']);
+for(const [minute,expected]of [[659,null],[660,'lunch'],[959.9,'lunch'],[960,null],[1019.9,null],[1020,'evening'],[1379.9,'evening'],[1380,null],[1440,null],[2100,'lunch']])assert.equal(shiftAt(minute),expected);
+assert.equal(nextShiftBoundary(690),960);assert.equal(nextShiftBoundary(960),1020);assert.equal(nextShiftBoundary(1380),1440);
+let schedule=staffSchedule(staff,'mamma-mia',690,profiles['mamma-mia'].service);assert.equal(schedule.working.length,2);assert(schedule.accepting);assert(schedule.working.every(p=>p.shift==='lunch'));
+assert.equal(staffSchedule(staff,'mamma-mia',960,profiles['mamma-mia'].service).working.length,0);
+profiles['mamma-mia'].service.dirtyTables=[{id:1}];schedule=staffSchedule(staff,'mamma-mia',960,profiles['mamma-mia'].service);assert(schedule.closing);assert(!schedule.accepting);assert.equal(schedule.working.length,2);
+profiles['mamma-mia'].service.dirtyTables=[];schedule=staffSchedule(staff,'mamma-mia',1020,profiles['mamma-mia'].service);assert(schedule.working.every(p=>p.shift==='evening'));assert(schedule.accepting);
+const cook=staff.employees.find(p=>p.shift==='lunch'&&p.role==='cook');assert(assignShift(staff,cook.id,'evening',profiles).ok);assert(!staffSchedule(staff,'mamma-mia',690,profiles['mamma-mia'].service).accepting);assert(assignShift(staff,cook.id,'lunch',profiles).ok);
+profiles['mamma-mia'].service.groups=[{phase:'waiting',work:{stage:0,cookId:cook.id}}];assert(!assignShift(staff,cook.id,'evening',profiles).ok);profiles['mamma-mia'].service.groups=[];
+assert.deepEqual(restoreStaff(JSON.parse(JSON.stringify(staff)),profiles),staff);
+const old=JSON.parse(JSON.stringify(staff));old.employees.forEach(p=>delete p.shift);assert(restoreStaff(old,profiles).employees.every(p=>p.shift==='lunch'));
+assert(restoreStaff(old,profiles,'evening').employees.every(p=>p.shift==='evening'),'Old staff can adopt the current shift without losing their identity or jobs.');
+for(const p of Object.values(FLOORPLANS)){assert.equal(p.decor.length,0);const fresh=freshRestaurant(p.id);assert(!fresh.items.some(i=>['oven','bar','fridge'].includes(i.type)));assert.equal(fresh.kitchenTiles.length,0);}
+const migrated=restoreRestaurants({'mamma-mia':{items:copyLayout(),floorPlanVersion:1}},[],null)['mamma-mia'];assert(!migrated.items.some(i=>['oven','bar','fridge'].includes(i.type)));
+const k=legacyKitchen(FLOORPLANS['mamma-mia']),p={...freshRestaurant('mamma-mia'),items:k.items,kitchenTiles:k.tiles};const retained=restoreRestaurants({'mamma-mia':p},[],null)['mamma-mia'];assert.equal(retained.items.length,3);assert.deepEqual(retained.items,p.items);
+console.log('Shifts passed: two scheduled teams, exact boundaries, closing/cleaning grace without new arrivals, shift assignment and busy guard, stable old/new saves, no fixed props or automatic kitchen devices.');
