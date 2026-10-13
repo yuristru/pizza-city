@@ -1,8 +1,8 @@
-import {state,ensureRestaurants,restaurantName,saveLayout,notify,setRestaurantOpen} from './pizza-core.js?v=20261013b';
-import {STAFF_ROLES,LEVEL_NAMES,skillLevel,averageSkill,monthlyPayroll,restaurantStaff,hireEmployee,assignEmployee,assignShift,dismissEmployee,employeeBusy} from './pizza-staff.js?v=20261013b';
-import {SHIFTS,shiftLabel,staffSchedule} from './pizza-shifts.js?v=20261013b';
-import {drawStaffAvatar} from './pizza-staff-avatar.js?v=20261013b';
-import {money} from './pizza-catalog.js?v=20261013b';
+import {state,ensureRestaurants,restaurantName,saveLayout,notify,setRestaurantOpen} from './pizza-core.js?v=20261013c';
+import {STAFF_ROLES,LEVEL_NAMES,skillLevel,averageSkill,monthlyPayroll,restaurantStaff,hireEmployee,assignEmployee,assignShift,dismissEmployee,employeeBusy} from './pizza-staff.js?v=20261013c';
+import {SHIFTS,shiftLabel,staffSchedule} from './pizza-shifts.js?v=20261013c';
+import {drawStaffAvatar} from './pizza-staff-avatar.js?v=20261013c';
+import {money} from './pizza-catalog.js?v=20261013c';
 const el=id=>document.getElementById(id),portraits=new Map(),roles={market:'all',files:'all',restaurants:'all'};
 let view='market',restaurant=null,stamp=0,shiftFilter='all';
 function node(tag,text,className){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(className)e.className=className;return e;}
@@ -31,6 +31,27 @@ function card(person,profiles,market){
  article.append(footer);return article;
 }
 function roleFilters(host){const bar=node('div',undefined,'staffRoleFilters');bar.setAttribute('aria-label','Fachbereich filtern');for(const [key,label]of [['all','Alle Fachbereiche'],...Object.entries(STAFF_ROLES).map(([key,r])=>[key,r.name])]){const b=button(label,()=>{roles[view]=key;renderStaffUI(true);});b.dataset.staffRole=key;b.setAttribute('aria-pressed',String(roles[view]===key));bar.append(b);}host.append(bar);}
+function roleIcon(role){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),use=document.createElementNS(svg.namespaceURI,'use');svg.setAttribute('viewBox','0 0 32 32');svg.setAttribute('aria-hidden','true');use.setAttribute('href',role==='cook'?'#icon-chef':'#icon-service');svg.append(use);return svg;}
+function restaurantList(host,profiles,dialog){
+ const table=node('table',undefined,'staffRestaurantTable');table.id='staffRestaurantList';table.append(node('caption','Restaurants und Schichtbesetzung'));
+ const head=node('thead'),headers=node('tr'),active=node('th');active.scope='col';active.append(node('span','Aktiv','sr-only'));headers.append(active);
+ const name=node('th','Restaurant');name.scope='col';headers.append(name);
+ for(const id of Object.keys(SHIFTS)){const th=node('th',SHIFTS[id].name);th.scope='col';th.append(node('small',id==='lunch'?'11 bis 16 Uhr':'17 bis 23 Uhr'));headers.append(th);}head.append(headers);table.append(head);
+ const body=node('tbody');
+ for(const id of Object.keys(profiles)){
+  const team=restaurantStaff(state.staff,id),row=node('tr'),choice=node('td'),radio=node('input');row.dataset.staffBranch=id;row.dataset.active=String(id===restaurant);
+  radio.type='radio';radio.name='staff-active-restaurant';radio.id='staff-restaurant-'+id;radio.value=id;radio.dataset.staffRestaurant=id;radio.checked=id===restaurant;radio.setAttribute('aria-label',restaurantName(id)+' als aktives Restaurant auswählen');
+  radio.onchange=()=>{if(!radio.checked)return;const scroll=dialog.scrollTop;restaurant=id;state.navigate('restaurant',id);if(!dialog.open)dialog.showModal();renderStaffUI(true);dialog.scrollTop=scroll;el(radio.id)?.focus({preventScroll:true});};choice.append(radio);row.append(choice);
+  const title=node('th'),label=node('label',restaurantName(id));title.scope='row';label.htmlFor=radio.id;title.append(label);row.append(title);
+  for(const shift of Object.keys(SHIFTS)){
+   const cell=node('td'),icons=node('div',undefined,'staffCoverage');cell.dataset.coverageShift=shift;
+   for(const role of ['cook','waiter']){const count=team.filter(p=>p.role===role&&(p.shift||'lunch')===shift).length,indicator=node('span',undefined,'staffCoverageIcon'),name=role==='cook'?'Koch':'Servicekraft';indicator.dataset.coverageRole=role;indicator.dataset.count=String(count);indicator.dataset.assigned=String(count>0);indicator.setAttribute('role','img');indicator.setAttribute('aria-label',SHIFTS[shift].name+': '+name+(count?' eingeteilt ('+count+')':' fehlt'));indicator.title=indicator.getAttribute('aria-label');indicator.append(roleIcon(role),node('span',count?'✓':'×','staffCoverageMark'));icons.append(indicator);}cell.append(icons);row.append(cell);
+  }
+  body.append(row);
+ }
+ table.append(body);host.append(table);
+ const legend=node('p',undefined,'staffCoverageLegend');for(const [role,label]of [['cook','Koch'],['waiter','Service']]){const part=node('span');part.append(roleIcon(role),document.createTextNode(label));legend.append(part);}legend.append(node('span','✓ eingeteilt · × fehlt'));host.append(legend);
+}
 export function renderStaffUI(force=false){
  const dialog=el('staffDialog');if(!dialog.open)return;const profiles=ensureRestaurants();
  if(!restaurant||!profiles[restaurant])restaurant=state.activeRestaurantId;
@@ -39,7 +60,8 @@ export function renderStaffUI(force=false){
   for(const tab of document.querySelectorAll('[data-staff-view]')){const active=tab.dataset.staffView===view;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;}
   const host=el('staffContent');host.setAttribute('aria-labelledby','staff-tab-'+view);host.replaceChildren();
   if(view==='restaurants'){
-   const controls=node('div',undefined,'staffBranchControls'),label=node('label','Restaurant auswählen'),select=node('select');select.id='staffRestaurantFilter';select.setAttribute('aria-label','Restaurant filtern');for(const id of Object.keys(profiles))select.append(new Option(restaurantName(id),id));select.value=restaurant;select.onchange=()=>{restaurant=select.value;renderStaffUI(true);};label.append(select);const shiftLabelNode=node('label','Schicht filtern'),shifts=node('select');shifts.id='staffShiftFilter';shifts.append(new Option('Alle Schichten','all'),...Object.keys(SHIFTS).map(id=>new Option(shiftLabel(id),id)));shifts.value=shiftFilter;shifts.onchange=()=>{shiftFilter=shifts.value;renderStaffUI(true);};shiftLabelNode.append(shifts);controls.append(label,shiftLabelNode,button('Restaurant ansehen',()=>{dialog.close();state.navigate('restaurant',restaurant);}));host.append(controls);
+   restaurantList(host,profiles,dialog);
+   const controls=node('div',undefined,'staffBranchControls'),shiftLabelNode=node('label','Personal nach Schicht filtern'),shifts=node('select');shifts.id='staffShiftFilter';shifts.append(new Option('Alle Schichten','all'),...Object.keys(SHIFTS).map(id=>new Option(shiftLabel(id),id)));shifts.value=shiftFilter;shifts.onchange=()=>{shiftFilter=shifts.value;renderStaffUI(true);};shiftLabelNode.append(shifts);controls.append(shiftLabelNode,button('Restaurant ansehen',()=>{dialog.close();state.navigate('restaurant',restaurant);}));host.append(controls);
    const team=restaurantStaff(state.staff,restaurant),summary=node('div',undefined,'staffBranchSummary');summary.id='staffBranchSummary';summary.append(node('h3',restaurantName(restaurant)),node('p',team.filter(p=>p.role==='cook').length+' Küche · '+team.filter(p=>p.role==='waiter').length+' Service · '+money(monthlyPayroll(state.staff,restaurant)/100)+' / Monat'));const accepting=button(profiles[restaurant].business.open===false?'Restaurant öffnen':'Restaurant schließen',()=>setRestaurantOpen(restaurant,profiles[restaurant].business.open===false));accepting.id='staffAcceptGuests';summary.append(accepting);host.append(summary);
   }else{host.append(node('h3',view==='market'?'Arbeitsmarkt':'Personalakten'),node('p',view==='market'?'Wähle Qualifikation und Restaurant. Höhere Kompetenzwerte bedeuten ein höheres Monatsgehalt.':'Deine Leute mit ihren Kompetenzen und der aktuellen Restaurantzuordnung.','staffIntro'));}
   roleFilters(host);
@@ -54,5 +76,6 @@ export function mountStaffUI(){
  el('staffBtn').onclick=()=>{if(el('businessDialog').open)el('businessDialog').close();restaurant=state.activeRestaurantId;el('staffDialog').showModal();renderStaffUI(true);};
  el('staffClose').onclick=()=>el('staffDialog').close();
  for(const tab of document.querySelectorAll('[data-staff-view]')){tab.onclick=()=>setView(tab.dataset.staffView);tab.onkeydown=event=>{const tabs=[...document.querySelectorAll('[data-staff-view]')],index=tabs.indexOf(tab);let target;if(event.key==='ArrowRight')target=tabs[(index+1)%tabs.length];if(event.key==='ArrowLeft')target=tabs[(index+tabs.length-1)%tabs.length];if(event.key==='Home')target=tabs[0];if(event.key==='End')target=tabs.at(-1);if(target){event.preventDefault();setView(target.dataset.staffView);target.focus();}};}
- document.addEventListener('restaurants-changed',()=>renderStaffUI(true));
+ document.addEventListener('restaurants-changed',()=>{restaurant=state.activeRestaurantId;renderStaffUI(true);});
+ document.addEventListener('staff-changed',()=>renderStaffUI(true));
 }

@@ -1,4 +1,4 @@
-import {Sprite,Texture} from './pizza-core.js?v=20261013b';
+import {Sprite,Texture} from './pizza-core.js?v=20261013c';
 
 // Individually measured atlas frames become small, flat pixel sprites once at load time.
 const art=new Map();

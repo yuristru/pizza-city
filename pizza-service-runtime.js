@@ -1,10 +1,10 @@
-import {accrueReservePayroll} from './pizza-staff.js?v=20261013b';
-import {staffSchedule,nextShiftBoundary} from './pizza-shifts.js?v=20261013b';
-import {DAY_MINUTES,SECONDS_PER_MINUTE,completeDay,dayLabel} from './pizza-daily.js?v=20261013b';
-import {profilePlan} from './pizza-kitchen.js?v=20261013b';
-import {state,saveLayout,updateMoney,ensureRestaurants,notify} from './pizza-core.js?v=20261013b';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261013b';
-import {advanceService} from './pizza-service.js?v=20261013b';
+import {accrueReservePayroll} from './pizza-staff.js?v=20261013c';
+import {staffSchedule,nextShiftBoundary} from './pizza-shifts.js?v=20261013c';
+import {DAY_MINUTES,SECONDS_PER_MINUTE,completeDay,dayLabel} from './pizza-daily.js?v=20261013c';
+import {profilePlan} from './pizza-kitchen.js?v=20261013c';
+import {state,saveLayout,updateMoney,ensureRestaurants,notify} from './pizza-core.js?v=20261013c';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261013c';
+import {advanceService} from './pizza-service.js?v=20261013c';
 
 let checkpoint=0;
 export function tickService(seconds){

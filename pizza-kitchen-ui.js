@@ -1,6 +1,6 @@
-import {counterLayoutIssue} from './pizza-business.js?v=20261013b';
-import {state,activePlan,ensureRestaurants} from './pizza-core.js?v=20261013b';
-import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261013b';
+import {counterLayoutIssue} from './pizza-business.js?v=20261013c';
+import {state,activePlan,ensureRestaurants} from './pizza-core.js?v=20261013c';
+import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261013c';
 export function renderKitchenUI(){
   const dialog=document.getElementById('kitchenDialog');if(!dialog.open)return;
   const status=kitchenReadiness(state.kitchenTiles,state.restaurantState,activePlan()),names={oven:'Ofen',bar:'Tresen',fridge:'Kühlschrank'};
