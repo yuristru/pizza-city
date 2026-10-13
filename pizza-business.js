@@ -1,6 +1,6 @@
-import {MONTH_HOURS} from './pizza-staff.js?v=20261013a';
-import {roomCell,roomStep} from './pizza-floorplans.js?v=20261013a';
-import {occupiedCells} from './pizza-layout.js?v=20261013a';
+import {MONTH_HOURS} from './pizza-staff.js?v=20261013b';
+import {roomCell,roomStep} from './pizza-floorplans.js?v=20261013b';
+import {occupiedCells} from './pizza-layout.js?v=20261013b';
 export const STAFF={cook:{name:'Koch',hourly:12},waiter:{name:'Service',hourly:8}};
 export function freshBusiness(){return {cook:0,waiter:0};}
 export function restoreBusiness(raw,legacy=false){return {...Object.fromEntries(Object.keys(STAFF).map(k=>[k,Number.isInteger(raw?.[k])&&raw[k]>=0&&raw[k]<=4?raw[k]:legacy?1:0])),open:raw?.open!==false};}
@@ -28,25 +28,38 @@ export function counterAccessIssue(bar,items,plan){
  if(!workPath(items,counter,handoff,plan,true)||!workPath(items,plan.entrance,counter,plan)||!workPath(items,plan.entrance,handoff,plan))return 'Bitte einen freien Laufweg zur Vorderseite jedes Tresens lassen.';
  return null;
 }
-export function counterLayoutIssue(items,plan){
+export function counterLayoutIssue(items,plan,previousPlan=null){
  if(!plan.kitchenKeys)return null;
- for(const bar of items.filter(item=>item.type==='bar')){const issue=counterAccessIssue(bar,items,plan);if(issue)return issue;}
+ // Only unchanged furniture on an expanded floor can keep an existing access issue.
+ const expansion=previousPlan?.kitchenKeys&&plan.kitchenKeys.size>previousPlan.kitchenKeys.size
+  &&previousPlan.keys===plan.keys&&previousPlan.kitchen===plan.kitchen&&previousPlan.entrance===plan.entrance&&previousPlan.approach===plan.approach&&previousPlan.decor===plan.decor
+  &&[...previousPlan.kitchenKeys].every(key=>plan.kitchenKeys.has(key));
+ for(const bar of items.filter(item=>item.type==='bar')){const issue=counterAccessIssue(bar,items,plan);if(issue&&(!expansion||!counterAccessIssue(bar,items,previousPlan)))return issue;}
  return null;
 }
-const workflowCache=new WeakMap();
+const workflowCache=new WeakMap(),completionCache=new WeakMap();
 export function kitchenWorkflow(items,plan,kitchenCells){
- const signature=items.map(i=>[i.type,i.x,i.y,i.r,i.seats].join(':')).join(';')+'|'+kitchenCells.map(c=>`${c.x},${c.y}`).join(';');
- const previous=workflowCache.get(plan);if(previous?.signature===signature)return previous.value;
- const value=buildWorkflow(items,plan,kitchenCells);workflowCache.set(plan,{signature,value});return value;
+ return cachedWorkflow(items,plan,kitchenCells,false,workflowCache);
 }
-function buildWorkflow(items,plan,kitchenCells){
+// Reachable pre-rule counter approaches are only for finishing accepted work.
+export function kitchenCompletionWorkflow(items,plan,kitchenCells){
+ return cachedWorkflow(items,plan,kitchenCells,true,completionCache);
+}
+function cachedWorkflow(items,plan,kitchenCells,completion,cache){
+ const signature=items.map(i=>[i.type,i.x,i.y,i.r,i.seats].join(':')).join(';')+'|'+kitchenCells.map(c=>`${c.x},${c.y}`).join(';');
+ const previous=cache.get(plan);if(previous?.signature===signature)return previous.value;
+ const value=buildWorkflow(items,plan,kitchenCells,completion);cache.set(plan,{signature,value});return value;
+}
+function buildWorkflow(items,plan,kitchenCells,completion){
  const allowed=new Set(kitchenCells.map(c=>`${c.x},${c.y}`));
  const devices=['fridge','bar','oven'].map(type=>items.filter(i=>i.type===type&&occupiedCells(i).every(k=>allowed.has(k))));
  // Try every valid combination, so a second inaccessible device cannot close a usable kitchen.
  for(const fridge of devices[0])for(const bar of devices[1])for(const oven of devices[2]){
-  if(counterAccessIssue(bar,items,plan))continue;
-  const {counter:b,handoff:h,...surfaces}=counterWorkplaces(bar);
-  for(const f of approaches(fridge,items,plan,true))for(const o of approaches(oven,items,plan,true)){
+  if(!completion&&counterAccessIssue(bar,items,plan))continue;
+  const surfaces=counterSurfaces(bar),workplaces=completion
+   ?approaches({...surfaces.prepSurface,type:'fridge',r:0},items,plan,true).filter(b=>roomStep(surfaces.prepSurface,b,plan)).flatMap(counter=>approaches({...surfaces.readySurface,type:'fridge',r:0},items,plan,true).filter(h=>roomStep(surfaces.readySurface,h,plan)).map(handoff=>({counter,handoff})))
+   :[counterWorkplaces(bar)];
+  for(const {counter:b,handoff:h}of workplaces)for(const f of approaches(fridge,items,plan,true))for(const o of approaches(oven,items,plan,true)){
    const prep=workPath(items,f,b,plan,true),bake=workPath(items,b,o,plan,true),pickup=workPath(items,o,h,plan,true),access=workPath(items,plan.entrance,h,plan);
    if(prep&&bake&&pickup&&access)return {prep,bake,pickup,fridge:f,counter:b,handoff:h,oven:o,...surfaces,stationKey:[bar.x,bar.y,bar.r].join(':'),ovenKey:[oven.x,oven.y].join(':')};
   }

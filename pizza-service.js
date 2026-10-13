@@ -1,10 +1,10 @@
-import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261013a';
-import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261013a';
-import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261013a';
-import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261013a';
+import {kitchenReadiness,kitchenWorkFlow,completionWorkFlow} from './pizza-kitchen.js?v=20261013b';
+import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261013b';
+import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261013b';
+import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261013b';
 
-import {businessIssue,demandScore,operatingRates,counterLayoutIssue} from './pizza-business.js?v=20261013a';
-import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable} from './pizza-production.js?v=20261013a';
+import {businessIssue,demandScore,operatingRates,counterLayoutIssue} from './pizza-business.js?v=20261013b';
+import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable} from './pizza-production.js?v=20261013b';
 export const SERVICE_PHASES=['arriving','waiting','eating','leaving','paying'];
 export const tableKey=t=>[t.x,t.y,t.r,t.seats,t.variant||'wood'].join(':');
 export function freshService(){return {version:1,chainVersion:1,elapsed:0,untilArrival:2,nextId:1,groups:[],payments:[],dirtyTables:[],waiterTasks:[],staffPositions:{},plateReturns:[],cleanedTables:0,netCents:0,revenueCents:0,costCents:0,servedGuests:0};}
@@ -42,8 +42,8 @@ function tableRoute(layout,t,plan){
   for(let y=t.y;y<t.y+h;y++)for(const x of [t.x-1,t.x+w])choices.push({x,y});
   return choices.map(p=>routeBetween(free,plan.entrance,p,plan)).filter(Boolean).sort((a,b)=>a.length-b.length)[0]||null;
 }
-export function serviceLayoutIssue(layout,plan=DEFAULT_PLAN){
-  const counterIssue=counterLayoutIssue(layout,plan);if(counterIssue)return counterIssue;
+export function serviceLayoutIssue(layout,plan=DEFAULT_PLAN,previousPlan=null){
+  const counterIssue=counterLayoutIssue(layout,plan,previousPlan);if(counterIssue)return counterIssue;
   const free=freeCells(layout,plan);
   if(plan.approach&&!routeBetween(free,plan.entrance,plan.approach,plan))return 'Bitte einen Laufweg zur Küchentür frei lassen.';
   if(layout.some(t=>t.type==='table'&&!tableRoute(layout,t,plan)))return 'Bitte einen Laufweg zu jedem Tisch frei lassen.';
@@ -79,7 +79,12 @@ function admit(service,layout,menu,balance,plan,business){
 export function advanceService(service,seconds,layout,menu,balanceCents,plan=DEFAULT_PLAN,business=null){
   const events=[];if(!Number.isFinite(seconds)||seconds<=0)return {balanceCents,events};
   const free=freeCells(layout,plan);
-  if(business){const ready=kitchenReadiness([...plan.kitchenKeys].map(k=>{const [x,y]=k.split(',').map(Number);return {x,y};}),layout,plan);business={...business,workflow:ready.ready?kitchenWorkFlow([...plan.kitchenKeys].map(k=>{const [x,y]=k.split(',').map(Number);return {x,y};}),layout,plan):null};}
+  if(business){
+    const tiles=[...plan.kitchenKeys].map(k=>{const [x,y]=k.split(',').map(Number);return {x,y};}),ready=kitchenReadiness(tiles,layout,plan),workflow=ready.ready?kitchenWorkFlow(tiles,layout,plan):null;
+    const pending=service.groups.length||service.dirtyTables.length||service.waiterTasks.length;
+    // New guests always need the strict workflow. Only existing orders/plates may recover.
+    business={...business,workflow,completionWorkflow:!workflow&&pending&&ready.ready?completionWorkFlow(tiles,layout,plan):null};
+  }
   seconds=Math.min(seconds,3600);
   while(seconds>1e-8){
     const dt=Math.min(.1,seconds);seconds-=dt;service.elapsed+=dt;

@@ -1,8 +1,8 @@
-import {state,ensureRestaurants,restaurantName,setRestaurantOpen} from './pizza-core.js?v=20261013a';
-import {restaurantPlan} from './pizza-floorplans.js?v=20261013a';
-import {STAFF,businessMetrics} from './pizza-business.js?v=20261013a';
-import {money} from './pizza-catalog.js?v=20261013a';
-import {mountDailyUI,renderDailyUI,openDailyReport} from './pizza-daily-ui.js?v=20261013a';
+import {state,ensureRestaurants,restaurantName,setRestaurantOpen} from './pizza-core.js?v=20261013b';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261013b';
+import {STAFF,businessMetrics} from './pizza-business.js?v=20261013b';
+import {money} from './pizza-catalog.js?v=20261013b';
+import {mountDailyUI,renderDailyUI,openDailyReport} from './pizza-daily-ui.js?v=20261013b';
 const el=id=>document.getElementById(id);let stamp=0,view='daily';
 function text(tag,value){const e=document.createElement(tag);e.textContent=value;return e;}
 export function renderBusinessUI(force=false){

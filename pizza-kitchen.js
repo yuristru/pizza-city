@@ -1,6 +1,6 @@
-import {kitchenWorkflow} from './pizza-business.js?v=20261013a';
-import {roomCell,roomStep,withKitchen,restaurantPlan} from './pizza-floorplans.js?v=20261013a';
-import {occupiedCells,decorCell,placementIssue} from './pizza-layout.js?v=20261013a';
+import {kitchenWorkflow,kitchenCompletionWorkflow} from './pizza-business.js?v=20261013b';
+import {roomCell,roomStep,withKitchen,restaurantPlan} from './pizza-floorplans.js?v=20261013b';
+import {occupiedCells,decorCell,placementIssue} from './pizza-layout.js?v=20261013b';
 export const KITCHEN_TYPES=['oven','bar','fridge'];
 export const KITCHEN_TILE_PRICE=50;
 export function restoreKitchenTiles(raw,p){
@@ -55,6 +55,12 @@ const cache=new WeakMap();
 export function profilePlan(id,profile){const old=cache.get(profile);if(old?.tiles===profile.kitchenTiles&&old.id===id)return old.plan;const plan=withKitchen(restaurantPlan(id),profile.kitchenTiles||[]);cache.set(profile,{id,tiles:profile.kitchenTiles,plan});return plan;}
 
 export function kitchenWorkFlow(tiles,items,p){
-  for(const cells of kitchenComponents(tiles,p)){const ready=kitchenReadiness(cells,items,p);if(ready.ready){const flow=kitchenWorkflow(items,p,cells);if(flow)return flow;}}
+  return findWorkflow(tiles,items,p,kitchenWorkflow);
+}
+export function completionWorkFlow(tiles,items,p){
+  return findWorkflow(tiles,items,p,kitchenCompletionWorkflow);
+}
+function findWorkflow(tiles,items,p,build){
+  for(const cells of kitchenComponents(tiles,p)){const ready=kitchenReadiness(cells,items,p);if(ready.ready){const flow=build(items,p,cells);if(flow)return flow;}}
   return null;
 }

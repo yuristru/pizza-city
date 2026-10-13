@@ -17,6 +17,8 @@ on:
       - 'tests/pizza-menu-browser-qa.cjs'
       - 'tests/pizza-service-qa.mjs'
       - 'tests/pizza-service-browser-qa.cjs'
+      - 'tests/pizza-service-recovery-qa.mjs'
+      - 'tests/pizza-service-recovery-browser-qa.cjs'
       - 'tests/pizza-properties-qa.mjs'
       - 'tests/pizza-city-layout-qa.mjs'
       - 'tests/pizza-city-study-qa.cjs'
@@ -60,6 +62,8 @@ jobs:
           node tests/pizza-menu-browser-qa.cjs
           node tests/pizza-service-qa.mjs
           node tests/pizza-service-browser-qa.cjs
+          node tests/pizza-service-recovery-qa.mjs
+          node tests/pizza-service-recovery-browser-qa.cjs
           node tests/pizza-restaurants-browser-qa.cjs
           node tests/pizza-staff-qa.mjs
           node tests/pizza-staff-browser-qa.cjs

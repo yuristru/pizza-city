@@ -1,13 +1,13 @@
-import {frontageRow} from './pizza-city-frontages.js?v=20261013a';
-import {BUILDING_FOOTPRINTS,footprintAnchor,footprintCells,footprintFits} from './pizza-city-footprints.js?v=20261013a';
-import {cityGround} from './pizza-city-ground.js?v=20261013a';
-import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261013a';
-import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261013a';
-import {openProperty} from './pizza-properties-ui.js?v=20261013a';
-import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261013a';
-import {citySprite} from './pizza-city-art.js?v=20261013a';
-import {personSprite} from './pizza-sprites.js?v=20261013a';
-import {carSprite} from './pizza-city-traffic.js?v=20261013a';
+import {frontageRow} from './pizza-city-frontages.js?v=20261013b';
+import {BUILDING_FOOTPRINTS,footprintAnchor,footprintCells,footprintFits} from './pizza-city-footprints.js?v=20261013b';
+import {cityGround} from './pizza-city-ground.js?v=20261013b';
+import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261013b';
+import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261013b';
+import {openProperty} from './pizza-properties-ui.js?v=20261013b';
+import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261013b';
+import {citySprite} from './pizza-city-art.js?v=20261013b';
+import {personSprite} from './pizza-sprites.js?v=20261013b';
+import {carSprite} from './pizza-city-traffic.js?v=20261013b';
 
 let districts=districtOrder();
 function cityHash(x,y,s=0){return hash(x,y,(state.citySeed+s)>>>0);}

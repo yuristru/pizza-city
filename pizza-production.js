@@ -1,6 +1,6 @@
-import {workPath} from './pizza-business.js?v=20261013a';
-import {roomCell,roomStep} from './pizza-floorplans.js?v=20261013a';
-import {dimensions} from './pizza-layout.js?v=20261013a';
+import {workPath} from './pizza-business.js?v=20261013b';
+import {roomCell,roomStep} from './pizza-floorplans.js?v=20261013b';
+import {dimensions} from './pizza-layout.js?v=20261013b';
 const key=t=>[t.x,t.y,t.r,t.seats,t.variant||'wood'].join(':');
 const personId=id=>typeof id==='string'&&/^[a-z0-9-]{1,80}$/.test(id);
 const cell=(p,plan)=>p&&Number.isInteger(p.x)&&Number.isInteger(p.y)&&roomCell(p.x,p.y,plan);
@@ -43,18 +43,19 @@ export function advanceWaiters(service,dt,layout,plan,business){
  }
  // A returning server can take a fresh pizza immediately; otherwise clean the oldest table.
  if(service.groups.some(g=>g.phase==='waiting'&&g.work?.stage===3&&(!g.work.started||g.work.deliveryStage==='pickup')))return;
+ const flow=business.workflow||business.completionWorkflow;
  for(const waiter of team(business,'waiter')){
   if(waiterBusy(service,waiter.id))continue;
-  const d=service.dirtyTables.find(d=>!service.waiterTasks.some(t=>t.dirtyId===d.id));if(!d||!business.workflow)continue;
+  const d=service.dirtyTables.find(d=>!service.waiterTasks.some(t=>t.dirtyId===d.id));if(!d||!flow)continue;
   const {w,h}=dimensions(d.table),targets=[];for(let x=d.table.x;x<d.table.x+w;x++)for(const y of [d.table.y-1,d.table.y+h])targets.push({x,y});for(let y=d.table.y;y<d.table.y+h;y++)for(const x of [d.table.x-1,d.table.x+w])targets.push({x,y});
-  const target=targets.find(p=>workPath(layout,business.workflow.handoff,p,plan));if(!target)continue;
-  const walk=fromPosition(service,waiter.id,target,layout,plan,false,business.workflow.handoff);if(!walk)continue;
-  service.waiterTasks.push({employeeId:waiter.id,kind:'clear',dirtyId:d.id,plates:0,flow:business.workflow,route:walk,progress:0,hold:.8+(100-(waiter.skills?.attention??50))/100,speed:speed(waiter)});
+  const target=targets.find(p=>workPath(layout,flow.handoff,p,plan));if(!target)continue;
+  const walk=fromPosition(service,waiter.id,target,layout,plan,false,flow.handoff);if(!walk)continue;
+  service.waiterTasks.push({employeeId:waiter.id,kind:'clear',dirtyId:d.id,plates:0,flow,route:walk,progress:0,hold:.8+(100-(waiter.skills?.attention??50))/100,speed:speed(waiter)});
  }
 }
 export function advanceKitchenOrder(service,g,dt,layout,plan,business){
- const flow=business.workflow;if(!flow)return;
  if(!g.work){
+  const flow=business.workflow||business.completionWorkflow;if(!flow)return;
   if(service.groups.some(other=>other.work?.flow.stationKey===flow.stationKey&&(other.work.stage===0||other.work.stage===1&&!other.work.ovenReserved)))return;
   const cook=team(business,'cook').filter(p=>!service.groups.some(other=>other.work?.stage<3&&other.work.cookId===p.id)).sort((a,b)=>(b.skills?.organization||0)-(a.skills?.organization||0))[0];if(!cook)return;
   const walk=fromPosition(service,cook.id,flow.fridge,layout,plan,true);if(!walk)return;
