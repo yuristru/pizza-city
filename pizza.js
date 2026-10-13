@@ -1,18 +1,18 @@
-import {mountStaffUI,renderStaffUI} from './pizza-staff-ui.js?v=20261013e';
-import {mountBusinessUI,renderBusinessUI} from './pizza-business-ui.js?v=20261013e';
-import {mountKitchenUI,renderKitchenUI} from './pizza-kitchen-ui.js?v=20261013e';
-import {restaurantPlan} from './pizza-floorplans.js?v=20261013e';
-import {mountProperties} from './pizza-properties-ui.js?v=20261013e';
-import {mountMenu} from './pizza-menu-ui.js?v=20261013e';
-import {tickService} from './pizza-service-runtime.js?v=20261013e';
-import {renderServiceUI} from './pizza-service-ui.js?v=20261013e';
-import {showPizza} from './pizza-editor.js?v=20261013e';
-import {app,root,state,loadAssets,updateMoney,restaurantName,ensureRestaurants,setRestaurantOpen,notify} from './pizza-core.js?v=20261013e';
-import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261013e';
-import {showRestaurant,tickRestaurant,resizeRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView,toggleMove,clearSelection,rotateSelection,sellSelection} from './pizza-restaurant.js?v=20261013e';
+import {mountStaffUI,renderStaffUI} from './pizza-staff-ui.js?v=20261013f';
+import {mountBusinessUI,renderBusinessUI} from './pizza-business-ui.js?v=20261013f';
+import {mountKitchenUI,renderKitchenUI} from './pizza-kitchen-ui.js?v=20261013f';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261013f';
+import {mountProperties} from './pizza-properties-ui.js?v=20261013f';
+import {mountMenu} from './pizza-menu-ui.js?v=20261013f';
+import {tickService} from './pizza-service-runtime.js?v=20261013f';
+import {renderServiceUI} from './pizza-service-ui.js?v=20261013f';
+import {showPizza} from './pizza-editor.js?v=20261013f';
+import {app,root,state,loadAssets,updateMoney,restaurantName,ensureRestaurants,setRestaurantOpen,notify} from './pizza-core.js?v=20261013f';
+import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261013f';
+import {showRestaurant,tickRestaurant,resizeRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView,toggleMove,clearSelection,rotateSelection,sellSelection,autoEquipRestaurant} from './pizza-restaurant.js?v=20261013f';
 
 const rotateBtn=document.querySelector('#rotateBtn'),deleteBtn=document.querySelector('#deleteBtn');
-import {mountCatalog,renderCatalog} from './pizza-catalog-ui.js?v=20261013e';
+import {mountCatalog,renderCatalog} from './pizza-catalog-ui.js?v=20261013f';
 mountProperties();mountKitchenUI();mountBusinessUI();mountStaffUI();
 mountMenu();
 mountCatalog(()=>{if(restaurantView().panMode)toggleRestaurantPan();clearSelection();syncEditUI();});
@@ -42,6 +42,7 @@ rotateBtn.onclick=rotateSelection;
 document.querySelector('#moveBtn').onclick=toggleMove;
 deleteBtn.onclick=sellSelection;
 document.querySelector('#placeBtn').onclick=confirmPlacement;
+document.querySelector('#autoEquipBtn').onclick=autoEquipRestaurant;
 document.querySelector('#cancelBtn').onclick=()=>{cancelPlacement();syncEditUI();};
 
 

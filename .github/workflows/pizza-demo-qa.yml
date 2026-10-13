@@ -23,6 +23,8 @@ on:
       - 'tests/pizza-live-kitchen-browser-qa.cjs'
       - 'tests/pizza-machines-qa.mjs'
       - 'tests/pizza-machines-browser-qa.cjs'
+      - 'tests/pizza-auto-equip-qa.mjs'
+      - 'tests/pizza-auto-equip-browser-qa.cjs'
       - 'tests/pizza-properties-qa.mjs'
       - 'tests/pizza-city-layout-qa.mjs'
       - 'tests/pizza-city-study-qa.cjs'
@@ -72,6 +74,8 @@ jobs:
           node tests/pizza-live-kitchen-browser-qa.cjs
           node tests/pizza-machines-qa.mjs
           node tests/pizza-machines-browser-qa.cjs
+          node tests/pizza-auto-equip-qa.mjs
+          node tests/pizza-auto-equip-browser-qa.cjs
           node tests/pizza-restaurants-browser-qa.cjs
           node tests/pizza-staff-qa.mjs
           node tests/pizza-staff-browser-qa.cjs

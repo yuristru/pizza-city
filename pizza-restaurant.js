@@ -1,14 +1,15 @@
-import {kitchenTileIssue,kitchenReadiness,KITCHEN_TYPES,KITCHEN_TILE_PRICE} from './pizza-kitchen.js?v=20261013e';
-import {DEFAULT_PLAN,boundaryEdges,roomCell,withKitchen} from './pizza-floorplans.js?v=20261013e';
-import {itemPrice,product,money,ROOM_PRODUCTS,roomProduct,roomPurchaseIssue,defaultFinishes} from './pizza-catalog.js?v=20261013e';
-import {app,world,state,Container,Graphics,Rectangle,clearWorld,sceneUI,sceneViewport,rememberEdit,saveLayout,updateMoney,notify,hash,activateRestaurant,captureRestaurant,sealRestaurantEdit,activePlan} from './pizza-core.js?v=20261013e';
-import {GRID,kitchenCell as isKitchenCell,passageCell as isPassageCell,project,gridCell,dimensions,occupiedCells,placementIssue as checkPlacement,copyLayout} from './pizza-layout.js?v=20261013e';
-import {furnitureSprite} from './pizza-sprites.js?v=20261013e';
-import {syncServiceGuests} from './pizza-service-ui.js?v=20261013e';
-import {servicePlacementIssue,tableKey,serviceLayoutIssue,servicePath} from './pizza-service.js?v=20261013e';
-import {reconcileMachineVisits,MACHINE_RULES} from './pizza-machines.js?v=20261013e';
-import {productionBusy,dirtyTable,reconcileProduction} from './pizza-production.js?v=20261013e';
-import {counterLayoutIssue} from './pizza-business.js?v=20261013e';
+import {kitchenTileIssue,kitchenReadiness,KITCHEN_TYPES,KITCHEN_TILE_PRICE} from './pizza-kitchen.js?v=20261013f';
+import {DEFAULT_PLAN,boundaryEdges,roomCell,withKitchen,restaurantPlan} from './pizza-floorplans.js?v=20261013f';
+import {itemPrice,product,money,ROOM_PRODUCTS,roomProduct,roomPurchaseIssue,defaultFinishes} from './pizza-catalog.js?v=20261013f';
+import {app,world,state,Container,Graphics,Rectangle,clearWorld,sceneUI,sceneViewport,rememberEdit,saveLayout,updateMoney,notify,hash,activateRestaurant,captureRestaurant,sealRestaurantEdit,activePlan} from './pizza-core.js?v=20261013f';
+import {GRID,kitchenCell as isKitchenCell,passageCell as isPassageCell,project,gridCell,dimensions,occupiedCells,placementIssue as checkPlacement,copyLayout} from './pizza-layout.js?v=20261013f';
+import {furnitureSprite} from './pizza-sprites.js?v=20261013f';
+import {syncServiceGuests} from './pizza-service-ui.js?v=20261013f';
+import {servicePlacementIssue,tableKey,serviceLayoutIssue,servicePath} from './pizza-service.js?v=20261013f';
+import {reconcileMachineVisits,MACHINE_RULES} from './pizza-machines.js?v=20261013f';
+import {productionBusy,dirtyTable,reconcileProduction} from './pizza-production.js?v=20261013f';
+import {counterLayoutIssue} from './pizza-business.js?v=20261013f';
+import {emptyRestaurant,minimalEquipment,AUTO_EQUIP_PRICE} from './pizza-auto-equip.js?v=20261013f';
 
 const RTW=GRID.width,RTH=GRID.height,WALL_HEIGHT=96;
 const TOOL_NAMES={table:'Tisch',fridge:'Kühlschrank',oven:'Ofen',bar:'Tresen',plant:'Pflanze',jukebox:'Musikautomat',arcade:'Spielautomat'};
@@ -150,6 +151,28 @@ function finishEdit(message){
   if(saved)notify(message);
 }
 
+function updateAutoEquipButton(){
+  const button=document.getElementById('autoEquipBtn'),empty=state.scene==='restaurant'&&emptyRestaurant(captureRestaurant());
+  button.hidden=!empty;document.getElementById('tools').classList.toggle('autoEquipAvailable',empty);
+  if(!empty)return;
+  const setup=minimalEquipment(restaurantPlan(state.activeRestaurantId)),affordable=Math.round(state.balance*100)>=AUTO_EQUIP_PRICE*100;
+  button.disabled=!setup||!affordable;
+  document.getElementById('autoEquipPrice').textContent=money(AUTO_EQUIP_PRICE);
+  button.title=!setup?'Für diesen Grundriss konnte kein freies Startpaket gefunden werden.':!affordable?'Nicht genügend Geld: '+money(AUTO_EQUIP_PRICE)+'.':'9 Küchenplatten, einfacher Ofen, Kühlschrank, Tresen und Zweiertisch mit Stühlen. '+money(AUTO_EQUIP_PRICE)+'.';
+  button.setAttribute('aria-label','Restaurant automatisch ausstatten: '+button.title);
+}
+
+export function autoEquipRestaurant(){
+  if(state.scene!=='restaurant'||!emptyRestaurant(captureRestaurant()))return false;
+  const setup=minimalEquipment(restaurantPlan(state.activeRestaurantId));
+  if(!setup){notify('Für diesen Grundriss konnte kein freies Startpaket gefunden werden.');return false;}
+  if(Math.round(state.balance*100)<setup.price*100){notify('Nicht genügend Geld: '+money(setup.price)+'.');return false;}
+  rememberEdit();clearSelection();state.selectMode=true;
+  state.restaurantState=copyLayout(setup.items);state.kitchenTiles=setup.kitchenTiles.map(t=>({...t}));
+  state.balance=(Math.round(state.balance*100)-setup.price*100)/100;
+  rebuildSurfaces();finishEdit('Minimalausstattung gekauft: '+money(setup.price)+'. Personal und Speisekarte ergänzen.');return true;
+}
+
 export function sellSelection(){
   if(!state.selectMode||state.moveMode||!editorSelection())return;
   const issue=selectionIssue();if(issue){notify(issue);return;}
@@ -208,6 +231,7 @@ function tileMoveIssue(cell){
 }
 
 export function updatePlacementPreview(){
+  updateAutoEquipButton();
   if(state.scene!=='restaurant'||!preview||preview.destroyed)return;
   for(const child of objects.children)if(child.label==='placed-furniture')child.eventMode=state.selectMode&&!state.moveMode&&!panMode?'static':'none';
   preview.removeChildren().forEach(child=>child.destroy({children:true}));
@@ -410,6 +434,7 @@ export function showRestaurant(id){
 }
 
 export function tickRestaurant(dt){
+  updateAutoEquipButton();
   if(objects&&!objects.destroyed)syncServiceGuests(objects);
   if(state.selectMode&&editorSelection()&&selectionIssue()!==lastSelectionIssue){updatePlacementPreview();resizeRestaurant();}
 }

@@ -1,6 +1,6 @@
-import {guestCell,occupiedCells} from './pizza-layout.js?v=20261013e';
-import {roomStep} from './pizza-floorplans.js?v=20261013e';
-import {product,DEFAULT_VARIANTS} from './pizza-catalog.js?v=20261013e';
+import {guestCell,occupiedCells} from './pizza-layout.js?v=20261013f';
+import {roomStep} from './pizza-floorplans.js?v=20261013f';
+import {product,DEFAULT_VARIANTS} from './pizza-catalog.js?v=20261013f';
 
 export const MACHINE_RULES={jukebox:{fee:100,duration:3,action:'Musikwahl'},arcade:{fee:200,duration:8,action:'Spielen'}};
 export const machineKey=m=>[m.type,m.variant||DEFAULT_VARIANTS[m.type],m.x,m.y,m.r].join(':');

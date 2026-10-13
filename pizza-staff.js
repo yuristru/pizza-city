@@ -1,4 +1,4 @@
-import {SHIFTS} from './pizza-shifts.js?v=20261013e';
+import {SHIFTS} from './pizza-shifts.js?v=20261013f';
 export const STAFF_ROLES={
  cook:{name:'Küche',person:'Koch / Köchin',skills:[{id:'preparation',name:'Zubereitung'},{id:'baking',name:'Backen'},{id:'organization',name:'Organisation'}]},
  waiter:{name:'Service',person:'Servicekraft',skills:[{id:'pace',name:'Tempo'},{id:'attention',name:'Aufmerksamkeit'},{id:'friendliness',name:'Freundlichkeit'}]}
