@@ -19,6 +19,8 @@ on:
       - 'tests/pizza-service-browser-qa.cjs'
       - 'tests/pizza-service-recovery-qa.mjs'
       - 'tests/pizza-service-recovery-browser-qa.cjs'
+      - 'tests/pizza-live-kitchen-qa.mjs'
+      - 'tests/pizza-live-kitchen-browser-qa.cjs'
       - 'tests/pizza-properties-qa.mjs'
       - 'tests/pizza-city-layout-qa.mjs'
       - 'tests/pizza-city-study-qa.cjs'
@@ -44,7 +46,7 @@ on:
 jobs:
   pizza-demo:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -64,6 +66,8 @@ jobs:
           node tests/pizza-service-browser-qa.cjs
           node tests/pizza-service-recovery-qa.mjs
           node tests/pizza-service-recovery-browser-qa.cjs
+          node tests/pizza-live-kitchen-qa.mjs
+          node tests/pizza-live-kitchen-browser-qa.cjs
           node tests/pizza-restaurants-browser-qa.cjs
           node tests/pizza-staff-qa.mjs
           node tests/pizza-staff-browser-qa.cjs

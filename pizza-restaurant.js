@@ -1,13 +1,13 @@
-import {kitchenTileIssue,kitchenReadiness,KITCHEN_TYPES,KITCHEN_TILE_PRICE} from './pizza-kitchen.js?v=20261013c';
-import {DEFAULT_PLAN,boundaryEdges,roomCell,withKitchen} from './pizza-floorplans.js?v=20261013c';
-import {itemPrice,product,money,ROOM_PRODUCTS,roomProduct,roomPurchaseIssue,defaultFinishes} from './pizza-catalog.js?v=20261013c';
-import {app,world,state,Container,Graphics,Rectangle,clearWorld,sceneUI,sceneViewport,rememberEdit,saveLayout,updateMoney,notify,hash,activateRestaurant,captureRestaurant,sealRestaurantEdit,activePlan} from './pizza-core.js?v=20261013c';
-import {GRID,kitchenCell as isKitchenCell,passageCell as isPassageCell,project,gridCell,dimensions,occupiedCells,placementIssue as checkPlacement,copyLayout} from './pizza-layout.js?v=20261013c';
-import {furnitureSprite} from './pizza-sprites.js?v=20261013c';
-import {syncServiceGuests} from './pizza-service-ui.js?v=20261013c';
-import {servicePlacementIssue,tableKey,serviceLayoutIssue} from './pizza-service.js?v=20261013c';
-import {productionBusy,dirtyTable} from './pizza-production.js?v=20261013c';
-import {counterLayoutIssue} from './pizza-business.js?v=20261013c';
+import {kitchenTileIssue,kitchenReadiness,KITCHEN_TYPES,KITCHEN_TILE_PRICE} from './pizza-kitchen.js?v=20261013d';
+import {DEFAULT_PLAN,boundaryEdges,roomCell,withKitchen} from './pizza-floorplans.js?v=20261013d';
+import {itemPrice,product,money,ROOM_PRODUCTS,roomProduct,roomPurchaseIssue,defaultFinishes} from './pizza-catalog.js?v=20261013d';
+import {app,world,state,Container,Graphics,Rectangle,clearWorld,sceneUI,sceneViewport,rememberEdit,saveLayout,updateMoney,notify,hash,activateRestaurant,captureRestaurant,sealRestaurantEdit,activePlan} from './pizza-core.js?v=20261013d';
+import {GRID,kitchenCell as isKitchenCell,passageCell as isPassageCell,project,gridCell,dimensions,occupiedCells,placementIssue as checkPlacement,copyLayout} from './pizza-layout.js?v=20261013d';
+import {furnitureSprite} from './pizza-sprites.js?v=20261013d';
+import {syncServiceGuests} from './pizza-service-ui.js?v=20261013d';
+import {servicePlacementIssue,tableKey,serviceLayoutIssue} from './pizza-service.js?v=20261013d';
+import {productionBusy,dirtyTable,reconcileProduction} from './pizza-production.js?v=20261013d';
+import {counterLayoutIssue} from './pizza-business.js?v=20261013d';
 
 const RTW=GRID.width,RTH=GRID.height,WALL_HEIGHT=96;
 const TOOL_NAMES={table:'Tisch',fridge:'Kühlschrank',oven:'Ofen',bar:'Tresen',plant:'Pflanze',jukebox:'Musikautomat',arcade:'Spielautomat'};
@@ -20,7 +20,6 @@ let panMode=false,pinching=false,blockTap=false,movingItem=null,selectedItem=nul
 export function clearSelection(){selectedItem=null;selectedTile=null;cancelPlacement();}
 export function editorSelection(){return selectedItem?{...selectedItem}:selectedTile?{type:'kitchenFloor',...selectedTile,r:0}:null;}
 function furnitureUseIssue(item){
-  if(KITCHEN_TYPES.includes(item.type)&&(state.service.groups.some(g=>g.phase!=='paying')||productionBusy(state.service)))return 'Zuerst Gäste bedienen und Teller zum Tresen zurückbringen lassen.';
   if(item.type==='table'&&(dirtyTable(state.service,item)||state.service.groups.some(g=>!['leaving','paying'].includes(g.phase)&&tableKey(g.table)===tableKey(item))))return 'Dieser Tisch ist belegt oder muss zuerst abgeräumt werden.';
   return null;
 }
@@ -51,7 +50,7 @@ export function rotateSelection(){
   if(!selectedItem)return;
   const busy=selectionIssue();if(busy){notify(busy);return;}
   const item={...selectedItem,r:(selectedItem.r+1)%4},others=state.restaurantState.filter(i=>i!==selectedItem);
-  const issue=placementIssue(item,others)||servicePlacementIssue(item,state.service)||serviceLayoutIssue([...others,item],plan);
+  const issue=furniturePlacementIssue(item,others);
   if(issue){notify(issue);document.querySelector('#placementStatus').textContent=issue;return;}
   rememberEdit();state.restaurantState=[...others,item];selectedItem=item;state.rotation=item.r;finishEdit('Objekt um 90 Grad gedreht.');
 }
@@ -66,6 +65,7 @@ function brushIssue(){
 }
 function candidate(cell){return movingItem?{...movingItem,...cell,r:state.rotation}:chosenItem(cell);}
 function otherItems(){return state.restaurantState.filter(item=>item!==movingItem);}
+function furniturePlacementIssue(item,others){return placementIssue(item,others)||servicePlacementIssue(item,state.service,KITCHEN_TYPES.includes(item.type))||serviceLayoutIssue([...others,item],plan,null,state.restaurantState);}
 export function restaurantView(){return {...view,panMode};}
 export function toggleRestaurantPan(){
   panMode=!panMode;cancelPlacement();updateCameraUI();updatePlacementPreview();
@@ -143,6 +143,7 @@ function renderFurniture(){
 function finishEdit(message){
   state.pendingPlacement=null;hoverCell=null;dragPointer=null;
   sealRestaurantEdit();
+  reconcileProduction(state.service,state.restaurantState,plan);
   const saved=saveLayout();updateMoney();renderFurniture();updatePlacementPreview();
   if(saved)notify(message);
 }
@@ -183,7 +184,7 @@ export function confirmPlacement(){
     const issue=tileMoveIssue(state.pendingPlacement);if(issue){notify(issue);return;}
     rememberEdit();const tile={...selectedTile,...state.pendingPlacement};state.kitchenTiles=state.kitchenTiles.map(t=>t===selectedTile?tile:t);selectedTile=tile;movingItem=null;state.moveMode=false;rebuildSurfaces();finishEdit('Küchenplatte kostenlos verschoben.');return;
   }
-  const item=candidate(state.pendingPlacement),others=otherItems(),issue=placementIssue(item,others)||servicePlacementIssue(item,state.service)||serviceLayoutIssue([...others,item],plan);
+  const item=candidate(state.pendingPlacement),others=otherItems(),issue=furniturePlacementIssue(item,others);
   if(issue){notify(issue);return;}
   const price=movingItem?0:itemPrice(item);if(state.balance<price){notify('Nicht genügend Geld.');return;}
   rememberEdit();state.balance-=price;if(!movingItem)item.paid=price;else selectedItem=item;state.restaurantState=[...others,item];movingItem=null;state.moveMode=false;finishEdit(item.type==='table'?`${item.seats}er-Tisch mit Stühlen platziert.`:`${TOOL_NAMES[item.type]} platziert.`);
@@ -240,7 +241,7 @@ export function updatePlacementPreview(){
     if(cell&&!panMode){const g=new Graphics();for(const c of brushCells.length?brushCells:[cell])tile(g,c.x,c.y,issue?0xd96549:0x90bd70,.6,2);preview.addChild(g);}return;
   }
   const cell=state.pendingPlacement||hoverCell,item=cell?candidate(cell):null;
-  const issue=busy&&state.moveMode?busy:item?(selectedTile&&state.moveMode?tileMoveIssue(cell):placementIssue(item,otherItems())||servicePlacementIssue(item,state.service)||serviceLayoutIssue([...otherItems(),item],plan)||(state.balance<(movingItem?0:itemPrice(item))?'Nicht genügend Geld.':null)):null;
+  const issue=busy&&state.moveMode?busy:item?(selectedTile&&state.moveMode?tileMoveIssue(cell):furniturePlacementIssue(item,otherItems())||(state.balance<(movingItem?0:itemPrice(item))?'Nicht genügend Geld.':null)):null;
   title.textContent=state.moveMode?'Objekt verschieben: Ziel wählen':panMode?'Ansicht verschieben':(state.selectedTool==='table'?state.selectedSeats+'er-Tisch mit Stühlen':TOOL_NAMES[state.selectedTool])+' · '+state.rotation*90+'°';
   status.textContent=(state.moveMode?'Kostenlos':money(itemPrice(chosenItem({x:0,y:0}))))+' · '+(panMode?'Zum Einrichten den Hand-Modus ausschalten.':issue||(state.pendingPlacement?'Position gewählt. Oben bestätigen.':state.moveMode?'Auf die neue Position tippen oder ziehen.':KITCHEN_TYPES.includes(state.selectedTool)?(kitchenReadiness(state.kitchenTiles,state.restaurantState,plan).issue||'Auf Küchenplatten platzieren.'):'Auf das Raster tippen oder ziehen.'));
   buy.disabled=!state.pendingPlacement||!!issue||panMode;
@@ -322,6 +323,7 @@ export function showRestaurant(id){
   if(!activateRestaurant(id)){notify('Diesen Standort musst du zuerst kaufen.');return;}
   if(!rebuilding){selectedItem=null;selectedTile=null;movingItem=null;brushStart=null;brushCells=[];state.selectMode=true;}
   plan=activePlan();ROOM=plan;
+  reconcileProduction(state.service,state.restaurantState,plan);
   document.dispatchEvent(new Event('restaurants-changed'));saveLayout(true);
   clearWorld();state.scene='restaurant';sceneUI('restaurant');
   roomLayer=new Container();state.restaurantCamera=roomLayer;roomLayer.label='restaurant-room';world.addChild(roomLayer);

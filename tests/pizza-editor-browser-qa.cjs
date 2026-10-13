@@ -88,7 +88,7 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
   // A table awaiting clearing remains selectable, with protected edit actions.
   await page.evaluate(async p=>{const {state}=await import(p);state.service.dirtyTables=[{id:901,table:{...state.restaurantState.find(i=>i.type==='table')},size:2}];},corePath);
   await select(6,4);for(const id of ['rotateBtn','moveBtn','deleteBtn'])assert.equal(await page.locator('#'+id).isEnabled(),false);assert.match(await page.locator('#placementStatus').innerText(),/abgeräumt/);
-  await select(2,2);assert.equal(await page.locator('#deleteBtn').isEnabled(),false);assert.match(await page.locator('#placementStatus').innerText(),/Teller/);
+  await select(2,2);for(const id of ['rotateBtn','moveBtn','deleteBtn'])assert.equal(await page.locator('#'+id).isEnabled(),true);
   await page.evaluate(async p=>{const {state}=await import(p);state.service.dirtyTables=[];state.onEditChange();},corePath);
   await select(0,3);const saved=await data();await page.reload();await page.waitForSelector('#loading',{state:'hidden'});await page.click('#restaurantBtn');assert.deepEqual((await data()).items,saved.items);assert.deepEqual((await data()).tiles,saved.tiles);assert.equal((await data()).balance,saved.balance);assert.equal((await data()).selected,null);
   await select(0,3);await page.selectOption('#restaurantSelect','via-roma');assert.equal((await data()).selected,null);assert.equal(await page.locator('#deleteBtn').isVisible(),false);await page.selectOption('#restaurantSelect','san-marco');

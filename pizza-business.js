@@ -1,6 +1,6 @@
-import {MONTH_HOURS} from './pizza-staff.js?v=20261013c';
-import {roomCell,roomStep} from './pizza-floorplans.js?v=20261013c';
-import {occupiedCells} from './pizza-layout.js?v=20261013c';
+import {MONTH_HOURS} from './pizza-staff.js?v=20261013d';
+import {roomCell,roomStep} from './pizza-floorplans.js?v=20261013d';
+import {occupiedCells} from './pizza-layout.js?v=20261013d';
 export const STAFF={cook:{name:'Koch',hourly:12},waiter:{name:'Service',hourly:8}};
 export function freshBusiness(){return {cook:0,waiter:0};}
 export function restoreBusiness(raw,legacy=false){return {...Object.fromEntries(Object.keys(STAFF).map(k=>[k,Number.isInteger(raw?.[k])&&raw[k]>=0&&raw[k]<=4?raw[k]:legacy?1:0])),open:raw?.open!==false};}
@@ -28,15 +28,43 @@ export function counterAccessIssue(bar,items,plan){
  if(!workPath(items,counter,handoff,plan,true)||!workPath(items,plan.entrance,counter,plan)||!workPath(items,plan.entrance,handoff,plan))return 'Bitte einen freien Laufweg zur Vorderseite jedes Tresens lassen.';
  return null;
 }
-export function counterLayoutIssue(items,plan,previousPlan=null){
+export function counterLayoutIssue(items,plan,previousPlan=null,previousItems=null){
  if(!plan.kitchenKeys)return null;
  // Only unchanged furniture on an expanded floor can keep an existing access issue.
  const expansion=previousPlan?.kitchenKeys&&plan.kitchenKeys.size>previousPlan.kitchenKeys.size
   &&previousPlan.keys===plan.keys&&previousPlan.kitchen===plan.kitchen&&previousPlan.entrance===plan.entrance&&previousPlan.approach===plan.approach&&previousPlan.decor===plan.decor
   &&[...previousPlan.kitchenKeys].every(key=>plan.kitchenKeys.has(key));
- for(const bar of items.filter(item=>item.type==='bar')){const issue=counterAccessIssue(bar,items,plan);if(issue&&(!expansion||!counterAccessIssue(bar,items,previousPlan)))return issue;}
+ for(const bar of items.filter(item=>item.type==='bar')){
+  const issue=counterAccessIssue(bar,items,plan);if(!issue)continue;
+  if(expansion&&counterAccessIssue(bar,items,previousPlan))continue;
+  const old=previousItems?.find(i=>i.type==='bar'&&i.x===bar.x&&i.y===bar.y&&i.r===bar.r);
+  if(old&&counterAccessIssue(old,previousItems,plan)){
+   const front=counterWorkplaces(bar),before=new Set(previousItems.flatMap(occupiedCells)),after=new Set(items.flatMap(occupiedCells));
+   if([front.counter,front.handoff].every(p=>!after.has(`${p.x},${p.y}`)||before.has(`${p.x},${p.y}`)))continue;
+  }
+  return issue;
+ }
  return null;
 }
+// Plate return only needs a real reachable counter, not a complete cooking kitchen.
+const handoffCache=new WeakMap();
+export function counterHandoff(items,plan,preferred=null){
+ const signature=items.map(i=>[i.type,i.x,i.y,i.r,i.seats].join(':')).join(';')+'|'+[...plan.kitchenKeys].join(';');
+ let cache=handoffCache.get(plan);if(cache?.signature!==signature){cache={signature,values:new Map()};handoffCache.set(plan,cache);}
+ if(cache.values.has(preferred))return cache.values.get(preferred);
+ const value=buildHandoff(items,plan,preferred);cache.values.set(preferred,value);return value;
+}
+function buildHandoff(items,plan,preferred){
+ const bars=items.filter(i=>i.type==='bar').sort((a,b)=>Number([b.x,b.y,b.r].join(':')===preferred)-Number([a.x,a.y,a.r].join(':')===preferred));
+ for(const bar of bars){
+  const stationKey=[bar.x,bar.y,bar.r].join(':');
+  if(!counterAccessIssue(bar,items,plan))return {...counterWorkplaces(bar),stationKey};
+  const surfaces=counterSurfaces(bar),h=approaches({...surfaces.readySurface,type:'fridge',r:0},items,plan,true).find(p=>roomStep(surfaces.readySurface,p,plan)&&workPath(items,plan.entrance,p,plan));
+  if(h){const b=approaches({...surfaces.prepSurface,type:'fridge',r:0},items,plan,true).find(p=>roomStep(surfaces.prepSurface,p,plan)&&workPath(items,h,p,plan,true));return {...surfaces,handoff:h,...(b?{counter:b}:{}),stationKey};}
+ }
+ return null;
+}
+export function deviceApproaches(item,items,plan){return approaches(item,items,plan,true).filter(p=>occupiedCells(item).some(k=>{const [x,y]=k.split(',').map(Number);return roomStep({x,y},p,plan);}));}
 const workflowCache=new WeakMap(),completionCache=new WeakMap();
 export function kitchenWorkflow(items,plan,kitchenCells){
  return cachedWorkflow(items,plan,kitchenCells,false,workflowCache);

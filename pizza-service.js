@@ -1,10 +1,11 @@
-import {kitchenReadiness,kitchenWorkFlow,completionWorkFlow} from './pizza-kitchen.js?v=20261013c';
-import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261013c';
-import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261013c';
-import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261013c';
+import {kitchenReadiness,kitchenWorkFlow,completionWorkFlow} from './pizza-kitchen.js?v=20261013d';
+import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261013d';
+import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261013d';
+import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261013d';
 
-import {businessIssue,demandScore,operatingRates,counterLayoutIssue} from './pizza-business.js?v=20261013c';
-import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable} from './pizza-production.js?v=20261013c';
+import {businessIssue,demandScore,operatingRates,counterLayoutIssue} from './pizza-business.js?v=20261013d';
+import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable,reconcileProduction} from './pizza-production.js?v=20261013d';
+import {workLayoutKey} from './pizza-work-targets.js?v=20261013d';
 export const SERVICE_PHASES=['arriving','waiting','eating','leaving','paying'];
 export const tableKey=t=>[t.x,t.y,t.r,t.seats,t.variant||'wood'].join(':');
 export function freshService(){return {version:1,chainVersion:1,elapsed:0,untilArrival:2,nextId:1,groups:[],payments:[],dirtyTables:[],waiterTasks:[],staffPositions:{},plateReturns:[],cleanedTables:0,netCents:0,revenueCents:0,costCents:0,servedGuests:0};}
@@ -42,8 +43,8 @@ function tableRoute(layout,t,plan){
   for(let y=t.y;y<t.y+h;y++)for(const x of [t.x-1,t.x+w])choices.push({x,y});
   return choices.map(p=>routeBetween(free,plan.entrance,p,plan)).filter(Boolean).sort((a,b)=>a.length-b.length)[0]||null;
 }
-export function serviceLayoutIssue(layout,plan=DEFAULT_PLAN,previousPlan=null){
-  const counterIssue=counterLayoutIssue(layout,plan,previousPlan);if(counterIssue)return counterIssue;
+export function serviceLayoutIssue(layout,plan=DEFAULT_PLAN,previousPlan=null,previousLayout=null){
+  const counterIssue=counterLayoutIssue(layout,plan,previousPlan,previousLayout);if(counterIssue)return counterIssue;
   const free=freeCells(layout,plan);
   if(plan.approach&&!routeBetween(free,plan.entrance,plan.approach,plan))return 'Bitte einen Laufweg zur Küchentür frei lassen.';
   if(layout.some(t=>t.type==='table'&&!tableRoute(layout,t,plan)))return 'Bitte einen Laufweg zu jedem Tisch frei lassen.';
@@ -53,9 +54,9 @@ export function routePosition(group,member=0){
   const distance=Math.max(0,Math.min(group.route.length-1,group.progress-member*.32)),index=Math.floor(distance),a=group.route[index],b=group.route[Math.min(index+1,group.route.length-1)],f=distance-index;
   return {x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f};
 }
-export function servicePlacementIssue(item,service){
+export function servicePlacementIssue(item,service,rerouteStaff=false){
   const cells=new Set(occupiedCells(item));
-  if(service.groups.some(g=>g.work?.route.some(p=>cells.has(`${p.x},${p.y}`)))||service.waiterTasks?.some(t=>t.route.some(p=>cells.has(`${p.x},${p.y}`))))return 'Dieser Laufweg wird gerade vom Personal benutzt.';
+  if(!rerouteStaff&&(service.groups.some(g=>g.work?.route.some(p=>cells.has(`${p.x},${p.y}`)))||service.waiterTasks?.some(t=>t.route.some(p=>cells.has(`${p.x},${p.y}`)))))return 'Dieser Laufweg wird gerade vom Personal benutzt.';
   if(service.dirtyTables?.some(d=>occupiedCells(d.table).some(c=>cells.has(c))))return 'Dieser Tisch muss zuerst abgeräumt werden.';
   return service.groups.some(g=>['arriving','leaving','paying'].includes(g.phase)&&g.route.some(p=>cells.has(`${p.x},${p.y}`)))?'Dieser Laufweg wird gerade von Gästen benutzt.':null;
 }
@@ -83,7 +84,8 @@ export function advanceService(service,seconds,layout,menu,balanceCents,plan=DEF
     const tiles=[...plan.kitchenKeys].map(k=>{const [x,y]=k.split(',').map(Number);return {x,y};}),ready=kitchenReadiness(tiles,layout,plan),workflow=ready.ready?kitchenWorkFlow(tiles,layout,plan):null;
     const pending=service.groups.length||service.dirtyTables.length||service.waiterTasks.length;
     // New guests always need the strict workflow. Only existing orders/plates may recover.
-    business={...business,workflow,completionWorkflow:!workflow&&pending&&ready.ready?completionWorkFlow(tiles,layout,plan):null};
+    business={...business,workflow,completionWorkflow:!workflow&&pending&&ready.ready?completionWorkFlow(tiles,layout,plan):null,layoutKey:workLayoutKey(layout,plan)};
+    reconcileProduction(service,layout,plan);
   }
   seconds=Math.min(seconds,3600);
   while(seconds>1e-8){

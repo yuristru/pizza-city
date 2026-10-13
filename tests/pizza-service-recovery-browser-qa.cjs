@@ -30,7 +30,7 @@ const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+deco
   }
   async function buyPlate(x,y){await page.click('[data-category="finish"]');await page.click('[data-finish="kitchen-tiles"]');await tapCell(x,y);assert.equal(await page.locator('#placeBtn').isEnabled(),true,await page.locator('#placementStatus').innerText());await page.click('#placeBtn');return data();}
   await loaded();let s=await data();const original=s;assert.equal(s.id,'san-marco');assert.equal(s.minutes,991);assert.equal(s.flow,null);assert.equal(s.service.dirtyTables.length,1);assert.equal(s.workers.length,2);assert.match(await page.locator('#restaurantServiceStatus').innerText(),/Schichtende/);
-  await selectBar();assert.equal(await page.locator('#moveBtn').isEnabled(),false);assert.match(await page.locator('#placementStatus').innerText(),/Teller/);await page.screenshot({path:path.join(out,'recovery-old-counter.png')});
+  await selectBar();assert.equal(await page.locator('#moveBtn').isEnabled(),true);assert.equal(await page.locator('#deleteBtn').isEnabled(),true);await page.screenshot({path:path.join(out,'recovery-old-counter.png')});
   // A single repair plate is affordable and valid before the old service has drained.
   s=await buyPlate(5,5);assert.equal(s.tiles.length,10);assert.equal(s.balance,original.balance-50);assert.deepEqual(s.items,original.items);assert.equal(s.service.dirtyTables.length,1);assert.equal(s.flow,null);
   await save();await loaded();s=await data();assert.equal(s.tiles.length,10);assert.equal(s.service.dirtyTables.length,1);assert.equal(s.balance,original.balance-50);assert.deepEqual(s.staff,original.staff);
