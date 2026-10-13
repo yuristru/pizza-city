@@ -9,6 +9,8 @@ on:
       - 'tests/pizza-demo-qa.cjs'
       - 'tests/pizza-editor-browser-qa.cjs'
       - 'tests/pizza-editor-helpers.cjs'
+      - 'tests/pizza-counter-qa.mjs'
+      - 'tests/pizza-restaurant-access-browser-qa.cjs'
       - 'tests/pizza-catalog-qa.mjs'
       - 'tests/pizza-recipe-qa.mjs'
       - 'tests/pizza-menu-qa.mjs'
@@ -62,6 +64,7 @@ jobs:
           node tests/pizza-staff-qa.mjs
           node tests/pizza-staff-browser-qa.cjs
           node tests/pizza-business-qa.mjs
+          node tests/pizza-counter-qa.mjs
           node tests/pizza-business-browser-qa.cjs
           node tests/pizza-daily-qa.mjs
           node tests/pizza-daily-browser-qa.cjs
@@ -80,6 +83,7 @@ jobs:
           node tests/pizza-city-mix-qa.cjs
           node tests/pizza-demo-qa.cjs
           node tests/pizza-editor-browser-qa.cjs
+          node tests/pizza-restaurant-access-browser-qa.cjs
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4

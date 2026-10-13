@@ -1,13 +1,13 @@
-import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261012f';
-import {state,Container,ensureRestaurants,activePlan,label} from './pizza-core.js?v=20261012f';
-import {project,dimensions} from './pizza-layout.js?v=20261012f';
-import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261012f';
-import {routePosition,guestSeat} from './pizza-service.js?v=20261012f';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261012f';
+import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261013a';
+import {state,Container,ensureRestaurants,activePlan,label} from './pizza-core.js?v=20261013a';
+import {project,dimensions} from './pizza-layout.js?v=20261013a';
+import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261013a';
+import {routePosition,guestSeat} from './pizza-service.js?v=20261013a';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261013a';
 
-import {businessIssue,workPath} from './pizza-business.js?v=20261012f';
-import {staffSchedule,shiftLabel} from './pizza-shifts.js?v=20261012f';
-import {personSprite,staffPersonSprite} from './pizza-sprites.js?v=20261012f';
+import {businessIssue,workPath,counterLayoutIssue} from './pizza-business.js?v=20261013a';
+import {staffSchedule,shiftLabel} from './pizza-shifts.js?v=20261013a';
+import {personSprite,staffPersonSprite} from './pizza-sprites.js?v=20261013a';
 const maps=new WeakMap(),banners=new Map();
 export function syncServiceGuests(objects){
   let nodes=maps.get(objects);if(!nodes){nodes=new Map();maps.set(objects,nodes);}
@@ -61,10 +61,12 @@ export function syncServiceGuests(objects){
 export function renderServiceUI(){
   const groups=state.service.groups,active=serviceMenu().some(item=>item.active),status=document.getElementById('restaurantServiceStatus');
   const seated=groups.filter(g=>g.phase==='waiting'||g.phase==='eating').length,total=groups.reduce((sum,g)=>sum+g.size,0);
-  const readiness=kitchenReadiness(state.kitchenTiles,state.restaurantState,activePlan());status.title=readiness.issue||'Küche betriebsbereit';status.dataset.kitchenReady=String(readiness.ready);
-  const profile=ensureRestaurants()[state.activeRestaurantId],plan=activePlan(),schedule=staffSchedule(state.staff,state.activeRestaurantId,state.gameMinutes,state.service),staff={...profile.business,cook:schedule.working.filter(p=>p.role==='cook').length,waiter:schedule.working.filter(p=>p.role==='waiter').length},issue=(profile.service.debtCents||0)>0||state.staff.reserveDebtCents>0?'Offene Betriebskosten':profile.business.open===false?'Neue Gäste gestoppt':!schedule.active?(schedule.closing?'Schichtende, Bestellungen abschließen':'Außerhalb der Schichten'):readiness.issue||businessIssue(staff,readiness.ready?kitchenWorkFlow(state.kitchenTiles,state.restaurantState,plan):null);
+  const readiness=kitchenReadiness(state.kitchenTiles,state.restaurantState,activePlan());status.title=readiness.issue||counterLayoutIssue(state.restaurantState,activePlan())||'Küche betriebsbereit';status.dataset.kitchenReady=String(readiness.ready);
+  const profile=ensureRestaurants()[state.activeRestaurantId],plan=activePlan(),schedule=staffSchedule(state.staff,state.activeRestaurantId,state.gameMinutes,state.service),staff={...profile.business,cook:schedule.working.filter(p=>p.role==='cook').length,waiter:schedule.working.filter(p=>p.role==='waiter').length},issue=(profile.service.debtCents||0)>0||state.staff.reserveDebtCents>0?'Offene Betriebskosten':profile.business.open===false?'Restaurant geschlossen':!schedule.active?(schedule.closing?'Schichtende, Bestellungen abschließen':'Außerhalb der Schichten'):readiness.issue||counterLayoutIssue(state.restaurantState,plan)||businessIssue(staff,readiness.ready?kitchenWorkFlow(state.kitchenTiles,state.restaurantState,plan):null);
+  const open=profile.business.open!==false,button=document.getElementById('restaurantOpenBtn');
+  if(button.dataset.open!==String(open)){button.dataset.open=String(open);button.setAttribute('aria-pressed',String(open));button.setAttribute('aria-label',open?'Restaurant schließen':'Restaurant öffnen');button.title=open?'Geöffnet: keine neuen Gäste mehr zulassen':'Geschlossen: Restaurant öffnen';document.getElementById('restaurantOpenIcon').setAttribute('d',open?'M6 4h4v16H6zM14 4h4v16h-4z':'M7 4l14 8-14 8z');}
   const stars=document.querySelector('.stars'),rating=state.service.rating||4;stars.textContent='★'.repeat(Math.round(rating))+'☆'.repeat(5-Math.round(rating));stars.setAttribute('aria-label',rating.toFixed(1)+' von 5 Sternen');
-  const dirty=state.service.dirtyTables?.length||0,text=(groups.length?total+(total===1?' Gast · ':' Gäste · ')+seated+(seated===1?' Tisch belegt':' Tische belegt'):issue?'Geschlossen · '+issue:active?'Geöffnet · Gäste kommen':'Speisekarte noch leer')+(dirty?' · '+dirty+(dirty===1?' Tisch abräumen':' Tische abräumen'):'');if(status.textContent!==text)status.textContent=text;
+  const dirty=state.service.dirtyTables?.length||0,text=(groups.length?(!open?'Geschlossen · ':'')+total+(total===1?' Gast · ':' Gäste · ')+seated+(seated===1?' Tisch belegt':' Tische belegt'):!open?'Geschlossen':issue?'Geschlossen · '+issue:active?'Geöffnet · Gäste kommen':'Speisekarte noch leer')+(dirty?' · '+dirty+(dirty===1?' Tisch abräumen':' Tische abräumen'):'');if(status.textContent!==text)status.textContent=text;
   const host=document.getElementById('incomeBanners'),wanted=new Set();
   for(const [restaurantId,profile]of Object.entries(ensureRestaurants()))for(const [index,payment]of profile.service.payments.entries()){
     const key=restaurantId+':'+payment.id;wanted.add(key);let b=banners.get(key);if(!b){b=document.createElement('div');b.className='incomeBanner';b.dataset.paymentId=String(payment.id);b.dataset.restaurantId=restaurantId;b.dataset.amountCents=String(payment.amount);b.textContent='+'+(payment.amount/100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' DM';host.append(b);banners.set(key,b);}

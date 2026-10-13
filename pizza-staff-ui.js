@@ -1,8 +1,8 @@
-import {state,ensureRestaurants,restaurantName,saveLayout,notify} from './pizza-core.js?v=20261012f';
-import {STAFF_ROLES,LEVEL_NAMES,skillLevel,averageSkill,monthlyPayroll,restaurantStaff,hireEmployee,assignEmployee,assignShift,dismissEmployee,employeeBusy} from './pizza-staff.js?v=20261012f';
-import {SHIFTS,shiftLabel,staffSchedule} from './pizza-shifts.js?v=20261012f';
-import {drawStaffAvatar} from './pizza-staff-avatar.js?v=20261012f';
-import {money} from './pizza-catalog.js?v=20261012f';
+import {state,ensureRestaurants,restaurantName,saveLayout,notify,setRestaurantOpen} from './pizza-core.js?v=20261013a';
+import {STAFF_ROLES,LEVEL_NAMES,skillLevel,averageSkill,monthlyPayroll,restaurantStaff,hireEmployee,assignEmployee,assignShift,dismissEmployee,employeeBusy} from './pizza-staff.js?v=20261013a';
+import {SHIFTS,shiftLabel,staffSchedule} from './pizza-shifts.js?v=20261013a';
+import {drawStaffAvatar} from './pizza-staff-avatar.js?v=20261013a';
+import {money} from './pizza-catalog.js?v=20261013a';
 const el=id=>document.getElementById(id),portraits=new Map(),roles={market:'all',files:'all',restaurants:'all'};
 let view='market',restaurant=null,stamp=0,shiftFilter='all';
 function node(tag,text,className){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(className)e.className=className;return e;}
@@ -40,7 +40,7 @@ export function renderStaffUI(force=false){
   const host=el('staffContent');host.setAttribute('aria-labelledby','staff-tab-'+view);host.replaceChildren();
   if(view==='restaurants'){
    const controls=node('div',undefined,'staffBranchControls'),label=node('label','Restaurant auswählen'),select=node('select');select.id='staffRestaurantFilter';select.setAttribute('aria-label','Restaurant filtern');for(const id of Object.keys(profiles))select.append(new Option(restaurantName(id),id));select.value=restaurant;select.onchange=()=>{restaurant=select.value;renderStaffUI(true);};label.append(select);const shiftLabelNode=node('label','Schicht filtern'),shifts=node('select');shifts.id='staffShiftFilter';shifts.append(new Option('Alle Schichten','all'),...Object.keys(SHIFTS).map(id=>new Option(shiftLabel(id),id)));shifts.value=shiftFilter;shifts.onchange=()=>{shiftFilter=shifts.value;renderStaffUI(true);};shiftLabelNode.append(shifts);controls.append(label,shiftLabelNode,button('Restaurant ansehen',()=>{dialog.close();state.navigate('restaurant',restaurant);}));host.append(controls);
-   const team=restaurantStaff(state.staff,restaurant),summary=node('div',undefined,'staffBranchSummary');summary.id='staffBranchSummary';summary.append(node('h3',restaurantName(restaurant)),node('p',team.filter(p=>p.role==='cook').length+' Küche · '+team.filter(p=>p.role==='waiter').length+' Service · '+money(monthlyPayroll(state.staff,restaurant)/100)+' / Monat'));const accepting=button(profiles[restaurant].business.open===false?'Neue Gäste zulassen':'Neue Gäste stoppen',()=>{profiles[restaurant].business.open=profiles[restaurant].business.open===false;saveLayout();renderStaffUI(true);});accepting.id='staffAcceptGuests';summary.append(accepting);host.append(summary);
+   const team=restaurantStaff(state.staff,restaurant),summary=node('div',undefined,'staffBranchSummary');summary.id='staffBranchSummary';summary.append(node('h3',restaurantName(restaurant)),node('p',team.filter(p=>p.role==='cook').length+' Küche · '+team.filter(p=>p.role==='waiter').length+' Service · '+money(monthlyPayroll(state.staff,restaurant)/100)+' / Monat'));const accepting=button(profiles[restaurant].business.open===false?'Restaurant öffnen':'Restaurant schließen',()=>setRestaurantOpen(restaurant,profiles[restaurant].business.open===false));accepting.id='staffAcceptGuests';summary.append(accepting);host.append(summary);
   }else{host.append(node('h3',view==='market'?'Arbeitsmarkt':'Personalakten'),node('p',view==='market'?'Wähle Qualifikation und Restaurant. Höhere Kompetenzwerte bedeuten ein höheres Monatsgehalt.':'Deine Leute mit ihren Kompetenzen und der aktuellen Restaurantzuordnung.','staffIntro'));}
   roleFilters(host);
   const people=(view==='market'?state.staff.market:view==='files'?state.staff.employees:restaurantStaff(state.staff,restaurant)).filter(p=>(roles[view]==='all'||p.role===roles[view])&&(view!=='restaurants'||shiftFilter==='all'||p.shift===shiftFilter)).slice().sort((a,b)=>view==='market'?averageSkill(a)-averageSkill(b):a.name.localeCompare(b.name,'de'));

@@ -1,10 +1,10 @@
-import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261012f';
-import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261012f';
-import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261012f';
-import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261012f';
+import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261013a';
+import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261013a';
+import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261013a';
+import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261013a';
 
-import {businessIssue,demandScore,operatingRates} from './pizza-business.js?v=20261012f';
-import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable} from './pizza-production.js?v=20261012f';
+import {businessIssue,demandScore,operatingRates,counterLayoutIssue} from './pizza-business.js?v=20261013a';
+import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable} from './pizza-production.js?v=20261013a';
 export const SERVICE_PHASES=['arriving','waiting','eating','leaving','paying'];
 export const tableKey=t=>[t.x,t.y,t.r,t.seats,t.variant||'wood'].join(':');
 export function freshService(){return {version:1,chainVersion:1,elapsed:0,untilArrival:2,nextId:1,groups:[],payments:[],dirtyTables:[],waiterTasks:[],staffPositions:{},plateReturns:[],cleanedTables:0,netCents:0,revenueCents:0,costCents:0,servedGuests:0};}
@@ -43,6 +43,7 @@ function tableRoute(layout,t,plan){
   return choices.map(p=>routeBetween(free,plan.entrance,p,plan)).filter(Boolean).sort((a,b)=>a.length-b.length)[0]||null;
 }
 export function serviceLayoutIssue(layout,plan=DEFAULT_PLAN){
+  const counterIssue=counterLayoutIssue(layout,plan);if(counterIssue)return counterIssue;
   const free=freeCells(layout,plan);
   if(plan.approach&&!routeBetween(free,plan.entrance,plan.approach,plan))return 'Bitte einen Laufweg zur Küchentür frei lassen.';
   if(layout.some(t=>t.type==='table'&&!tableRoute(layout,t,plan)))return 'Bitte einen Laufweg zu jedem Tisch frei lassen.';

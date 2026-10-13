@@ -1,19 +1,20 @@
-import {kitchenTileIssue,kitchenReadiness,KITCHEN_TYPES,KITCHEN_TILE_PRICE} from './pizza-kitchen.js?v=20261012f';
-import {DEFAULT_PLAN,boundaryEdges,roomCell,withKitchen} from './pizza-floorplans.js?v=20261012f';
-import {itemPrice,product,money,ROOM_PRODUCTS,roomProduct,roomPurchaseIssue,defaultFinishes} from './pizza-catalog.js?v=20261012f';
-import {app,world,state,Container,Graphics,Rectangle,clearWorld,sceneUI,sceneViewport,rememberEdit,saveLayout,updateMoney,notify,hash,activateRestaurant,captureRestaurant,sealRestaurantEdit,activePlan} from './pizza-core.js?v=20261012f';
-import {GRID,kitchenCell as isKitchenCell,passageCell as isPassageCell,project,gridCell,dimensions,occupiedCells,placementIssue as checkPlacement,copyLayout} from './pizza-layout.js?v=20261012f';
-import {furnitureSprite} from './pizza-sprites.js?v=20261012f';
-import {syncServiceGuests} from './pizza-service-ui.js?v=20261012f';
-import {servicePlacementIssue,tableKey,serviceLayoutIssue} from './pizza-service.js?v=20261012f';
-import {productionBusy,dirtyTable} from './pizza-production.js?v=20261012f';
+import {kitchenTileIssue,kitchenReadiness,KITCHEN_TYPES,KITCHEN_TILE_PRICE} from './pizza-kitchen.js?v=20261013a';
+import {DEFAULT_PLAN,boundaryEdges,roomCell,withKitchen} from './pizza-floorplans.js?v=20261013a';
+import {itemPrice,product,money,ROOM_PRODUCTS,roomProduct,roomPurchaseIssue,defaultFinishes} from './pizza-catalog.js?v=20261013a';
+import {app,world,state,Container,Graphics,Rectangle,clearWorld,sceneUI,sceneViewport,rememberEdit,saveLayout,updateMoney,notify,hash,activateRestaurant,captureRestaurant,sealRestaurantEdit,activePlan} from './pizza-core.js?v=20261013a';
+import {GRID,kitchenCell as isKitchenCell,passageCell as isPassageCell,project,gridCell,dimensions,occupiedCells,placementIssue as checkPlacement,copyLayout} from './pizza-layout.js?v=20261013a';
+import {furnitureSprite} from './pizza-sprites.js?v=20261013a';
+import {syncServiceGuests} from './pizza-service-ui.js?v=20261013a';
+import {servicePlacementIssue,tableKey,serviceLayoutIssue} from './pizza-service.js?v=20261013a';
+import {productionBusy,dirtyTable} from './pizza-production.js?v=20261013a';
+import {counterLayoutIssue} from './pizza-business.js?v=20261013a';
 
 const RTW=GRID.width,RTH=GRID.height,WALL_HEIGHT=96;
 const TOOL_NAMES={table:'Tisch',fridge:'Kühlschrank',oven:'Ofen',bar:'Tresen',plant:'Pflanze',jukebox:'Musikautomat',arcade:'Spielautomat'};
 let plan=DEFAULT_PLAN,ROOM=DEFAULT_PLAN;
 const kitchenCell=(x,y)=>isKitchenCell(x,y,plan),passageCell=(x,y)=>isPassageCell(x,y,plan);
 const placementIssue=(item,items)=>checkPlacement(item,items,plan);
-let roomLayer,roomMask,objects,preview,hoverCell=null,dragPointer=null;
+let roomLayer,roomMask,rearPartitions,objects,preview,hoverCell=null,dragPointer=null;
 const view={zoom:1,x:0,y:0},pointers=new Map();
 let panMode=false,pinching=false,blockTap=false,movingItem=null,selectedItem=null,selectedTile=null,rebuilding=false,lastSelectionIssue=null,brushStart=null,brushCells=[];
 export function clearSelection(){selectedItem=null;selectedTile=null;cancelPlacement();}
@@ -28,6 +29,7 @@ function selectionIssue(){
   if(selectedTile){
     if(state.restaurantState.some(item=>occupiedCells(item).includes(`${selectedTile.x},${selectedTile.y}`)))return 'Zuerst das Gerät auf dieser Küchenplatte entfernen.';
     if(state.service.groups.some(g=>g.phase!=='paying')||productionBusy(state.service))return 'Küchenboden erst nach dem Service verändern.';
+    if(counterLayoutIssue(state.restaurantState,withKitchen(plan,state.kitchenTiles.filter(tile=>tile!==selectedTile))))return 'Diese Küchenplatte wird als Arbeitsplatz vor dem Tresen benötigt. Zuerst den Tresen umstellen.';
   }
   return null;
 }
@@ -103,32 +105,32 @@ function placed(item,interactive=true,ghost=false){
   objects.addChild(group);return group;
 }
 
-function partition(x,y,right,length,height,label='kitchen-partition'){
+function partition(x,y,right,length,height,label='kitchen-partition',layer=objects){
   const start=project(x,y),end=project(x+(right?length:0),y+(right?0:length)),g=new Graphics();
   g.label=label;g.eventMode='none';g.zIndex=Math.max(start.y,end.y)+.1;
   g.poly([start.x,start.y,end.x,end.y,end.x,end.y-height,start.x,start.y-height]).fill(0xdbcaab).stroke({color:0x8b6845,width:1});
-  g.poly([start.x,start.y,end.x,end.y,end.x,end.y-24,start.x,start.y-24]).fill(0x865732);
+  const plinth=Math.min(24,height);g.poly([start.x,start.y,end.x,end.y,end.x,end.y-plinth,start.x,start.y-plinth]).fill(0x865732);
   for(let i=0;i<length;i++){
     const p=project(x+(right?i:0),y+(right?0:i));
-    g.moveTo(p.x,p.y).lineTo(p.x,p.y-24).stroke({color:0xba8851,width:1});
+    g.moveTo(p.x,p.y).lineTo(p.x,p.y-plinth).stroke({color:0xba8851,width:1});
   }
-  g.moveTo(start.x,start.y-height).lineTo(end.x,end.y-height).stroke({color:0xb77b46,width:4});objects.addChild(g);return g;
+  g.moveTo(start.x,start.y-height).lineTo(end.x,end.y-height).stroke({color:0xb77b46,width:4});g.wallHeight=height;layer.addChild(g);return g;
 }
 function kitchenWalls(){
   const k=plan.kitchen;if(k.kind==='island')return;
   for(const side of ['north','west','south','east']){
-    const right=side==='north'||side==='south',length=right?k.w:k.h;
+    const right=side==='north'||side==='south',length=right?k.w:k.h,front=side==='south'||side==='east',layer=front?objects:rearPartitions;
     for(let i=0;i<length;i++){
       const x=right?k.x+i:k.x+(side==='east'?k.w:0),y=right?k.y+(side==='south'?k.h:0):k.y+i;
       const neighbor={x:right?x:x+(side==='west'?-1:0),y:right?y+(side==='north'?-1:0):y};
       if(!roomCell(neighbor.x,neighbor.y,plan))continue;
-      const opening=k.kind==='island'?side==='south'&&i===1:k.door?.side===side&&k.door.offset===i;
-      if(!opening){partition(x-.5,y-.5,right,1,k.kind==='island'?24:48);continue;}
-      if(k.kind==='island')continue;
+      const opening=k.door?.side===side&&k.door.offset===i;
+      if(!opening){const wall=partition(x-.5,y-.5,right,1,front?12:48,'kitchen-partition',layer);wall.side=side;continue;}
       const a=project(x-.5,y-.5),b=project(x-.5+(right?1:0),y-.5+(right?0:1)),g=new Graphics();
       g.label='kitchen-door';g.eventMode='none';g.zIndex=Math.max(a.y,b.y)+.2;
-      for(const p of [a,b])g.moveTo(p.x,p.y).lineTo(p.x,p.y-60).stroke({color:0x875a35,width:3});
-      g.moveTo(a.x,a.y-60).lineTo(b.x,b.y-60).stroke({color:0xb17b46,width:4});objects.addChild(g);
+      const height=front?14:60;g.wallHeight=height;g.side=side;
+      for(const p of [a,b])g.moveTo(p.x,p.y).lineTo(p.x,p.y-height).stroke({color:0x875a35,width:3});
+      g.moveTo(a.x,a.y-height).lineTo(b.x,b.y-height).stroke({color:0xb17b46,width:4});layer.addChild(g);
     }
   }
 }
@@ -325,7 +327,7 @@ export function showRestaurant(id){
   roomLayer=new Container();state.restaurantCamera=roomLayer;roomLayer.label='restaurant-room';world.addChild(roomLayer);
   roomMask=new Graphics();roomMask.eventMode='none';world.addChild(roomMask);roomLayer.mask=roomMask;
   view.zoom=1;view.x=0;view.y=0;panMode=false;pinching=false;blockTap=false;pointers.clear();updateCameraUI();
-  const wall=new Graphics(),floor=new Container();objects=new Container();preview=new Container();
+  const wall=new Graphics(),floor=new Container();rearPartitions=new Container();rearPartitions.label='kitchen-back-walls';rearPartitions.sortableChildren=true;objects=new Container();preview=new Container();
   objects.label='restaurant-objects';objects.sortableChildren=true;preview.label='placement-preview';preview.eventMode='none';hoverCell=null;dragPointer=null;
   const palette=ROOM_PRODUCTS.find(p=>p.level===state.finishes.renovation)?.colors||[0xcbb28b,0xb59670,0x8a5b3d,0x774b36];
   const edges=boundaryEdges(plan);
@@ -349,7 +351,8 @@ export function showRestaurant(id){
     if(coordinate%4!==2||!edges.some(e=>e.side===edge.side&&e.x===edge.x+(right?1:0)&&e.y===edge.y+(right?0:1)))continue;
     wallWindow(roomLayer,edge.x-.5,edge.y-.5,right);
   }
-  roomLayer.addChild(floor,objects,preview);
+  // Rear partitions sit behind the contents; front partitions are low cutaways.
+  roomLayer.addChild(floor,rearPartitions,objects,preview);
   floor.label='restaurant-floor';floor.finish=state.finishes.floor;wall.label='restaurant-walls';wall.renovation=state.finishes.renovation;
   const floorColors=ROOM_PRODUCTS.find(p=>p.id===state.finishes.floor).colors;
   for(const {x,y}of plan.cells){

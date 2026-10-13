@@ -1,8 +1,8 @@
-import {state,ensureRestaurants,restaurantName,saveLayout,notify} from './pizza-core.js?v=20261012f';
-import {restaurantPlan} from './pizza-floorplans.js?v=20261012f';
-import {STAFF,businessMetrics} from './pizza-business.js?v=20261012f';
-import {money} from './pizza-catalog.js?v=20261012f';
-import {mountDailyUI,renderDailyUI,openDailyReport} from './pizza-daily-ui.js?v=20261012f';
+import {state,ensureRestaurants,restaurantName,setRestaurantOpen} from './pizza-core.js?v=20261013a';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261013a';
+import {STAFF,businessMetrics} from './pizza-business.js?v=20261013a';
+import {money} from './pizza-catalog.js?v=20261013a';
+import {mountDailyUI,renderDailyUI,openDailyReport} from './pizza-daily-ui.js?v=20261013a';
 const el=id=>document.getElementById(id);let stamp=0,view='daily';
 function text(tag,value){const e=document.createElement(tag);e.textContent=value;return e;}
 export function renderBusinessUI(force=false){
@@ -11,7 +11,7 @@ export function renderBusinessUI(force=false){
  el('dailyContent').hidden=view!=='daily';el('financeLifetimeContent').hidden=view!=='lifetime';
  if(view==='daily'){renderDailyUI(force);return;}
  const profiles=ensureRestaurants(),profile=profiles[state.activeRestaurantId],host=el('businessControls');host.replaceChildren(text('h3',restaurantName()));
- const accepting=text('button',profile.business.open===false?'Restaurant öffnen':'Neue Gäste stoppen');accepting.id='acceptGuests';accepting.type='button';accepting.onclick=()=>{profile.business.open=profile.business.open===false;saveLayout();renderBusinessUI(true);};host.append(accepting,text('p','„Neue Gäste stoppen“ lässt laufende Bestellungen fertig werden. Danach kannst du Personal und Geräte umstellen.'));
+ const accepting=text('button',profile.business.open===false?'Restaurant öffnen':'Restaurant schließen');accepting.id='acceptGuests';accepting.type='button';accepting.onclick=()=>setRestaurantOpen(state.activeRestaurantId,profile.business.open===false);host.append(accepting,text('p','Schließen stoppt neue Gäste. Laufende Bestellungen und das Abräumen werden beendet. Danach kannst du Personal und Geräte umstellen.'));
  const table=el('branchRows');table.replaceChildren();
  for(const [id,p]of Object.entries(profiles)){
   const m=businessMetrics(p,restaurantPlan(id)),row=document.createElement('tr');row.dataset.branch=id;

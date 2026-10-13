@@ -1,6 +1,6 @@
-import {kitchenWorkflow} from './pizza-business.js?v=20261012f';
-import {roomCell,roomStep,withKitchen,restaurantPlan} from './pizza-floorplans.js?v=20261012f';
-import {occupiedCells,decorCell,placementIssue} from './pizza-layout.js?v=20261012f';
+import {kitchenWorkflow} from './pizza-business.js?v=20261013a';
+import {roomCell,roomStep,withKitchen,restaurantPlan} from './pizza-floorplans.js?v=20261013a';
+import {occupiedCells,decorCell,placementIssue} from './pizza-layout.js?v=20261013a';
 export const KITCHEN_TYPES=['oven','bar','fridge'];
 export const KITCHEN_TILE_PRICE=50;
 export function restoreKitchenTiles(raw,p){
@@ -48,7 +48,7 @@ export function legacyKitchen(p){
   const tiles=p.cells.filter(t=>t.x>=p.kitchen.x&&t.y>=p.kitchen.y&&t.x<p.kitchen.x+p.kitchen.w&&t.y<p.kitchen.y+p.kitchen.h).map(t=>({...t,paid:0}));
   const k=p.kitchen,items=[{type:'fridge',x:k.x,y:k.y,r:0},{type:'oven',x:k.x+1,y:k.y,r:0},{type:'bar',x:k.x,y:k.y+k.h-1,r:0}];
   const plan=withKitchen(p,tiles);
-  if(!kitchenWorkflow(items,plan,tiles)){const candidates=tiles.flatMap(c=>[0,1].map(r=>({...items[2],x:c.x,y:c.y,r})));const bar=candidates.find(b=>!placementIssue(b,items.slice(0,2),plan)&&kitchenWorkflow([...items.slice(0,2),b],plan,tiles));if(bar)items[2]=bar;}
+  if(!kitchenWorkflow(items,plan,tiles)){const candidates=tiles.flatMap(c=>[0,1,2,3].map(r=>({...items[2],x:c.x,y:c.y,r})));const bar=candidates.find(b=>!placementIssue(b,items.slice(0,2),plan)&&kitchenWorkflow([...items.slice(0,2),b],plan,tiles));if(bar)items[2]=bar;}
   return {tiles,items};
 }
 const cache=new WeakMap();
