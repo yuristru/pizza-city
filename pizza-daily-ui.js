@@ -1,6 +1,6 @@
-import {state,ensureRestaurants,restaurantName,saveLayout} from './pizza-core.js?v=20261013d';
-import {DAY_MINUTES,currentReport,reportMetrics,dayLabel,minuteLabel} from './pizza-daily.js?v=20261013d';
-import {money} from './pizza-catalog.js?v=20261013d';
+import {state,ensureRestaurants,restaurantName,saveLayout} from './pizza-core.js?v=20261013e';
+import {DAY_MINUTES,currentReport,reportMetrics,dayLabel,minuteLabel} from './pizza-daily.js?v=20261013e';
+import {money} from './pizza-catalog.js?v=20261013e';
 const el=id=>document.getElementById(id),number=new Intl.NumberFormat('de-DE',{maximumFractionDigits:1,minimumFractionDigits:1});
 let selectedDay='current',selectedRestaurant='all',dayOptions='',branchOptions='',trendStamp='',branchStamp='';
 function node(tag,value,className){const e=document.createElement(tag);if(value!==undefined)e.textContent=value;if(className)e.className=className;return e;}
@@ -30,6 +30,7 @@ function meter(label,value,max,caption){
 function renderFigures(report){
  const m=reportMetrics(report,selectedRestaurant),overview=el('dailyOverview');
  overview.replaceChildren(kpi('Umsatz',money(m.revenueCents/100)),kpi('Kosten',money(m.costCents/100)),kpi('Gewinn',money(m.profitCents/100),m.profitCents<0?'loss':'profit'),kpi('Bediente Gäste',String(m.servedGuests)));
+ const machines=node('small','davon Automaten: '+money(m.machineRevenueCents/100));machines.dataset.machineRevenue=String(m.machineRevenueCents);overview.firstElementChild.append(machines);
  const since=selectedRestaurant==='all'?report.startMinute:report.branches[selectedRestaurant].since;
  el('dailyTitle').textContent=(selectedRestaurant==='all'?'Alle Restaurants':restaurantName(selectedRestaurant))+' · '+dayLabel(report.day);
  el('dailyPeriod').textContent=(report.closed?'Abgeschlossen':'Laufender Spieltag')+' · '+minuteLabel(since)+' bis '+(report.closed?'24:00':minuteLabel(report.endMinute))+' Uhr'+(since>report.day*DAY_MINUTES?' · Teil des Tages erfasst':'');
@@ -39,7 +40,7 @@ function renderFigures(report){
  for(const [label,cents]of rows)costs.append(meter(label,cents,Math.max(1,m.costCents),money(cents/100)));
  const guest=el('dailyGuests');guest.replaceChildren(node('h3','Gäste und Zufriedenheit'),meter('Gästezufriedenheit',m.rating,5,m.rating===null?'Noch keine Bewertung':number.format(m.rating)+' / 5'),meter('Sitzplatzauslastung',m.utilization,100,number.format(m.utilization)+' %'));
  const facts=node('dl',undefined,'dailyFacts');
- for(const [label,value]of [['Bewertungen',String(m.reviews)],['Verlorene Gäste',String(m.lostGuests)],['Mittlere Wartezeit',m.averageWait===null?'Noch keine Zahlung':number.format(m.averageWait)+' min'],['Offene Kosten am '+(report.closed?'Tagesende':'aktuellen Stand'),money(m.debtCents/100)]])facts.append(node('dt',label),node('dd',value));guest.append(facts);
+ for(const [label,value]of [['Bewertungen',String(m.reviews)],['Verlorene Gäste',String(m.lostGuests)],['Automatennutzungen',String(m.machineUses)],['Mittlere Wartezeit',m.averageWait===null?'Noch keine Zahlung':number.format(m.averageWait)+' min'],['Offene Kosten am '+(report.closed?'Tagesende':'aktuellen Stand'),money(m.debtCents/100)]])facts.append(node('dt',label),node('dd',value));guest.append(facts);
  const branches=el('dailyBranches');branches.hidden=selectedRestaurant!=='all';
  if(selectedRestaurant==='all'){
   const ids=Object.keys(report.branches),key=ids.join(',');

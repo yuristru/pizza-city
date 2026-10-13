@@ -1,14 +1,15 @@
-import {kitchenReadiness,kitchenWorkFlow,completionWorkFlow} from './pizza-kitchen.js?v=20261013d';
-import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261013d';
-import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261013d';
-import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261013d';
+import {kitchenReadiness,kitchenWorkFlow,completionWorkFlow} from './pizza-kitchen.js?v=20261013e';
+import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261013e';
+import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261013e';
+import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261013e';
 
-import {businessIssue,demandScore,operatingRates,counterLayoutIssue} from './pizza-business.js?v=20261013d';
-import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable,reconcileProduction} from './pizza-production.js?v=20261013d';
-import {workLayoutKey} from './pizza-work-targets.js?v=20261013d';
+import {businessIssue,demandScore,operatingRates,counterLayoutIssue} from './pizza-business.js?v=20261013e';
+import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable,reconcileProduction} from './pizza-production.js?v=20261013e';
+import {workLayoutKey} from './pizza-work-targets.js?v=20261013e';
+import {restoreMachines,startMachineVisit,reconcileMachineVisits,advanceMachineVisits,machinePosition} from './pizza-machines.js?v=20261013e';
 export const SERVICE_PHASES=['arriving','waiting','eating','leaving','paying'];
 export const tableKey=t=>[t.x,t.y,t.r,t.seats,t.variant||'wood'].join(':');
-export function freshService(){return {version:1,chainVersion:1,elapsed:0,untilArrival:2,nextId:1,groups:[],payments:[],dirtyTables:[],waiterTasks:[],staffPositions:{},plateReturns:[],cleanedTables:0,netCents:0,revenueCents:0,costCents:0,servedGuests:0};}
+export function freshService(){return {version:1,chainVersion:1,elapsed:0,untilArrival:2,nextId:1,groups:[],machineGuests:[],payments:[],dirtyTables:[],waiterTasks:[],staffPositions:{},plateReturns:[],cleanedTables:0,netCents:0,revenueCents:0,machineRevenueCents:0,machineUses:0,costCents:0,servedGuests:0};}
 const pointOK=(p,plan)=>p&&Number.isInteger(p.x)&&Number.isInteger(p.y)&&guestCell(p.x,p.y,plan);
 function recordReview(service,score){const n=service.reviews||0;service.rating=((service.rating||4)*n+score)/(n+1);service.reviews=n+1;}
 const integer=(n,min=0,max=1e12)=>Number.isSafeInteger(n)&&n>=min&&n<=max;
@@ -26,7 +27,7 @@ export function restoreService(raw,plan=DEFAULT_PLAN){
     ids.add(g.id);const restored=JSON.parse(JSON.stringify(g));delete restored.work;const work=raw.chainVersion===1&&g.phase==='waiting'?restoreWork(g.work,plan):null;if(work)restored.work=work;if(g.waited!==undefined)restored.waited=Number.isFinite(g.waited)&&g.waited>=0?Math.min(g.waited,120):0;fresh.groups.push(restored);
   }
   if(Array.isArray(raw.payments))fresh.payments=raw.payments.filter(p=>integer(p?.id,1,raw.nextId-1)&&integer(p.amount,1,799992)&&Number.isFinite(p.time)&&p.time<=raw.elapsed&&p.time>=raw.elapsed-4&&pointOK(p.position,plan)).slice(-4).map(p=>({...p,position:{...p.position}}));
-  restoreProduction(raw,fresh,plan);return fresh;
+  restoreMachines(raw,fresh,plan);restoreProduction(raw,fresh,plan);return fresh;
 }
 function freeCells(layout,plan){const used=new Set(layout.flatMap(occupiedCells)),free=new Set();for(let y=0;y<plan.h;y++)for(let x=0;x<plan.w;x++)if(guestCell(x,y,plan)&&!used.has(`${x},${y}`))free.add(`${x},${y}`);return free;}
 export function servicePath(layout,start,goal,plan=DEFAULT_PLAN){return routeBetween(freeCells(layout,plan),start,goal,plan);}
@@ -58,6 +59,7 @@ export function servicePlacementIssue(item,service,rerouteStaff=false){
   const cells=new Set(occupiedCells(item));
   if(!rerouteStaff&&(service.groups.some(g=>g.work?.route.some(p=>cells.has(`${p.x},${p.y}`)))||service.waiterTasks?.some(t=>t.route.some(p=>cells.has(`${p.x},${p.y}`)))))return 'Dieser Laufweg wird gerade vom Personal benutzt.';
   if(service.dirtyTables?.some(d=>occupiedCells(d.table).some(c=>cells.has(c))))return 'Dieser Tisch muss zuerst abgeräumt werden.';
+  if(service.machineGuests?.some(v=>{const p=machinePosition(v);return cells.has(`${Math.round(p.x)},${Math.round(p.y)}`);}))return 'Auf diesem Platz steht gerade ein Gast am Automaten.';
   return service.groups.some(g=>['arriving','leaving','paying'].includes(g.phase)&&g.route.some(p=>cells.has(`${p.x},${p.y}`)))?'Dieser Laufweg wird gerade von Gästen benutzt.':null;
 }
 function leave(group,layout,plan){
@@ -80,6 +82,7 @@ function admit(service,layout,menu,balance,plan,business){
 export function advanceService(service,seconds,layout,menu,balanceCents,plan=DEFAULT_PLAN,business=null){
   const events=[];if(!Number.isFinite(seconds)||seconds<=0)return {balanceCents,events};
   const free=freeCells(layout,plan);
+  reconcileMachineVisits(service,layout,plan,servicePath);
   if(business){
     const tiles=[...plan.kitchenKeys].map(k=>{const [x,y]=k.split(',').map(Number);return {x,y};}),ready=kitchenReadiness(tiles,layout,plan),workflow=ready.ready?kitchenWorkFlow(tiles,layout,plan):null;
     const pending=service.groups.length||service.dirtyTables.length||service.waiterTasks.length;
@@ -91,6 +94,7 @@ export function advanceService(service,seconds,layout,menu,balanceCents,plan=DEF
   while(seconds>1e-8){
     const dt=Math.min(.1,seconds);seconds-=dt;service.elapsed+=dt;
     service.payments=service.payments.filter(p=>service.elapsed-p.time<4);
+    const machines=advanceMachineVisits(service,dt,layout,plan,servicePath);balanceCents+=machines.amount;events.push(...machines.events);
     if(business)advanceWaiters(service,dt,layout,plan,business);
     if(business){
       const rates=operatingRates(business.staff,layout,plan.area);
@@ -128,7 +132,7 @@ export function advanceService(service,seconds,layout,menu,balanceCents,plan=DEF
         }
         g.timer=Math.max(0,g.timer-dt);if(g.timer>1e-8)continue;
         if(g.phase==='waiting'){g.phase='eating';g.timer=g.eatDuration;}
-        else if(g.phase==='eating'){g.ate=true;if(business)addDirtyTable(service,g);leave(g,layout,plan);}
+        else if(g.phase==='eating'){g.ate=true;if(business)addDirtyTable(service,g);startMachineVisit(service,g,layout,plan,servicePath);leave(g,layout,plan);}
         else service.groups=service.groups.filter(other=>other!==g);
       }
     }
@@ -145,5 +149,5 @@ export function rehomeService(raw,layout,moved,plan){
     if(!route)continue;
     g.table={...table};g.route=['leaving','paying'].includes(g.phase)?route.slice().reverse():route;g.progress=g.phase==='paying'?g.route.length-1+(g.size-1)*.32:0;groups.push(g);
   }
-  service.groups=groups;service.payments=service.payments.map(p=>({...p,position:{...plan.entrance}}));return service;
+  service.groups=groups;service.machineGuests=[];service.payments=service.payments.map(p=>({...p,position:{...plan.entrance}}));return service;
 }

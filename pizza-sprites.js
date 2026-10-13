@@ -1,7 +1,7 @@
-import {avatarTraits} from './pizza-staff-avatar.js?v=20261013d';
-import {Sprite,Texture,Rectangle} from './pizza-core.js?v=20261013d';
-import {restaurantSprite,restaurantIcon} from './pizza-restaurant-art.js?v=20261013d';
-import {project,tableChairs} from './pizza-layout.js?v=20261013d';
+import {avatarTraits} from './pizza-staff-avatar.js?v=20261013e';
+import {Sprite,Texture,Rectangle} from './pizza-core.js?v=20261013e';
+import {restaurantSprite,restaurantIcon} from './pizza-restaurant-art.js?v=20261013e';
+import {project,tableChairs} from './pizza-layout.js?v=20261013e';
 
 // Pixel bitmaps with four fixed views. The scene places only flat 2D sprites.
 const WIDTH=256,HEIGHT=192,FOOT={x:128,y:144},cache=new Map();
@@ -199,7 +199,7 @@ function furnitureArt(type,rotation,seats,variant){
 }
 function detailedVariant(type,variant){return (type==='oven'&&(!variant||variant==='brick'||variant==='professional'))||(type==='plant'&&(!variant||variant==='olive'))||(type==='jukebox'&&(!variant||variant==='vintage'))||type==='wine';}
 export function furnitureSprite(type,rotation=0,seats=4,variant){
-  const detailed=detailedVariant(type,variant)?restaurantSprite(type,rotation):null;
+  const detailed=detailedVariant(type,variant)&&!(type==='jukebox'&&rotation!==0)?restaurantSprite(type,rotation):null;
   if(detailed){if(variant==='professional')detailed.tint=0xdde4ec;return detailed;}
   const art=furnitureArt(type,rotation,seats,variant),result=sprite(art,'furniture-sprite');result.hitArea=art.hitArea;return result;
 }

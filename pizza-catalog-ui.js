@@ -1,6 +1,7 @@
-import {state} from './pizza-core.js?v=20261013d';
-import {PRODUCTS,ROOM_PRODUCTS,CATEGORIES,product,roomProduct,itemPrice,money} from './pizza-catalog.js?v=20261013d';
-import {furnitureIcon} from './pizza-sprites.js?v=20261013d';
+import {state} from './pizza-core.js?v=20261013e';
+import {PRODUCTS,ROOM_PRODUCTS,CATEGORIES,product,roomProduct,itemPrice,money} from './pizza-catalog.js?v=20261013e';
+import {furnitureIcon} from './pizza-sprites.js?v=20261013e';
+import {MACHINE_RULES} from './pizza-machines.js?v=20261013e';
 let qualityStep=false,onChoose=()=>{};
 function choose(p,seats){state.selectMode=false;state.selectedTool=p.type;state.selectedVariant=p.id;if(seats)state.selectedSeats=seats;state.deleteMode=false;onChoose();}
 export function mountCatalog(callback){
@@ -24,7 +25,8 @@ function card(p,seats,tier=false){
   const image=document.createElement('img');image.src=furnitureIcon(p.type,seats||4,p.id);image.alt='';image.className='furnitureIcon';
   const label=document.createElement('span');label.textContent=name;
   const cost=document.createElement('small');cost.textContent=(tier?'ab ':'')+money(price);
-  button.append(image,label,cost);button.onclick=()=>{if(tier)qualityStep=false;choose(p,seats);};return button;
+  button.append(image,label,cost);if(MACHINE_RULES[p.type]){const income=money(MACHINE_RULES[p.type].fee/100);cost.textContent+=' · +'+income;button.title=income+' Einnahmen je Nutzung';button.setAttribute('aria-label',button.getAttribute('aria-label')+', '+button.title);}
+  button.onclick=()=>{if(tier)qualityStep=false;choose(p,seats);};return button;
 }
 export function renderCatalog(){
   const selected=roomProduct({type:state.selectedTool,variant:state.selectedVariant})||product({type:state.selectedTool,variant:state.selectedVariant})||PRODUCTS.find(p=>p.id==='wood'),category=state.selectMode?'select':selected.category;
