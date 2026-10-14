@@ -28,6 +28,8 @@ on:
       - 'tests/pizza-staff-assignment-qa.mjs'
       - 'tests/pizza-staff-assignment-browser-qa.cjs'
       - 'tests/pizza-night-qa.mjs'
+      - 'tests/pizza-procurement-qa.mjs'
+      - 'tests/pizza-commerce-browser-qa.cjs'
       - 'tests/pizza-night-browser-qa.cjs'
       - 'tests/pizza-properties-qa.mjs'
       - 'tests/pizza-city-layout-qa.mjs'
@@ -83,6 +85,8 @@ jobs:
           node tests/pizza-staff-assignment-qa.mjs
           node tests/pizza-staff-assignment-browser-qa.cjs
           node tests/pizza-night-qa.mjs
+          node tests/pizza-procurement-qa.mjs
+          node tests/pizza-commerce-browser-qa.cjs
           node tests/pizza-night-browser-qa.cjs
           node tests/pizza-restaurants-browser-qa.cjs
           node tests/pizza-staff-qa.mjs

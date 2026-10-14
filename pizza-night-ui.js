@@ -1,7 +1,7 @@
-import {state,root,saveLayout,notify} from './pizza-core.js?v=20261014a';
-import {SECONDS_PER_MINUTE} from './pizza-daily.js?v=20261014a';
-import {tickService} from './pizza-service-runtime.js?v=20261014a';
-import {isNight,cityBrightness,nightSkipTarget} from './pizza-night.js?v=20261014a';
+import {state,root,saveLayout,notify} from './pizza-core.js?v=20261014b';
+import {SECONDS_PER_MINUTE} from './pizza-daily.js?v=20261014b';
+import {tickService} from './pizza-service-runtime.js?v=20261014b';
+import {isNight,cityBrightness,nightSkipTarget} from './pizza-night.js?v=20261014b';
 let skipping=false,stamp='';
 export function renderNightUI(){
   const key=[Math.floor(state.gameMinutes),state.ready,skipping].join(':');if(key===stamp)return;stamp=key;

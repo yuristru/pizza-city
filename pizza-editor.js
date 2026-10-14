@@ -1,6 +1,7 @@
-import {drawIngredientArt} from './pizza-ingredient-art.js?v=20261014a';
-import {app,state,clearWorld,sceneUI,notify} from './pizza-core.js?v=20261014a';
-import {INGREDIENTS,ingredient,blankRecipe,onPizza,validRecipe,copyRecipe,recipeCost,toppingAt,formOf,nextForm,formName} from './pizza-recipe.js?v=20261014a';
+import {drawIngredientArt} from './pizza-ingredient-art.js?v=20261014b';
+import {app,state,clearWorld,sceneUI,notify} from './pizza-core.js?v=20261014b';
+import {ingredientPurchaseCost,purchasingDiscount} from './pizza-procurement.js?v=20261014b';
+import {INGREDIENTS,ingredient,blankRecipe,onPizza,validRecipe,copyRecipe,recipeCost,toppingAt,formOf,nextForm,formName} from './pizza-recipe.js?v=20261014b';
 const el=id=>document.getElementById(id),board=el('pizzaBoard'),pixelBoard=document.createElement('canvas'),ctx=pixelBoard.getContext('2d'),KEY='pizza-recipes-v1';
 pixelBoard.width=160;pixelBoard.height=160;ctx.setTransform(.5,0,0,.5,0,0);ctx.imageSmoothingEnabled=false;
 let recipe=blankRecipe(),recipes=[],selected='mozzarella',erase=false,history=[],stroke=null,forms=Object.fromEntries(INGREDIENTS.map(i=>[i.id,0]));
@@ -77,7 +78,7 @@ function render(){
  for(const b of document.querySelectorAll('[data-ingredient]')){const active=!erase&&b.dataset.ingredient===selected;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));}
  for(const b of document.querySelectorAll('[data-sauce]')){const active=b.dataset.sauce===recipe.sauce;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));}
  el('pizzaErase').classList.toggle('active',erase);el('pizzaErase').setAttribute('aria-pressed',String(erase));el('pizzaUndo').disabled=!history.length;
- el('pizzaStats').textContent=recipe.toppings.length+' Portionen · Zutatenkosten '+price(recipeCost(recipe));
+ el('pizzaStats').textContent=recipe.toppings.length+' Portionen · Zutatenkosten '+price(ingredientPurchaseCost(recipeCost(recipe),1,purchasingDiscount(state.procurement)))+(purchasingDiscount(state.procurement)?' · 20 % Einkaufsrabatt':'');
  el('pizzaInstructions').textContent=erase?'Zutaten auf der Pizza antippen, um sie zu entfernen.':(ingredient(selected)?.name||'Zutat')+' · '+formName(selected,forms[selected])+': tippen oder verteilen.';
 }
 function updateRecipes(){const select=el('pizzaRecipes');select.replaceChildren(new Option('Gespeicherte Rezepte',''));recipes.forEach((r,i)=>select.add(new Option(r.name,String(i))));select.value='';}

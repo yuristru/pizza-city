@@ -1,14 +1,14 @@
-import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261014a';
-import {state,Container,ensureRestaurants,activePlan,label} from './pizza-core.js?v=20261014a';
-import {project,dimensions} from './pizza-layout.js?v=20261014a';
-import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261014a';
-import {routePosition,guestSeat} from './pizza-service.js?v=20261014a';
-import {machinePosition,MACHINE_RULES} from './pizza-machines.js?v=20261014a';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261014a';
+import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261014b';
+import {state,Container,ensureRestaurants,activePlan,label} from './pizza-core.js?v=20261014b';
+import {project,dimensions} from './pizza-layout.js?v=20261014b';
+import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261014b';
+import {routePosition,guestSeat} from './pizza-service.js?v=20261014b';
+import {machinePosition,MACHINE_RULES} from './pizza-machines.js?v=20261014b';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261014b';
 
-import {businessIssue,workPath,counterLayoutIssue,counterHandoff} from './pizza-business.js?v=20261014a';
-import {staffSchedule,shiftLabel} from './pizza-shifts.js?v=20261014a';
-import {personSprite,staffPersonSprite} from './pizza-sprites.js?v=20261014a';
+import {businessIssue,workPath,counterLayoutIssue,counterHandoff} from './pizza-business.js?v=20261014b';
+import {staffSchedule,shiftLabel} from './pizza-shifts.js?v=20261014b';
+import {personSprite,staffPersonSprite} from './pizza-sprites.js?v=20261014b';
 const maps=new WeakMap(),banners=new Map();
 export function syncServiceGuests(objects){
   let nodes=maps.get(objects);if(!nodes){nodes=new Map();maps.set(objects,nodes);}
@@ -74,7 +74,7 @@ export function renderServiceUI(){
   const readiness=kitchenReadiness(state.kitchenTiles,state.restaurantState,activePlan());status.title=readiness.issue||counterLayoutIssue(state.restaurantState,activePlan())||'Küche betriebsbereit';status.dataset.kitchenReady=String(readiness.ready);
   const profile=ensureRestaurants()[state.activeRestaurantId],plan=activePlan(),schedule=staffSchedule(state.staff,state.activeRestaurantId,state.gameMinutes,state.service),staff={...profile.business,cook:schedule.working.filter(p=>p.role==='cook').length,waiter:schedule.working.filter(p=>p.role==='waiter').length};
   const shiftName=schedule.active==='lunch'?'Mittagsschicht':'Abendschicht',teamIssue=!staff.cook?'Koch für die '+shiftName+' einteilen.':!staff.waiter?'Servicekraft für die '+shiftName+' einteilen.':null;
-  const issue=(profile.service.debtCents||0)>0||state.staff.reserveDebtCents>0?'Offene Betriebskosten':profile.business.open===false?'Restaurant geschlossen':!schedule.active?(schedule.closing?'Schichtende, Bestellungen abschließen':'Außerhalb der Schichten'):readiness.issue||counterLayoutIssue(state.restaurantState,plan)||teamIssue||businessIssue(staff,readiness.ready?kitchenWorkFlow(state.kitchenTiles,state.restaurantState,plan):null);
+  const issue=(profile.service.debtCents||0)>0||state.staff.reserveDebtCents>0||state.procurement.debtCents>0?'Offene Betriebskosten':profile.business.open===false?'Restaurant geschlossen':!schedule.active?(schedule.closing?'Schichtende, Bestellungen abschließen':'Außerhalb der Schichten'):readiness.issue||counterLayoutIssue(state.restaurantState,plan)||teamIssue||businessIssue(staff,readiness.ready?kitchenWorkFlow(state.kitchenTiles,state.restaurantState,plan):null);
   const open=profile.business.open!==false,button=document.getElementById('restaurantOpenBtn');
   if(button.dataset.open!==String(open)){button.dataset.open=String(open);button.setAttribute('aria-pressed',String(open));button.setAttribute('aria-label',open?'Restaurant schließen':'Restaurant öffnen');button.title=open?'Geöffnet: keine neuen Gäste mehr zulassen':'Geschlossen: Restaurant öffnen';document.getElementById('restaurantOpenIcon').setAttribute('d',open?'M6 4h4v16H6zM14 4h4v16h-4z':'M7 4l14 8-14 8z');}
   const stars=document.querySelector('.stars'),rating=state.service.rating||4;stars.textContent='★'.repeat(Math.round(rating))+'☆'.repeat(5-Math.round(rating));stars.setAttribute('aria-label',rating.toFixed(1)+' von 5 Sternen');

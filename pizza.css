@@ -202,3 +202,7 @@ noscript{position:fixed;inset:0;z-index:99;display:grid;place-items:center;backg
 .selectionMenu .placementcopy{grid-column:1/-1}
 .selectionMenu button{min-width:0;padding:0 2px;font-size:9px}
 #deleteBtn:not(:disabled){background:#9a4635;color:#fff0ca;border-color:#663225}
+
+#commerceDialog{width:min(480px,calc(100% - 24px));max-height:calc(100% - 24px);overflow:auto;padding:18px;background:#f0dfbf;color:#3a2b1f;border:4px solid #775b37;border-radius:10px}#commercePreview{position:static;inset:auto;width:180px;height:160px;display:block;margin:0 auto;image-rendering:pixelated;pointer-events:none}#commerceBuy{width:100%;min-height:44px}#commerceDescription,#commerceStatus{line-height:1.5}#dailyProcurement{margin-top:12px}#dailyProcurement .dailyKpi{margin-top:8px}
+
+#commerceDialog::backdrop{background:#171416aa}.propertyFilters button[data-warehouse-filter]{grid-column:1/-1}

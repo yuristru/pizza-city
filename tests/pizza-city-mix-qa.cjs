@@ -24,7 +24,7 @@ const server=http.createServer((req,res)=>{
   const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox','--disable-dev-shm-usage','--enable-unsafe-swiftshader']});
   try{
     const page=await browser.newPage({viewport:{width:1280,height:950}}),errors=[];
-    page.on('pageerror',e=>errors.push(e.message));
+    page.on('pageerror',e=>{errors.push(e.message);console.error('Browser error:',e.message);});
     await page.goto(`http://127.0.0.1:${server.address().port}/pizza.html`);
     await page.waitForSelector('#loading',{state:'hidden'});
     const cityPath=fs.readFileSync(path.join(root,'pizza.js'),'utf8').match(/from ['"](.\/pizza-city\.js[^'"]*)['"]/)[1].replace('./','/');

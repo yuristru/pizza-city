@@ -1,18 +1,22 @@
-import {restaurantPlan} from './pizza-floorplans.js?v=20261014a';
-import {state,saveLayout,updateMoney,notify,ensureRestaurants} from './pizza-core.js?v=20261014a';
-import {money} from './pizza-catalog.js?v=20261014a';
-import {PROPERTIES,PROPERTY_SIZES,property,buyProperty,propertyPurchaseIssue} from './pizza-properties.js?v=20261014a';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261014b';
+import {state,saveLayout,updateMoney,notify,ensureRestaurants} from './pizza-core.js?v=20261014b';
+import {money} from './pizza-catalog.js?v=20261014b';
+import {PROPERTIES,PROPERTY_SIZES,property,buyProperty,propertyPurchaseIssue} from './pizza-properties.js?v=20261014b';
+import {WAREHOUSES} from './pizza-procurement.js?v=20261014b';
+import {openCommerce} from './pizza-commerce-ui.js?v=20261014b';
 const el=id=>document.getElementById(id);
 let selected=null,filter='small';
 function render(){
   const owned=state.ownedProperties;
-  el('propertySummary').textContent=`9 Standorte · ${owned.length} in deinem Besitz · Konto ${money(state.balance)}`;
+  el('propertySummary').textContent=`9 Restaurantstandorte · ${owned.length} eigene · ${state.procurement.owned.length} von 2 Lagern · Konto ${money(state.balance)}`;
   el('propertyList').hidden=!!selected;el('propertyDetail').hidden=!selected;el('propertyFilters').hidden=!!selected;
   el('propertyTitle').textContent=selected?'Standort ansehen':'Immobilien';
   if(!selected){
     el('propertyFilters').replaceChildren(...Object.entries(PROPERTY_SIZES).map(([key,size])=>{
       const button=document.createElement('button');button.type='button';button.textContent=size.name+' · '+Math.min(...PROPERTIES.filter(p=>p.size===key).map(p=>p.area))+' bis '+Math.max(...PROPERTIES.filter(p=>p.size===key).map(p=>p.area))+' m²';button.classList.toggle('active',filter===key);button.setAttribute('aria-pressed',String(filter===key));button.onclick=()=>{filter=key;render();};return button;
     }));
+    const warehouseFilter=document.createElement('button');warehouseFilter.type='button';warehouseFilter.textContent='Lager';warehouseFilter.dataset.warehouseFilter='true';warehouseFilter.classList.toggle('active',filter==='warehouses');warehouseFilter.setAttribute('aria-pressed',String(filter==='warehouses'));warehouseFilter.onclick=()=>{filter='warehouses';render();};el('propertyFilters').append(warehouseFilter);
+    if(filter==='warehouses'){el('propertyList').replaceChildren(...WAREHOUSES.map(w=>{const b=document.createElement('button');b.type='button';b.dataset.warehouse=w.id;const name=document.createElement('strong'),detail=document.createElement('span');name.textContent=w.name;detail.textContent=w.district+' · 20 % Einkaufsrabatt · '+(state.procurement.owned.includes(w.id)?'Dein Lager':money(w.price));b.append(name,detail);b.onclick=()=>openCommerce(w.id);return b;}));return;}
     el('propertyList').replaceChildren(...PROPERTIES.filter(p=>p.size===filter).map(p=>{
       const button=document.createElement('button');button.type='button';button.dataset.property=p.id;
       const name=document.createElement('strong'),detail=document.createElement('span');name.textContent=p.name;detail.textContent=p.district+' · '+p.area+' m² · '+(owned.includes(p.id)?'Dein Standort':money(p.price));button.append(name,detail);button.onclick=()=>openProperty(p.id);return button;

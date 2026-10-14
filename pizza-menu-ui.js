@@ -1,7 +1,8 @@
-import {notify} from './pizza-core.js?v=20261014a';
-import {INGREDIENTS,copyRecipe} from './pizza-recipe.js?v=20261014a';
-import {savedRecipes,drawRecipePreview,showPizza} from './pizza-editor.js?v=20261014a';
-import {parseMenuPrice,menuContribution,restoreMenu,putOnMenu} from './pizza-menu.js?v=20261014a';
+import {purchasingDiscount} from './pizza-procurement.js?v=20261014b';
+import {notify,state} from './pizza-core.js?v=20261014b';
+import {INGREDIENTS,copyRecipe} from './pizza-recipe.js?v=20261014b';
+import {savedRecipes,drawRecipePreview,showPizza} from './pizza-editor.js?v=20261014b';
+import {parseMenuPrice,menuContribution,restoreMenu,putOnMenu} from './pizza-menu.js?v=20261014b';
 
 const el=id=>document.getElementById(id),KEY='pizza-menu-v1';
 const money=cents=>(cents/100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' DM';
@@ -13,9 +14,9 @@ function save(message){
 }
 function node(tag,className,text){const n=document.createElement(tag);if(className)n.className=className;if(text!==undefined)n.textContent=text;return n;}
 function button(text,action){const b=node('button','',text);b.type='button';b.onclick=action;return b;}
-function updateSummary(){el('menuSummary').textContent=items.length+' Pizzen · '+items.filter(item=>item.active).length+' im Angebot';}
+function updateSummary(){el('menuSummary').textContent=items.length+' Pizzen · '+items.filter(item=>item.active).length+' im Angebot'+(purchasingDiscount(state.procurement)?' · Zentraler Einkauf: 20 % günstigere Zutaten':'');}
 function economics(card,item){
-  const {cost,amount,percent}=menuContribution(item);
+  const {cost,amount,percent}=menuContribution(item,purchasingDiscount(state.procurement));
   card.classList.toggle('menuLoss',amount<0);card.classList.toggle('menuPaused',!item.active);
   card.querySelector('[data-menu-cost]').textContent=money(cost);
   card.querySelector('[data-menu-contribution]').textContent=money(amount);

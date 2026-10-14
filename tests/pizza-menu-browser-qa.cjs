@@ -14,9 +14,10 @@ const server=http.createServer((req,res)=>{
   try{
     browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined,args:process.env.PIZZA_BROWSER_ARGS?JSON.parse(process.env.PIZZA_BROWSER_ARGS):['--no-sandbox','--disable-dev-shm-usage','--enable-unsafe-swiftshader']});
     const context=await browser.newContext({viewport:{width:393,height:852},hasTouch:true,deviceScaleFactor:2});
-    const page=await context.newPage(),errors=[],external=[];page.on('pageerror',error=>errors.push(error.message));
+    const page=await context.newPage(),errors=[],external=[];page.setDefaultTimeout(Number(process.env.PIZZA_ACTION_TIMEOUT)||30000);page.on('pageerror',error=>{errors.push(error.message);console.error('Page error:',error.message);});page.on('console',m=>{if(m.type()==='error')console.error(m.text());});page.on('requestfailed',r=>console.error('Request failure:',r.url(),r.failure()));
     const url='http://127.0.0.1:'+server.address().port+'/pizza.html';
     await context.route('**/*',route=>route.request().url().startsWith(url.replace('/pizza.html','/'))?route.continue():(external.push(route.request().url()),route.abort()));
+    await page.route('**/pizza.js?*',r=>r.fulfill({contentType:'text/javascript',body:source.replace('state.ready=true;','app.ticker.stop();state.ready=true;')}));
     async function loaded(){await page.goto(url);await page.waitForSelector('#loading',{state:'hidden',timeout:Number(process.env.PIZZA_LOAD_TIMEOUT)||15000});await page.evaluate(async p=>{const {app}=await import(p);app.ticker.stop();},core);}
     const menu=()=>page.evaluate(async p=>(await import(p)).menuSnapshot(),menuModule);
     const recipes=()=>page.evaluate(async p=>(await import(p)).savedRecipes(),editor);

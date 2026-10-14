@@ -1,5 +1,6 @@
-import {validRecipe,copyRecipe,recipeCost} from './pizza-recipe.js?v=20261014a';
+import {validRecipe,copyRecipe,recipeCost} from './pizza-recipe.js?v=20261014b';
 
+import {ingredientPurchaseCost} from './pizza-procurement.js?v=20261014b';
 // All prices and contributions are integer Pfennig amounts.
 export function parseMenuPrice(value){
   if(typeof value!=='string')return null;
@@ -7,8 +8,8 @@ export function parseMenuPrice(value){
   const [whole,fraction='']=text.split(/[.,]/),price=Number(whole)*100+Number(fraction.padEnd(2,'0'));
   return price>0&&price<=99999?price:null;
 }
-export function menuContribution(item){
-  const cost=recipeCost(item.recipe),amount=item.price-cost;
+export function menuContribution(item,discount=0){
+  const cost=ingredientPurchaseCost(recipeCost(item.recipe),1,discount),amount=item.price-cost;
   return {cost,amount,percent:amount/item.price*100};
 }
 export function restoreMenu(saved){

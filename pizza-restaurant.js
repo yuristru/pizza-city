@@ -1,15 +1,15 @@
-import {kitchenTileIssue,kitchenReadiness,KITCHEN_TYPES,KITCHEN_TILE_PRICE} from './pizza-kitchen.js?v=20261014a';
-import {DEFAULT_PLAN,boundaryEdges,roomCell,withKitchen,restaurantPlan} from './pizza-floorplans.js?v=20261014a';
-import {itemPrice,product,money,ROOM_PRODUCTS,roomProduct,roomPurchaseIssue,defaultFinishes} from './pizza-catalog.js?v=20261014a';
-import {app,world,state,Container,Graphics,Rectangle,clearWorld,sceneUI,sceneViewport,rememberEdit,saveLayout,updateMoney,notify,hash,activateRestaurant,captureRestaurant,sealRestaurantEdit,activePlan} from './pizza-core.js?v=20261014a';
-import {GRID,kitchenCell as isKitchenCell,passageCell as isPassageCell,project,gridCell,dimensions,occupiedCells,placementIssue as checkPlacement,copyLayout} from './pizza-layout.js?v=20261014a';
-import {furnitureSprite} from './pizza-sprites.js?v=20261014a';
-import {syncServiceGuests} from './pizza-service-ui.js?v=20261014a';
-import {servicePlacementIssue,tableKey,serviceLayoutIssue,servicePath} from './pizza-service.js?v=20261014a';
-import {reconcileMachineVisits,MACHINE_RULES} from './pizza-machines.js?v=20261014a';
-import {productionBusy,dirtyTable,reconcileProduction} from './pizza-production.js?v=20261014a';
-import {counterLayoutIssue} from './pizza-business.js?v=20261014a';
-import {emptyRestaurant,minimalEquipment,AUTO_EQUIP_PRICE} from './pizza-auto-equip.js?v=20261014a';
+import {kitchenTileIssue,kitchenReadiness,KITCHEN_TYPES,KITCHEN_TILE_PRICE} from './pizza-kitchen.js?v=20261014b';
+import {DEFAULT_PLAN,boundaryEdges,roomCell,withKitchen,restaurantPlan} from './pizza-floorplans.js?v=20261014b';
+import {itemPrice,product,money,ROOM_PRODUCTS,roomProduct,roomPurchaseIssue,defaultFinishes} from './pizza-catalog.js?v=20261014b';
+import {app,world,state,Container,Graphics,Rectangle,clearWorld,sceneUI,sceneViewport,rememberEdit,saveLayout,updateMoney,notify,hash,activateRestaurant,captureRestaurant,sealRestaurantEdit,activePlan} from './pizza-core.js?v=20261014b';
+import {GRID,kitchenCell as isKitchenCell,passageCell as isPassageCell,project,gridCell,dimensions,occupiedCells,placementIssue as checkPlacement,copyLayout} from './pizza-layout.js?v=20261014b';
+import {furnitureSprite} from './pizza-sprites.js?v=20261014b';
+import {syncServiceGuests} from './pizza-service-ui.js?v=20261014b';
+import {servicePlacementIssue,tableKey,serviceLayoutIssue,servicePath} from './pizza-service.js?v=20261014b';
+import {reconcileMachineVisits,MACHINE_RULES} from './pizza-machines.js?v=20261014b';
+import {productionBusy,dirtyTable,reconcileProduction} from './pizza-production.js?v=20261014b';
+import {counterLayoutIssue} from './pizza-business.js?v=20261014b';
+import {emptyRestaurant,minimalEquipment,AUTO_EQUIP_PRICE} from './pizza-auto-equip.js?v=20261014b';
 
 const RTW=GRID.width,RTH=GRID.height,WALL_HEIGHT=96;
 const TOOL_NAMES={table:'Tisch',fridge:'Kühlschrank',oven:'Ofen',bar:'Tresen',plant:'Pflanze',jukebox:'Musikautomat',arcade:'Spielautomat'};
