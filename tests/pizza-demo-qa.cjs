@@ -111,11 +111,12 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     assert(cityArt.types.length>=4);
     assert.equal(cityArt.landmarks.length,2);assert(cityArt.landmarks.every(item=>item.sprite));
     assert(cityArt.traffic.every(item=>item.sprite&&item.scaleX>0&&item.scaleY>0),'Directional traffic must remain upright flat sprites.');
-    assert.equal(cityArt.terraces.length,6);
+    const {COMPETITORS}=await import(pathToFileURL(path.join(root,'pizza-competitors.js')));
+    assert.equal(cityArt.terraces.length,2*(1+COMPETITORS.length),'Each player or competitor restaurant has two terrace tables.');
     const {cityLayout}=await import(pathToFileURL(path.join(root,'pizza-city-layout.js')));
     const initialLayout=cityLayout();
     assert(cityArt.terraces.every(item=>item.sprite&&!initialLayout.road(item.x,item.y)),'Terraces must stay off the carriageway.');
-    console.log('City art passed: sixteen house variants, eight building types, nine properties, two landmarks, eight props, upright 2D traffic and six terrace sprites off the roads.');
+    console.log('City art passed: sixteen house variants, eight building types, nine properties, two landmarks, eight props, upright 2D traffic and restaurant terrace sprites off the roads.');
     await page.click('#propertiesBtn');
     assert.equal(await page.locator('[data-property]').count(),3);
     await page.click('[data-property="san-marco"]');
