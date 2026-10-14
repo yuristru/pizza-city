@@ -25,6 +25,10 @@ on:
       - 'tests/pizza-machines-browser-qa.cjs'
       - 'tests/pizza-auto-equip-qa.mjs'
       - 'tests/pizza-auto-equip-browser-qa.cjs'
+      - 'tests/pizza-staff-assignment-qa.mjs'
+      - 'tests/pizza-staff-assignment-browser-qa.cjs'
+      - 'tests/pizza-night-qa.mjs'
+      - 'tests/pizza-night-browser-qa.cjs'
       - 'tests/pizza-properties-qa.mjs'
       - 'tests/pizza-city-layout-qa.mjs'
       - 'tests/pizza-city-study-qa.cjs'
@@ -76,6 +80,10 @@ jobs:
           node tests/pizza-machines-browser-qa.cjs
           node tests/pizza-auto-equip-qa.mjs
           node tests/pizza-auto-equip-browser-qa.cjs
+          node tests/pizza-staff-assignment-qa.mjs
+          node tests/pizza-staff-assignment-browser-qa.cjs
+          node tests/pizza-night-qa.mjs
+          node tests/pizza-night-browser-qa.cjs
           node tests/pizza-restaurants-browser-qa.cjs
           node tests/pizza-staff-qa.mjs
           node tests/pizza-staff-browser-qa.cjs

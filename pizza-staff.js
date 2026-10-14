@@ -1,4 +1,4 @@
-import {SHIFTS} from './pizza-shifts.js?v=20261013f';
+import {SHIFTS} from './pizza-shifts.js?v=20261014a';
 export const STAFF_ROLES={
  cook:{name:'Küche',person:'Koch / Köchin',skills:[{id:'preparation',name:'Zubereitung'},{id:'baking',name:'Backen'},{id:'organization',name:'Organisation'}]},
  waiter:{name:'Service',person:'Servicekraft',skills:[{id:'pace',name:'Tempo'},{id:'attention',name:'Aufmerksamkeit'},{id:'friendliness',name:'Freundlichkeit'}]}
@@ -30,7 +30,7 @@ export function restoreStaff(raw,profiles,defaultShift='lunch'){
   if(employees.every(Boolean)&&market.every(Boolean)&&new Set(ids).size===ids.length){
    const staff={version:1,seed:raw.seed,nextId:Math.max(raw.nextId,...ids.filter(id=>/^candidate-[0-9]+$/.test(id)).map(id=>Number(id.slice(10))+1)),employees,market:market.map(p=>({...p,restaurantId:null})),reserveCostCents:Number.isSafeInteger(raw.reserveCostCents)&&raw.reserveCostCents>=0&&raw.reserveCostCents<=1e12?raw.reserveCostCents:0,reserveDebtCents:Number.isSafeInteger(raw.reserveDebtCents)&&raw.reserveDebtCents>=0&&raw.reserveDebtCents<=1e12?raw.reserveDebtCents:0,reserveAccrued:Number.isFinite(raw.reserveAccrued)&&raw.reserveAccrued>=0&&raw.reserveAccrued<1?raw.reserveAccrued:0};
    // A damaged or obsolete assignment keeps the employee in the company reserve.
-   for(const id of Object.keys(profiles))for(const role of Object.keys(STAFF_ROLES)){const team=employees.filter(p=>p.restaurantId===id&&p.role===role);for(const p of team.slice(MAX_TEAM))p.restaurantId=null;}
+   for(const id of Object.keys(profiles))for(const shift of Object.keys(SHIFTS))for(const role of Object.keys(STAFF_ROLES)){const team=restaurantStaff(staff,id,shift).filter(p=>p.role===role);for(const p of team.slice(MAX_TEAM))p.restaurantId=null;}
    return staff;
   }
  }
@@ -40,25 +40,26 @@ export function restoreStaff(raw,profiles,defaultShift='lunch'){
  }
  return staff;
 }
-export function restaurantStaff(staff,id){return staff.employees.filter(p=>p.restaurantId===id);}
+export function restaurantStaff(staff,id,shift=null){return staff.employees.filter(p=>p.restaurantId===id&&(shift===null||(p.shift||'lunch')===shift));}
 export function monthlyPayroll(staff,id=undefined){return staff.employees.filter(p=>id===undefined||p.restaurantId===id).reduce((sum,p)=>sum+p.salaryCents,0);}
 export function syncStaffCounts(staff,profiles){for(const [id,p]of Object.entries(profiles)){const team=restaurantStaff(staff,id);for(const role of Object.keys(STAFF_ROLES))p.business[role]=team.filter(e=>e.role===role).length;p.business.staffMonthlyCents=team.reduce((sum,e)=>sum+e.salaryCents,0);}return profiles;}
 export function employeeBusy(employee,profiles){if(!employee.restaurantId)return false;const service=profiles[employee.restaurantId]?.service;return !!(service?.waiterTasks?.some(t=>t.employeeId===employee.id)||service?.groups.some(g=>g.phase==='waiting'&&g.work&&(employee.role==='cook'?g.work.stage<3&&g.work.cookId===employee.id:g.work.stage===3&&g.work.started&&g.work.waiterId===employee.id)));}
-export function assignmentIssue(staff,employee,id,profiles){
+export function assignmentIssue(staff,employee,id,profiles,shift=employee?.shift||'lunch'){
  if(!employee)return 'Diese Personalakte existiert nicht.';
  if(id!==null&&!Object.hasOwn(profiles,id))return 'Diesen Standort musst du zuerst kaufen.';
- if(employee.restaurantId===id)return null;
+ if(!SHIFTS[shift])return 'Bitte eine gültige Schicht wählen.';
+ if(employee.restaurantId===id&&(employee.shift||'lunch')===shift)return null;
  if(employeeBusy(employee,profiles))return 'Diese Person arbeitet gerade an einer Bestellung oder räumt Teller ab. Neue Gäste stoppen und den Arbeitsgang fertig werden lassen.';
- if(id!==null&&staff.employees.filter(p=>p.id!==employee.id&&p.restaurantId===id&&p.role===employee.role).length>=MAX_TEAM)return 'In diesem Restaurant sind bereits vier Personen aus diesem Fachbereich.';
+ if(id!==null&&restaurantStaff(staff,id,shift).filter(p=>p.id!==employee.id&&p.role===employee.role).length>=MAX_TEAM)return 'Für die '+(shift==='lunch'?'Mittagsschicht':'Abendschicht')+' sind in diesem Restaurant bereits vier '+(employee.role==='cook'?'Köche':'Servicekräfte')+' eingeteilt.';
  return null;
 }
-export function assignEmployee(staff,id,restaurantId,profiles){const e=staff.employees.find(p=>p.id===id),issue=assignmentIssue(staff,e,restaurantId,profiles);if(issue)return {ok:false,issue};e.restaurantId=restaurantId;syncStaffCounts(staff,profiles);return {ok:true,employee:e};}
-export function assignShift(staff,id,shift,profiles){const e=staff.employees.find(p=>p.id===id);if(!e||!SHIFTS[shift])return {ok:false,issue:'Bitte eine gültige Schicht wählen.'};if(e.shift===shift)return {ok:true,employee:e};if(employeeBusy(e,profiles))return {ok:false,issue:'Diese Person arbeitet gerade. Die Schicht kann nach dem Arbeitsgang geändert werden.'};e.shift=shift;return {ok:true,employee:e};}
+export function assignEmployee(staff,id,restaurantId,profiles,shift=undefined){const e=staff.employees.find(p=>p.id===id),targetShift=shift??e?.shift??'lunch',issue=assignmentIssue(staff,e,restaurantId,profiles,targetShift);if(issue)return {ok:false,issue};e.restaurantId=restaurantId;e.shift=targetShift;syncStaffCounts(staff,profiles);return {ok:true,employee:e};}
+export function assignShift(staff,id,shift,profiles){const e=staff.employees.find(p=>p.id===id);if(!e||!SHIFTS[shift])return {ok:false,issue:'Bitte eine gültige Schicht wählen.'};return assignEmployee(staff,id,e.restaurantId,profiles,shift);}
 export function hireEmployee(staff,id,restaurantId,profiles,shift='lunch'){
  const e=staff.market.find(p=>p.id===id);if(!e)return {ok:false,issue:'Diese Bewerbung ist nicht mehr verfügbar.'};
  if(staff.employees.length>=120)return {ok:false,issue:'Deine Personalverwaltung ist voll.'};
  if(!SHIFTS[shift])return {ok:false,issue:'Bitte eine gültige Schicht wählen.'};
- const issue=assignmentIssue(staff,{...e,restaurantId:null},restaurantId,profiles);if(issue)return {ok:false,issue};
+ const issue=assignmentIssue(staff,{...e,restaurantId:null,shift},restaurantId,profiles,shift);if(issue)return {ok:false,issue};
  staff.market=staff.market.filter(p=>p.id!==id);e.restaurantId=restaurantId;e.shift=shift;staff.employees.push(e);if(staff.market.length<12)replenish(staff,e.role,Math.floor((skillLevel(e)-1)/2));syncStaffCounts(staff,profiles);return {ok:true,employee:e};
 }
 export function dismissEmployee(staff,id,profiles){const e=staff.employees.find(p=>p.id===id);if(!e)return {ok:false,issue:'Diese Personalakte existiert nicht.'};if(employeeBusy(e,profiles))return {ok:false,issue:'Diese Person arbeitet noch an einer Bestellung.'};staff.employees=staff.employees.filter(p=>p.id!==id);e.restaurantId=null;if(staff.market.length>=24)staff.market.shift();staff.market.push(e);syncStaffCounts(staff,profiles);return {ok:true,employee:e};}
