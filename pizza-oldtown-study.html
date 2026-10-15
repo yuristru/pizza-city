@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f5f0e5">
+  <title>PizzaCity · Das Altstadtviertel</title>
+  <link rel="stylesheet" href="./pizza-oldtown-study.css?v=20261015d">
+</head>
+<body>
+  <header><a href="./pizza.html?v=20261015c" class="brand">PIZZA<span>CITY</span><small>ALTSTADTSTUDIE 02</small></a><a class="back" href="./pizza.html?v=20261015c">Zur Stadt ↗</a></header>
+  <main>
+    <section class="intro"><div><p class="eyebrow">STRASSENFRONTEN · HÖFE · PIAZZA</p><h1>Die dichte Altstadt.</h1><p>Drei geschlossene Häuserblöcke, eine schmale Gasse und ein Platz mit klaren Rändern.</p></div><span class="seal">2<span>ETAGEN</span><small>2:1 ISOMETRIE</small></span></section>
+    <section class="study" aria-label="Interaktives Altstadtviertel">
+      <div class="toolbar">
+        <div class="switch" aria-label="Bebauung vergleichen"><button data-mode="closed" aria-pressed="true">Geschlossene Blöcke</button><button data-mode="open" aria-pressed="false">Offene Anordnung</button></div>
+        <label class="court-toggle"><input type="checkbox" id="courts"> Höfe zeigen</label>
+      </div>
+      <div id="app"><p id="loading" role="status">Das Viertel wird aufgebaut …</p><div class="scene-controls"><button id="zoomIn" aria-label="Vergrößern">+</button><button id="zoomOut" aria-label="Verkleinern">−</button><button id="fit" aria-label="Ganzes Viertel anzeigen"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="6"/><path d="M12 2v6m0 8v6M2 12h6m8 0h6"/></svg></button></div><div class="scene-caption"><span id="viewName">Das ganze Viertel</span><span id="scaleValue"></span></div></div>
+      <div class="viewbar"><span>Ansicht</span><div><button data-view="all" aria-pressed="true">Viertel</button><button data-view="alley" aria-pressed="false">Gasse</button><button data-view="piazza" aria-pressed="false">Piazza</button><button data-view="block" aria-pressed="false">Häuserblock</button></div><p>Ziehen zum Bewegen · Zwei Finger zum Zoomen</p></div>
+    </section>
+    <section class="details">
+      <div class="facts"><article><strong id="coverage">…</strong><span>geschlossene Straßenfront<small>an den drei Wohnblöcken</small></span></article><article><strong>3</strong><span>Innenhöfe<small>mit schmalen Zugängen</small></span></article><article><strong>1</strong><span>Piazza<small>von Häusern eingefasst</small></span></article></div>
+      <div class="selection" id="selection" aria-live="polite"><span class="dot"></span><p><b>Ein Restaurant auswählen.</b> Die Schilder führen dich zu den Eingängen. „Höfe zeigen“ öffnet den Blick hinter die Straßenfassaden.</p></div>
+    </section>
+    <section class="notes"><article><span>01 / STRASSENKANTE</span><h2>Häuser schließen die Ecken.</h2><p>Jeder normale Block ist an allen vier Seiten bebaut. Eine einzelne schmale Öffnung führt in den Hof.</p></article><article><span>02 / FREIRAUM</span><h2>Der Hof liegt innen.</h2><p>Private Höfe bleiben klein und unterschiedlich gefasst. Öffentlicher Freiraum konzentriert sich auf die Piazza.</p></article><article><span>03 / VERGLEICH</span><h2>Dasselbe Viertel, andere Wirkung.</h2><p>Wechsle zur offenen Anordnung und vergleiche die Straßenräume mit denselben Hausgrafiken.</p></article></section>
+    <footer>Ein separates Testviertel mit den Spielgrafiken. Spielstände werden hier nicht verändert. <a href="./pizza-city-study.html">Zur ersten Anschlussstudie ↗</a></footer>
+  </main>
+  <script type="module">import('./pizza-oldtown-study.js?v=20261015d').catch(error=>{console.error(error);document.querySelector('#loading').textContent='Das Viertel konnte nicht geladen werden. Bitte die Seite neu laden.';});</script>
+</body>
+</html>
