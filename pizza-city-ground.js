@@ -1,7 +1,7 @@
 import {Sprite,Texture,CITY_N,hash} from './pizza-core.js?v=20261015b';
 
 // One texture pixel per world pixel matches the city sprites; bake once per map.
-export function cityGround({road,water,bridge,park,fountainCell,streets,links,nodes},seed){
+export function cityGround({road,water,park,fountainCell,streets,links,nodes,canal,crossings},seed){
   const min=-8,max=CITY_N+7,left=(min-max)*32-32,top=min*32-16;
   const canvas=document.createElement('canvas');
   canvas.width=(max-min)*64+64;canvas.height=(max-min)*32+32;
@@ -49,15 +49,15 @@ export function cityGround({road,water,bridge,park,fountainCell,streets,links,no
     }
   }
   function waterTile(x,y){
-    quad(x-.5,y-.5,1,1,'#397b8d');
     for(let n=0;n<24;n++){
-      const p=point(x-.45+random(x,y,n+120)*.9,y-.45+random(y,x,n+140)*.9);
+      const gx=x-.45+random(x,y,n+120)*.9,gy=y-.45+random(y,x,n+140)*.9;
+      if(!water(gx,gy))continue;
+      const p=point(gx,gy);
       pixel(p[0],p[1],n%3?'#518c99':'#256578',3+(n%4));
     }
   }
   for(let y=min;y<=max;y++)for(let x=min;x<=max;x++){
-    if(water(x,y)&&!bridge(x,y))waterTile(x,y);
-    else if(park(x,y)&&!fountainCell(x,y)&&!road(x,y,.5)){
+    if(park(x,y)&&!fountainCell(x,y)&&!road(x,y,.5)){
       quad(x-.5,y-.5,1,1,'#788851');
       for(let n=0;n<60;n++){const p=point(x-.45+random(x,y,n+170)*.9,y-.45+random(y,x,n+190)*.9);pixel(p[0],p[1],n%2?'#87995c':'#677a49');}
     }else stone(x,y);
@@ -66,6 +66,9 @@ export function cityGround({road,water,bridge,park,fountainCell,streets,links,no
     if(s.axis===0)quad(s.from,s.center-width/2,s.to-s.from,width,color);
     else quad(s.center-width/2,s.from,width,s.to-s.from,color);
   }
+  // Paint the exact canal banks instead of rounding the water to whole tiles.
+  ribbon(canal,canal.width+.24,'#a2967c');ribbon(canal,canal.width,'#397b8d');
+  for(let y=min;y<=max;y++)for(let x=min;x<=max;x++)if(water(x,y)||water(x+.5,y+.5)||water(x-.5,y-.5))waterTile(x,y);
   // Streets are continuous fractional-width ribbons, independent of tile size.
   for(const s of streets){ribbon(s,s.width+.56,'#b9ab91');ribbon(s,s.width+.08,'#e0d0ae');stats.curbs++;}
   for(const s of streets)ribbon(s,s.width,'#484d4b');
@@ -79,7 +82,7 @@ export function cityGround({road,water,bridge,park,fountainCell,streets,links,no
   }
   for(const s of streets){
     // Only the main boulevard has a center line; residential lanes stay quiet.
-    if(s.width>1)for(let t=s.from+.5;t<s.to;t+=2){
+    if(s.width>.9)for(let t=s.from+.5;t<s.to;t+=2){
       if(s.axis===0)quad(t,s.center-.025,.6,.05,'#b7baa5',.08);
       else quad(s.center-.025,t,.05,.6,'#b7baa5',.08);
     }
@@ -96,9 +99,13 @@ export function cityGround({road,water,bridge,park,fountainCell,streets,links,no
     }
     pixel(p[0]-3,p[1]-2,'#9b9c86',4);
   }
-  for(const s of streets.filter(s=>s.axis===0&&s.center>=12)){
-    quad(26.15,s.center-s.width/2-.28,2.2,s.width+.56,'#bbae94');
-    for(let n=0;n<12;n++)line(point(26.15+n*.18,s.center-s.width/2-.28),point(26.15+n*.18,s.center+s.width/2+.28),'#a39780');
+  for(const s of crossings){
+    ribbon(s,s.width+.56,'#bbae94');
+    for(let t=s.from;t<s.to;t+=.18){
+      const a=s.axis===0?[t,s.center-s.width/2-.28]:[s.center-s.width/2-.28,t];
+      const b=s.axis===0?[t,s.center+s.width/2+.28]:[s.center+s.width/2+.28,t];
+      line(point(...a),point(...b),'#a39780');
+    }
   }
   const texture=Texture.from(canvas);texture.source.scaleMode='nearest';
   const sprite=new Sprite(texture);sprite.position.set(left,top);sprite.scale.set(1);sprite.label='city-ground';sprite.pixelScale=1;sprite.groundDetails=stats;

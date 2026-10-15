@@ -4,8 +4,8 @@ import {openCommerce} from './pizza-commerce-ui.js?v=20261015b';
 import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261015b';
 import {frontageRow} from './pizza-city-frontages.js?v=20261015b';
 import {BUILDING_FOOTPRINTS,footprintAnchor,footprintCells,footprintFits} from './pizza-city-footprints.js?v=20261015b';
-import {cityGround} from './pizza-city-ground.js?v=20261015b';
-import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261015b';
+import {cityGround} from './pizza-city-ground.js?v=20261015c';
+import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261015c';
 import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261015b';
 import {openProperty} from './pizza-properties-ui.js?v=20261015b';
 import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Texture,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261015b';
@@ -25,11 +25,12 @@ const road=(x,y,pad=0)=>layout.road(x,y,pad);
 const water=(x,y)=>layout.water(x,y);
 const bridge=(x,y)=>layout.bridge(x,y);
 function park(x,y){
+  if(layout.greenAreas.some(a=>x>=a.x0&&x<=a.x1&&y>=a.y0&&y<=a.y1))return true;
   const b=layout.blocks.find(b=>x>=b.x0&&x<=b.x1&&y>=b.y0&&y<=b.y1);
   if(!b)return false;const [sx,sy]=sourceBlock(b.bx,b.by);
   return sx===2&&sy===2&&x>b.x0+2.6;
 }
-function fountainCell(x,y){return layout.blocks.some(b=>{const [sx,sy]=sourceBlock(b.bx,b.by);return sx===2&&sy===2&&Math.abs(x-(b.x1-1.5))<1&&Math.abs(y-(b.y1-1.8))<1;});}
+function fountainCell(x,y){return layout.blocks.some(b=>{const [sx,sy]=sourceBlock(b.bx,b.by);return (sx===2&&sy===2&&Math.abs(x-(b.x1-1.5))<1&&Math.abs(y-(b.y1-1.8))<1)||(['park','piazza'].includes(b.landUse)&&Math.abs(x-(b.x0+b.x1)/2)<1&&Math.abs(y-(b.y0+b.y1)/2)<1);});}
 function place(layer,object,x,y){const p=iso(x,y);object.position.set(p.x,p.y);object.zIndex=p.y;layer.addChild(object);return object;}
 
 function fallbackTree(){const g=new Graphics();g.ellipse(0,0,12,4).fill({color:0,alpha:.16});g.rect(-2,-20,4,20).fill(0x78553a);g.poly([-17,-23,-15,-41,-7,-52,8,-54,18,-43,20,-27,7,-19]).fill(0x426641);g.poly([-15,-33,-10,-47,2,-51,12,-39,1,-27]).fill(0x6a8b4d);return g;}
@@ -41,19 +42,25 @@ function patioTable(){const g=citySprite('props',7)||new Graphics().poly([-13,-1
 function fountain(){return citySprite('props',4)||new Graphics().ellipse(0,-5,36,18).fill(0xb4b096).ellipse(0,-6,30,13).fill(0x598d9e).rect(-3,-25,6,21).fill(0xcac2a8);}
 
 function bridges(objects){
-  for(const s of layout.streets.filter(s=>s.axis===0&&s.center>=12))for(const edge of [s.center-s.width/2-.27,s.center+s.width/2+.27]){
-    const wall=new Graphics(),a=iso(26.15,edge),b=iso(28.35,edge);
+  for(const s of layout.crossings)for(const edge of [s.center-s.width/2-.27,s.center+s.width/2+.27]){
+    const wall=new Graphics(),a=s.axis===0?iso(s.from,edge):iso(edge,s.from),b=s.axis===0?iso(s.to,edge):iso(edge,s.to);
     wall.poly([0,-8,b.x-a.x,b.y-a.y-8,b.x-a.x,b.y-a.y,0,0]).fill(0x8c836c).stroke({color:0xd6cbb0,width:1});
-    for(let n=0;n<=5;n++){const px=n*14.08,py=n*7.04;wall.rect(px-1,py-12,3,7).fill(0xbeb397);}
+    const posts=Math.ceil((s.to-s.from)/.45);
+    for(let n=0;n<=posts;n++){const t=n/posts;wall.rect((b.x-a.x)*t-1,(b.y-a.y)*t-12,3,7).fill(0xbeb397);}
     wall.position.set(a.x,a.y);wall.zIndex=(a.y+b.y)/2;wall.label='city-bridge';objects.addChild(wall);
   }
 }
 function waterfront(objects){
-  for(let y=12;y<34;y+=1.3){
-    if(layout.horizontal(y,.8))continue;
-    const g=new Graphics();g.poly([0,-4,-28,10,-28,15,0,1]).fill(0x807b69).stroke({color:0xcac4ab,width:1});
-    g.rect(-1,-12,3,10).fill(0x55594b);g.poly([-27,2,0,-12]).stroke({color:0x4e5549,width:1});
-    place(objects,g,26.35,y+.1);
+  const c=layout.canal;
+  for(const side of [-1,1])for(let t=c.from+.2;t<c.to-.9;t+=1.3){
+    const edge=c.center+side*(c.width/2+.09),x=c.axis===0?t:edge,y=c.axis===0?edge:t;
+    const endX=c.axis===0?t+1.05:edge,endY=c.axis===0?edge:t+1.05;
+    if(road(x,y,.65)||road(endX,endY,.65))continue;
+    const a=iso(x,y),b=iso(endX,endY),dx=b.x-a.x,dy=b.y-a.y,g=new Graphics();
+    g.poly([0,-3,dx,dy-3,dx,dy+1,0,1]).fill(0x807b69).stroke({color:0xcac4ab,width:1});
+    g.rect(-1,-12,3,10).fill(0x55594b);g.rect(dx-1,dy-12,3,10).fill(0x55594b);
+    g.moveTo(0,-11).lineTo(dx,dy-11).stroke({color:0x4e5549,width:1});
+    place(objects,g,x,y);g.label='city-quay';
   }
 }
 
@@ -118,10 +125,20 @@ function block(objects,labels,b){
   let {bx,by,x0,x1,y0,y1}=b;const w=x1-x0,h=y1-y0;
   [bx,by]=sourceBlock(bx,by);
   const put=(object,x,y)=>place(objects,object,x0+x,y0+y);
-  // The canal edge is a promenade, not another copy of a residential square.
-  if(b.bx===3){
-    for(let y=1;y<h;y+=2)put(tree(3,.75),1,y);
-    put(bench(),.7,h*.65);return;
+  // The shoreline follows the generated canal on any of the four city edges.
+  if(b.landUse==='waterfront'){
+    for(let y=.65;y<h-.2;y+=2.2)for(let x=.65;x<w-.2;x+=2.3){
+      const gx=x0+x,gy=y0+y;
+      if(road(gx,gy,.5)||water(gx,gy)||water(gx-.5,gy)||water(gx+.5,gy)||water(gx,gy-.5)||water(gx,gy+.5))continue;
+      put(tree(Math.floor(cityHash(gx,gy,17)*4),.7),x,y);
+    }
+    return;
+  }
+  if(b.landUse==='park'||b.landUse==='piazza'){
+    put(fountain(),w/2,h/2);
+    for(const [x,y]of [[.7,.8],[w-.7,.8],[.7,h-.6],[w-.7,h-.6]])put(tree(Math.floor(cityHash(x0+x,y0+y,18)*4),.8),x,y);
+    put(bench(),Math.max(.8,w/2-1.7),h/2+.9);put(bench(),Math.min(w-.8,w/2+1.7),h/2+.9);
+    put(lamp(),w-.1,h-.1);return;
   }
   if(bx===0&&by===0){
     landmark(objects,labels,x0+w*.55,y0+h-.4,0);
@@ -145,7 +162,11 @@ function block(objects,labels,b){
   const sites=PROPERTIES.filter(p=>p.bx===bx&&p.by===by);
   const required=sites.map(site=>item(site.art,site.sprite,{site}));
   function row(which,mandatory,candidates,edge){
-    const houses=frontageRow(w,mandatory,candidates,n=>cityHash(bx*11+n,by,which==='back'?81:83));
+    const open=b.density==='open',minimum=mandatory.reduce((sum,p)=>sum+p.width,0)+.36;
+    const length=Math.min(w,Math.max(minimum,w*(open?.64:1)));
+    const houses=frontageRow(length,mandatory,candidates,n=>cityHash(bx*11+n,by,which==='back'?81:83));
+    const offset=(w-length)*(cityHash(x0,y0,which==='back'?85:87)>.5?1:0);
+    for(const house of houses)house.start+=offset;
     if(which==='front'&&!mandatory.length&&houses.length>2&&cityHash(bx,by,101)>.55)houses.pop();
     // Restaurants sit within the front rather than behind the camera controls at its end.
     if(mandatory.some(h=>h.name)&&houses.length>1){
@@ -155,7 +176,7 @@ function block(objects,labels,b){
     for(const house of houses){
       const x=x0+house.start+house.width,y=which==='back'?edge+house.depth:edge;
       const object=house.warehouse?warehouseBuilding(objects,labels,x,y,house.warehouse):house.site?propertyBuilding(objects,labels,x,y,house.site):building(objects,labels,x,y,house.index,house.name,house.player,house.kind,house.rival);
-      object.frontage=which;object.blockKey=b.bx+','+b.by;
+      object.frontage=which;object.blockKey=b.id;
       object.groundBounds={x0:x-house.width,x1:x,y0:y-house.depth,y1:y};
     }
     return houses;
@@ -172,7 +193,7 @@ function block(objects,labels,b){
       const object=citySprite('courtyardBuildings',variant),anchor=footprintAnchor(template);
       place(objects,object,cx+anchor[0],cy+anchor[1]);object.label='city-courtyard-building';
       object.buildingVariant=variant;object.buildingKind='courtyardBuildings';
-      object.footprintId=template.id;object.groundOrigin={x:cx,y:cy};object.blockKey=b.bx+','+b.by;
+      object.footprintId=template.id;object.groundOrigin={x:cx,y:cy};object.blockKey=b.id;
       object.occupiedGroundCells=footprintCells(template).map(([x,y])=>[cx+x,cy+y]);
       object.groundBounds={x0:cx,x1:cx+template.width,y0:cy,y1:cy+template.depth};
       put(lamp(),.08,h-.08);return;
@@ -180,26 +201,27 @@ function block(objects,labels,b){
   }
   // Two fronts enclose a narrow, deliberately open interior instead of scattering
   // separate houses at four fixed anchors. Widths vary; each row shares an edge.
-  const back=row('back',required,pool,y0+.15);
+  const back=row('back',required,b.density==='open'?[]:pool,y0+.15);
   const rival=COMPETITORS.find(r=>r.bx===bx&&r.by===by);
   const restaurant=bx===1&&by===1?item('buildings',4,{name:'Mamma Mia',player:true}):rival?item('buildings',rival.sprite,{name:rival.name,rival}):null;
-  const frontCandidates=pool.filter(p=>p.depth<=h-Math.max(...back.map(p=>p.depth))-.7);
+  const frontCandidates=pool.filter(p=>p.depth<=h-Math.max(0,...back.map(p=>p.depth))-.7);
   const warehouseSites=WAREHOUSES.filter(site=>site.bx===bx&&site.by===by).map(warehouse=>({kind:'warehouse',index:0,width:warehouse.width,depth:warehouse.depth,warehouse}));
   const front=row('front',[...(restaurant?[restaurant]:[]),...warehouseSites],frontCandidates,y1-(restaurant?.85:.15));
-  const innerBack=y0+.15+Math.max(...back.map(p=>p.depth));
-  const innerFront=y1-(restaurant?.85:.15)-Math.max(...front.map(p=>p.depth));
+  const innerBack=y0+.15+Math.max(0,...back.map(p=>p.depth));
+  const innerFront=y1-(restaurant?.85:.15)-Math.max(0,...front.map(p=>p.depth));
   // Occasionally connect one side with a short wing, leaving the other as a
   // clear passage. A wing is added only if its full foundation fits the gap.
   const gap=innerFront-innerBack;
   const wings=pool.filter(p=>p.depth<=gap-.2&&p.width<2);
-  if(wings.length&&cityHash(bx,by,89)>.35){
+  if(b.density!=='open'&&wings.length&&cityHash(bx,by,89)>.35){
     const wing=wings[Math.min(wings.length-1,Math.floor(cityHash(bx,by,91)*wings.length))];
     const x=x0+.18+wing.width,y=innerBack+.1+wing.depth;
     const object=building(objects,labels,x,y,wing.index,null,false,wing.kind);
-    object.frontage='wing';object.blockKey=b.bx+','+b.by;
+    object.frontage='wing';object.blockKey=b.id;
     object.groundBounds={x0:x-wing.width,x1:x,y0:y-wing.depth,y1:y};
   }
-  if(wings.length&&gap>1.5&&cityHash(bx,by,103)>.6){const wing=wings[Math.floor(cityHash(bx,by,107)*wings.length)],x=x1-.18,y=innerFront-.1;const object=building(objects,labels,x,y,wing.index,null,false,wing.kind);object.frontage='wing';object.blockKey=b.bx+','+b.by;object.groundBounds={x0:x-wing.width,x1:x,y0:y-wing.depth,y1:y};}
+  if(b.density!=='open'&&wings.length&&gap>1.5&&cityHash(bx,by,103)>.6){const wing=wings[Math.floor(cityHash(bx,by,107)*wings.length)],x=x1-.18,y=innerFront-.1;const object=building(objects,labels,x,y,wing.index,null,false,wing.kind);object.frontage='wing';object.blockKey=b.id;object.groundBounds={x0:x-wing.width,x1:x,y0:y-wing.depth,y1:y};}
+  if(b.density==='open')for(const [x,y]of [[w*.25,h*.3],[w*.7,h*.25]])if(!back.some(p=>x>=p.start-.4&&x<=p.start+p.width+.4&&y<p.depth+.7))put(tree(Math.floor(cityHash(x0+x,y0+y,23)*4),.75),x,y);
   if(gap>.8){put(planter(),w*.62,(innerBack+innerFront)/2-y0);if(gap>1.3)put(bench(),w*.68,(innerBack+innerFront)/2-y0);}
   put(lamp(),.08,h-.08);
 
