@@ -2,17 +2,19 @@ import {WAREHOUSES} from './pizza-procurement.js?v=20261015b';
 import {COMPETITORS} from './pizza-competitors.js?v=20261015b';
 import {openCommerce} from './pizza-commerce-ui.js?v=20261015b';
 import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261015b';
-import {frontageRow} from './pizza-city-frontages.js?v=20261015b';
-import {BUILDING_FOOTPRINTS,footprintAnchor,footprintCells,footprintFits} from './pizza-city-footprints.js?v=20261015b';
-import {cityGround} from './pizza-city-ground.js?v=20261015c';
-import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261015c';
+import {closedCityBlock} from './pizza-city-perimeter.js?v=20261015e';
+import {cityGround} from './pizza-city-ground.js?v=20261015e';
+import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261015e';
 import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261015b';
 import {openProperty} from './pizza-properties-ui.js?v=20261015b';
 import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Texture,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261015b';
+import {BUILDING_ART} from './pizza-city-building-art.js?v=20261015b';
+import {buildingProjection} from './pizza-city-building-rules.js?v=20261015b';
 import {citySprite} from './pizza-city-art.js?v=20261015b';
 import {personSprite} from './pizza-sprites.js?v=20261015b';
 import {carSprite} from './pizza-city-traffic.js?v=20261015b';
 
+const foundation=(kind,index)=>{const art=BUILDING_ART[kind]?.[index];return art?buildingProjection(art.corners,art.worldWidth,art.storeys,art.facadePixels).groundSize:{width:1.65,depth:1.65};};
 let districts=districtOrder();
 function cityHash(x,y,s=0){return hash(x,y,(state.citySeed+s)>>>0);}
 function sourceBlock(bx,by){
@@ -26,11 +28,9 @@ const water=(x,y)=>layout.water(x,y);
 const bridge=(x,y)=>layout.bridge(x,y);
 function park(x,y){
   if(layout.greenAreas.some(a=>x>=a.x0&&x<=a.x1&&y>=a.y0&&y<=a.y1))return true;
-  const b=layout.blocks.find(b=>x>=b.x0&&x<=b.x1&&y>=b.y0&&y<=b.y1);
-  if(!b)return false;const [sx,sy]=sourceBlock(b.bx,b.by);
-  return sx===2&&sy===2&&x>b.x0+2.6;
+  return false;
 }
-function fountainCell(x,y){return layout.blocks.some(b=>{const [sx,sy]=sourceBlock(b.bx,b.by);return (sx===2&&sy===2&&Math.abs(x-(b.x1-1.5))<1&&Math.abs(y-(b.y1-1.8))<1)||(['park','piazza'].includes(b.landUse)&&Math.abs(x-(b.x0+b.x1)/2)<1&&Math.abs(y-(b.y0+b.y1)/2)<1);});}
+function fountainCell(x,y){return layout.blocks.some(b=>['park','piazza'].includes(b.landUse)&&Math.abs(x-(b.x0+b.x1)/2)<1&&Math.abs(y-(b.y0+b.y1)/2)<1);}
 function place(layer,object,x,y){const p=iso(x,y);object.position.set(p.x,p.y);object.zIndex=p.y;layer.addChild(object);return object;}
 
 function fallbackTree(){const g=new Graphics();g.ellipse(0,0,12,4).fill({color:0,alpha:.16});g.rect(-2,-20,4,20).fill(0x78553a);g.poly([-17,-23,-15,-41,-7,-52,8,-54,18,-43,20,-27,7,-19]).fill(0x426641);g.poly([-15,-33,-10,-47,2,-51,12,-39,1,-27]).fill(0x6a8b4d);return g;}
@@ -69,15 +69,23 @@ function pizzaBadge(g,x){
   g.circle(x,0,9).fill(0xcf9e52).stroke({color:0x75502f,width:1});g.circle(x,0,6.5).fill(0xaf3b2a);
   g.poly([x,0,x-5,-4,x-2,-6]).fill(0xf0cf82);g.poly([x,0,x+5,-4,x+6,1]).fill(0xf0cf82);g.poly([x,0,x-2,6,x-6,2]).fill(0xf0cf82);
 }
-function building(objects,labels,x,y,index=0,name=null,player=false,kind='buildings',rival=null){
-  let object=citySprite(kind,index)||citySprite('buildings',0);
-  if(!object){const type=index>=4?'small':index%2?'medium':'big',textures=state.cityTex[type];object=new Sprite(textures[Math.floor(cityHash(x,y)*textures.length)]);object.anchor.set(.5,1);object.scale.set(2);object.storeys=2;object.facadeHeight=48;}
+function building(objects,labels,x,y,index=0,name=null,player=false,kind='buildings',rival=null,scale=1,court=null){
+  let object=citySprite(kind,index);
+  if(!object){
+    const {width:w,depth:d}=foundation(kind,index),left=iso(0,d),right=iso(w,0),back=iso(0,0),front=iso(w,d),height=48;
+    object=new Graphics();
+    object.poly([left.x-front.x, left.y-front.y,0,0,0,-height,left.x-front.x,left.y-front.y-height]).fill(0xd5b97d);
+    object.poly([0,0,right.x-front.x,right.y-front.y,right.x-front.x,right.y-front.y-height,0,-height]).fill(0xe6d1a1);
+    object.poly([left.x-front.x,left.y-front.y-height,back.x-front.x,back.y-front.y-height,right.x-front.x,right.y-front.y-height,0,-height]).fill(0xae4933);
+    for(const t of [.3,.7]){const px=(left.x-front.x)*t,py=(left.y-front.y)*t;object.rect(px-3,py-37,6,10).fill(0x45634b);object.rect(px-3,py-18,6,10).fill(0x45634b);}
+    object.storeys=2;object.facadeHeight=height;
+  }
+  object.scale.set(object.scale.x*scale);object.facadeHeight*=scale;
   const p=iso(x,y);place(objects,object,x,y);object.label=rival?'city-competitor':player?'player-restaurant':'city-building';if(rival){object.competitorId=rival.id;object.eventMode='static';object.cursor='pointer';object.on('pointertap',()=>{if(!state.cityGesture?.moved)openCommerce(rival.id);});}object.buildingVariant=index;object.buildingKind=kind;
   if(player){object.eventMode='static';object.cursor='pointer';object.on('pointertap',openRestaurant);}
   if(name){
-    const tablePositions=[[-.55,.4],[.65,.2]];
-    for(const [dx,dy]of tablePositions)place(objects,patioTable(),x+dx,y+dy);
-    place(objects,planter(),x-1.6,y+.15);place(objects,planter(),x+1.25,y-.7);
+    const tablePositions=court?[[court.x0+(court.x1-court.x0)*.3,court.y1-.15],[court.x0+(court.x1-court.x0)*.7,court.y1-.15]]:[[x-.55,y+.4],[x+.65,y+.2]];
+    for(const [tx,ty]of tablePositions)place(objects,patioTable(),tx,ty);
     const tag=new Container(),text=label(name,rival?10:12,rival?'#fff1ce':'#3a2b1f'),width=Math.ceil(text.width)+36;tag.position.set(p.x,p.y-object.height-(rival?27:11));tag.zIndex=p.y;
     const bg=new Graphics();bg.roundRect(-width/2,-13,width,rival?36:26,4).fill(rival?0x854439:0xf0dfbf).stroke({color:0x745238,width:2});
     bg.poly([-width/2+4,-10,width/2-4,-10]).stroke({color:0xfff1d4,width:1});pizzaBadge(bg,-width/2+13);
@@ -92,9 +100,9 @@ function landmark(objects,labels,x,y,index){
   const object=citySprite('landmarks',index)||building(objects,labels,x,y,7);
   place(objects,object,x,y);object.label=index?'city-cathedral':'city-colosseum';
 }
-function propertyBuilding(objects,labels,x,y,site){
+function propertyBuilding(objects,labels,x,y,site,scale=1){
   const owned=state.ownedProperties.includes(site.id),size=PROPERTY_SIZES[site.size];
-  building(objects,labels,x,y,site.sprite,null,false,site.art);
+  building(objects,labels,x,y,site.sprite,null,false,site.art,null,scale);
   const object=objects.children.at(-1);object.label='city-property';object.propertyId=site.id;
   object.eventMode='static';object.cursor='pointer';object.on('pointertap',()=>{if(!state.cityGesture?.moved)state.ownedProperties.includes(site.id)?openRestaurant(site.id):openProperty(site.id);});
   const marker=new Container(),p=iso(x,y),bg=new Graphics(),text=label('',9,'#fff1ce');
@@ -105,8 +113,8 @@ function propertyBuilding(objects,labels,x,y,site){
   marker.on('pointertap',()=>{if(!state.cityGesture?.moved)state.ownedProperties.includes(site.id)?openRestaurant(site.id):openProperty(site.id);});labels.addChild(marker);if(owned)state.cityRestaurantSigns[site.id]=marker;return object;
 }
 let warehouseTexture=null;
-function warehouseBuilding(objects,labels,x,y,site){
-  const texture=warehouseTexture||(warehouseTexture=Texture.from(warehouseCanvas()));texture.source.scaleMode='nearest';const object=new Sprite(texture);object.anchor.set(76/124,94/98);place(objects,object,x,y);object.label='city-warehouse';object.storeys=1;object.facadeHeight=32;object.warehouseId=site.id;object.eventMode='static';object.cursor='pointer';object.on('pointertap',()=>{if(!state.cityGesture?.moved)openCommerce(site.id);});
+function warehouseBuilding(objects,labels,x,y,site,scale=1){
+  const texture=warehouseTexture||(warehouseTexture=Texture.from(warehouseCanvas()));texture.source.scaleMode='nearest';const object=new Sprite(texture);object.anchor.set(76/124,94/98);object.scale.set(scale);place(objects,object,x,y);object.label='city-warehouse';object.storeys=1;object.facadeHeight=32*scale;object.warehouseId=site.id;object.eventMode='static';object.cursor='pointer';object.on('pointertap',()=>{if(!state.cityGesture?.moved)openCommerce(site.id);});
   const p=iso(x,y),tag=new Container(),bg=new Graphics(),text=label('',9,'#fff1ce');tag.label='city-warehouse-marker';tag.warehouseId=site.id;tag.position.set(p.x,p.y-object.height-14);tag.zIndex=p.y+30;text.anchor.set(.5);tag.addChild(bg,text);tag.eventMode='static';tag.cursor='pointer';tag.hitArea=new Rectangle(-54,-12,108,28);tag.on('pointertap',()=>{if(!state.cityGesture?.moved)openCommerce(site.id);});labels.addChild(tag);return object;
 }
 function refreshPropertyMarkers(){
@@ -148,81 +156,22 @@ function block(objects,labels,b){
     landmark(objects,labels,x0+w*.48,y0+h-.5,1);
     put(tree(2,.85),.3,1);put(tree(2,.8),w-.2,h-.4);return;
   }
-  if(bx===2&&by===2){
-    put(fountain(),w-1.5,h-1.8);
-    const rival=COMPETITORS.find(r=>r.bx===bx&&r.by===by);building(objects,labels,x0+2.4,y0+h-1.15,rival.sprite,rival.name,false,'buildings',rival);
-    [[.25,.8],[w*.55,.5],[w-.35,1.5],[w-.4,h-.5]].forEach(([x,y],i)=>put(tree(i%4,.8),x,y));
-    put(bench(),w-1.4,h-.35);put(bench(),w-.3,h-2.5);return;
-  }
-  const size=(kind,index)=>state.cityArt[kind]?.[index]?.groundSize||{width:1.65,depth:1.65};
+  const size=(kind,index)=>state.cityArt[kind]?.[index]?.groundSize||foundation(kind,index);
   const item=(kind,index,extra={})=>({kind,index,...size(kind,index),...extra});
   const pool=[];
   for(let index=0;index<(state.cityArt.buildings?.length||32);index++)pool.push(item('buildings',index));
-  for(const index of [0,1,3,4,5,6,7])pool.push(item('buildingTypes',index));
-  const sites=PROPERTIES.filter(p=>p.bx===bx&&p.by===by);
-  const required=sites.map(site=>item(site.art,site.sprite,{site}));
-  function row(which,mandatory,candidates,edge){
-    const open=b.density==='open',minimum=mandatory.reduce((sum,p)=>sum+p.width,0)+.36;
-    const length=Math.min(w,Math.max(minimum,w*(open?.64:1)));
-    const houses=frontageRow(length,mandatory,candidates,n=>cityHash(bx*11+n,by,which==='back'?81:83));
-    const offset=(w-length)*(cityHash(x0,y0,which==='back'?85:87)>.5?1:0);
-    for(const house of houses)house.start+=offset;
-    if(which==='front'&&!mandatory.length&&houses.length>2&&cityHash(bx,by,101)>.55)houses.pop();
-    // Restaurants sit within the front rather than behind the camera controls at its end.
-    if(mandatory.some(h=>h.name)&&houses.length>1){
-      const start=houses[0].start,restaurant=houses.shift();houses.splice(Math.floor(houses.length/2),0,restaurant);
-      let cursor=start;for(const house of houses){house.start=cursor;cursor+=house.width;}
-    }
-    for(const house of houses){
-      const x=x0+house.start+house.width,y=which==='back'?edge+house.depth:edge;
-      const object=house.warehouse?warehouseBuilding(objects,labels,x,y,house.warehouse):house.site?propertyBuilding(objects,labels,x,y,house.site):building(objects,labels,x,y,house.index,house.name,house.player,house.kind,house.rival);
-      object.frontage=which;object.blockKey=b.id;
-      object.groundBounds={x0:x-house.width,x1:x,y0:y-house.depth,y1:y};
-    }
-    return houses;
-  }
-  const courtIndex=bx===0&&by===2?1:((bx===0&&by===1)||(bx===1&&by===2))?0:-1;
-  if(courtIndex>=0&&state.cityArt.courtyardBuildings){
-    const template=BUILDING_FOOTPRINTS.find(t=>t.id===(courtIndex?'courtyard-u':'corner-l'));
-    const cx=x0+(w-template.width)/2,cy=y1-template.depth-.2;
-    const shallow=pool.filter(p=>p.depth<=1.85);
-    const allowed=(x,y)=>x>=x0&&x<=x1&&y>=y0+2&&y<=y1&&!road(x,y)&&!water(x,y);
-    if(footprintFits(template,cx,cy,allowed)){
-      row('back',required,shallow,y0+.15);
-      const variant=courtIndex+(state.cityArt.courtyardBuildings[courtIndex+2]&&cityHash(bx,by,191)>.5?2:0);
-      const object=citySprite('courtyardBuildings',variant),anchor=footprintAnchor(template);
-      place(objects,object,cx+anchor[0],cy+anchor[1]);object.label='city-courtyard-building';
-      object.buildingVariant=variant;object.buildingKind='courtyardBuildings';
-      object.footprintId=template.id;object.groundOrigin={x:cx,y:cy};object.blockKey=b.id;
-      object.occupiedGroundCells=footprintCells(template).map(([x,y])=>[cx+x,cy+y]);
-      object.groundBounds={x0:cx,x1:cx+template.width,y0:cy,y1:cy+template.depth};
-      put(lamp(),.08,h-.08);return;
-    }
-  }
-  // Two fronts enclose a narrow, deliberately open interior instead of scattering
-  // separate houses at four fixed anchors. Widths vary; each row shares an edge.
-  const back=row('back',required,b.density==='open'?[]:pool,y0+.15);
+  for(const index of [0,1,2,3,4,5,6,7])pool.push(item('buildingTypes',index));
   const rival=COMPETITORS.find(r=>r.bx===bx&&r.by===by);
   const restaurant=bx===1&&by===1?item('buildings',4,{name:'Mamma Mia',player:true}):rival?item('buildings',rival.sprite,{name:rival.name,rival}):null;
-  const frontCandidates=pool.filter(p=>p.depth<=h-Math.max(0,...back.map(p=>p.depth))-.7);
-  const warehouseSites=WAREHOUSES.filter(site=>site.bx===bx&&site.by===by).map(warehouse=>({kind:'warehouse',index:0,width:warehouse.width,depth:warehouse.depth,warehouse}));
-  const front=row('front',[...(restaurant?[restaurant]:[]),...warehouseSites],frontCandidates,y1-(restaurant?.85:.15));
-  const innerBack=y0+.15+Math.max(0,...back.map(p=>p.depth));
-  const innerFront=y1-(restaurant?.85:.15)-Math.max(0,...front.map(p=>p.depth));
-  // Occasionally connect one side with a short wing, leaving the other as a
-  // clear passage. A wing is added only if its full foundation fits the gap.
-  const gap=innerFront-innerBack;
-  const wings=pool.filter(p=>p.depth<=gap-.2&&p.width<2);
-  if(b.density!=='open'&&wings.length&&cityHash(bx,by,89)>.35){
-    const wing=wings[Math.min(wings.length-1,Math.floor(cityHash(bx,by,91)*wings.length))];
-    const x=x0+.18+wing.width,y=innerBack+.1+wing.depth;
-    const object=building(objects,labels,x,y,wing.index,null,false,wing.kind);
-    object.frontage='wing';object.blockKey=b.id;
-    object.groundBounds={x0:x-wing.width,x1:x,y0:y-wing.depth,y1:y};
+  const required=[...(restaurant?[restaurant]:[]),...WAREHOUSES.filter(p=>p.bx===bx&&p.by===by).map(warehouse=>({kind:'warehouse',index:0,width:warehouse.width,depth:warehouse.depth,warehouse})),...PROPERTIES.filter(p=>p.bx===bx&&p.by===by).map(site=>item(site.art,site.sprite,{site}))];
+  const plan=closedCityBlock(pool,{...b,seed:(state.citySeed+Math.floor((x0+20)*971+(y0+20)*7919))>>>0,required});
+  state.cityBlockPlans.push(plan);
+  for(const p of plan.parts){
+    const x=p.x1,y=p.y1;
+    const object=p.warehouse?warehouseBuilding(objects,labels,x,y,p.warehouse,p.scale):p.site?propertyBuilding(objects,labels,x,y,p.site,p.scale):building(objects,labels,x,y,p.index,p.name,p.player,p.kind,p.rival,p.scale,plan.court);
+    object.frontage=p.edge;object.blockKey=b.id;object.groundBounds={x0:p.x0,x1:p.x1,y0:p.y0,y1:p.y1};
   }
-  if(b.density!=='open'&&wings.length&&gap>1.5&&cityHash(bx,by,103)>.6){const wing=wings[Math.floor(cityHash(bx,by,107)*wings.length)],x=x1-.18,y=innerFront-.1;const object=building(objects,labels,x,y,wing.index,null,false,wing.kind);object.frontage='wing';object.blockKey=b.id;object.groundBounds={x0:x-wing.width,x1:x,y0:y-wing.depth,y1:y};}
-  if(b.density==='open')for(const [x,y]of [[w*.25,h*.3],[w*.7,h*.25]])if(!back.some(p=>x>=p.start-.4&&x<=p.start+p.width+.4&&y<p.depth+.7))put(tree(Math.floor(cityHash(x0+x,y0+y,23)*4),.75),x,y);
-  if(gap>.8){put(planter(),w*.62,(innerBack+innerFront)/2-y0);if(gap>1.3)put(bench(),w*.68,(innerBack+innerFront)/2-y0);}
+  const c=plan.court;put(planter(),(c.x0+c.x1)/2-x0,(c.y0+c.y1)/2-y0);
   put(lamp(),.08,h-.08);
 
 }
@@ -291,6 +240,7 @@ export function showCity(){
   const ground=cityGround({...layout,park,fountainCell},state.citySeed),markings=new Container(),objects=new Container(),labels=new Container();
   ground.label='city-ground';objects.label='city-objects';objects.sortableChildren=true;labels.sortableChildren=true;
   state.camera.addChild(ground,markings,objects,labels);
+  state.cityBlockPlans=[];
   bridges(objects);waterfront(objects);
   for(const b of layout.blocks)block(objects,labels,b);
   for(let i=0;i<40;i++){

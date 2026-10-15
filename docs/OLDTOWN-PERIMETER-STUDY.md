@@ -36,4 +36,14 @@ Die Restaurantbilder haben jeweils einen Punkt am straßenseitigen Eingang und e
 
 `node tests/pizza-oldtown-study-browser-qa.cjs` prüft die echten Texturen, die Zwei-Geschoss-Grenze, die Vergleichsanordnung, Hof- und Platzansichten, Schilder, Zoom und Verschieben, einen echten Zwei-Finger-Zoom im Browser, 320/393 Pixel breite Mobilansichten und Querformat sowie unveränderte gespeicherte Partien. Die visuelle Kontrolle gilt den gemalten Dachüberständen und Fassaden zusätzlich zur Grundrissprüfung.
 
-Vor einer Übernahme in den Stadtgenerator sind insbesondere weitere Eckkombinationen, passende Brandwände bei Höhenwechseln und die Sichtbarkeit wichtiger Standorte in größeren, unterschiedlich geformten Blöcken zu beurteilen. Das Grundrissmodell kann dafür weiterverwendet werden.
+## Übernahme in die Spielstadt
+
+Die geschlossenen Blöcke sind jetzt die reguläre Wohnbebauung. `closedCityBlock` übernimmt die variablen Parzellen des Stadtgenerators und belegt ihre vier Seiten vollständig, mit genau einem 0,36 Einheiten breiten Zugang im Westen. Damit bleiben auch bei kleinen Randparzellen mindestens 90 % jeder Straßenkante bebaut. Plätze, Parks, Wasserflächen und die beiden Wahrzeichen bleiben bewusste Ausnahmen.
+
+Pflichtstandorte werden vor den Füllhäusern auf die vier Ecken verteilt: neun Kaufobjekte, zwei eingeschossige Lager, das Spielerrestaurant und drei Konkurrenten. Ein deterministischer Suchlauf passt die Eckkombinationen und die gleichmäßige Verkleinerung der Häuser an die gemessenen Grundflächen an. Er berücksichtigt die maximale Breite der Seitenflügel und hält Innenhöfe sowie Zugänge frei. Restauranttische stehen im eigenen Hof. Wichtige Schilder werden nach der Skalierung über dem jeweiligen Dach platziert.
+
+Die Zwei-Geschoss-Grenze und die echte 2:1-Projektion bleiben erhalten. Bei ausgefallenen Atlanten bleiben die kalibrierten Grundflächen verfügbar; einfache prozedurale Ersatzhäuser verwenden dieselben Maße. Der Spielstand und die Identitäten der Standorte ändern sich nicht.
+
+Die Modellprüfung wurde um 128 vollständige Stadtgrundrisse erweitert. Die Browserprüfung prüft 32 Städte mit allen vier Kanallagen auf geschlossene Straßenfronten, überschneidungsfreie Häuser, freie Höfe und Durchgänge sowie vollständige Standortlisten. Die bestehenden Tests für Kauf, Lager, Konkurrenz, Restaurantwechsel, Kamera, Mobilansicht und fehlende Atlanten bleiben aktiv.
+
+Die gemalten Dachüberstände und Fassaden bleiben Bestandsgrafiken. Speziell aufeinander abgestimmte Brandwände bei Höhenwechseln sind eine mögliche spätere grafische Verfeinerung.

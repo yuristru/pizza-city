@@ -39,7 +39,8 @@ export function cityLayout(seed=DEFAULT_CITY_SEED){
   const ys=partition(top,bottom,3,7.5),order=districtOrder(seed);
   const add=(id,bx,by,x0,x1,y0,y1,core=false)=>{
     const source=core?order[by*3+bx]:null;
-    parcels.push({id,bx,by,x0,x1,y0,y1,core,source,density:random()<.3?'open':'dense',landUse:'housing'});
+    random(); // Keep the existing seed's parcel and street sequence stable.
+    parcels.push({id,bx,by,x0,x1,y0,y1,core,source,density:'dense',landUse:'housing'});
   };
   for(let row=0;row<3;row++){
     const xs=partition(left,right,3,7);
@@ -126,8 +127,7 @@ export function cityLayout(seed=DEFAULT_CITY_SEED){
   const crossings=streets.filter(s=>s.axis!==canal.axis&&s.center>=canal.from&&s.center<=canal.to&&s.from<=canal.center-canal.width/2&&s.to>=canal.center+canal.width/2)
     .map(s=>({...s,from:canal.center-canal.width/2-.28,to:canal.center+canal.width/2+.28}));
   const bridge=(x,y)=>water(x,y)&&crossings.some(s=>contains(s,x,y,.28));
-  const greenAreas=blocks.flatMap(b=>b.landUse==='park'||b.landUse==='waterfront'?[{x0:b.x0,x1:b.x1,y0:b.y0,y1:b.y1}]:
-    b.landUse==='housing'&&b.density==='open'&&!b.core?[{x0:b.x0+.2,x1:b.x1-.2,y0:b.y0+.2,y1:b.y0+(b.y1-b.y0)*.55}]:[]);
+  const greenAreas=blocks.filter(b=>b.landUse==='park'||b.landUse==='waterfront').map(b=>({x0:b.x0,x1:b.x1,y0:b.y0,y1:b.y1}));
   return {streets,blocks,nodes,links,road,horizontal,water,bridge,canal,crossings,greenAreas};
 }
 

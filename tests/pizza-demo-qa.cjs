@@ -127,10 +127,14 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     async function checkCourtyards(){
       const courts=await page.evaluate(async modulePath=>{
         const {state}=await import(modulePath),layout=state.cityLayout;
-        return state.camera.children.find(c=>c.label==='city-objects').children.filter(c=>c.label==='city-courtyard-building').map(c=>({id:c.footprintId,cells:c.occupiedGroundCells.length,clear:c.occupiedGroundCells.every(([x,y])=>[[.01,.01],[.99,.01],[.01,.99],[.99,.99]].every(([dx,dy])=>!layout.road(x+dx,y+dy)&&!layout.water(x+dx,y+dy)))}));
+        return state.cityBlockPlans.map(b=>({coverage:b.coverage,clear:b.parts.every(p=>{
+          const overlap=q=>Math.min(p.x1,q.x1)-Math.max(p.x0,q.x0)>1e-7&&Math.min(p.y1,q.y1)-Math.max(p.y0,q.y0)>1e-7;
+          return !overlap(b.court)&&!overlap(b.gate)&&[[p.x0,p.y0],[p.x1,p.y1]].every(([x,y])=>!layout.road(x,y)&&!layout.water(x,y));
+        })}));
       },corePath);
-      assert.deepEqual(courts.map(c=>c.id).sort(),['corner-l','corner-l','courtyard-u']);
-      assert(courts.every(c=>c.clear&&c.cells===(c.id==='corner-l'?6:10)),'Courtyard footprints must keep streets and water clear.');
+      const expected=await page.evaluate(async p=>{const {state}=await import(p);return state.cityLayout.blocks.filter(b=>b.landUse==='housing'&&b.source!==0&&b.source!==1).length;},corePath);
+      assert.equal(courts.length,expected);
+      assert(courts.every(c=>c.clear&&Object.values(c.coverage).every(v=>v.ratio>=.9)),'Closed blocks keep courtyards, entrances and streets clear.');
     }
     await checkCourtyards();
     const citySignature=()=>page.evaluate(async modulePath=>{const {state}=await import(modulePath);return {seed:state.citySeed,owned:state.ownedProperties,signature:state.camera.children.find(c=>c.label==='city-objects').children.filter(c=>['city-building','city-courtyard-building','city-property','player-restaurant','city-colosseum','city-cathedral'].includes(c.label)).map(c=>[c.label,c.propertyId,c.buildingKind,c.buildingVariant,c.x,c.y])};},corePath);
