@@ -1,17 +1,17 @@
-import {WAREHOUSES} from './pizza-procurement.js?v=20261015a';
-import {COMPETITORS} from './pizza-competitors.js?v=20261015a';
-import {openCommerce} from './pizza-commerce-ui.js?v=20261015a';
-import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261015a';
-import {frontageRow} from './pizza-city-frontages.js?v=20261015a';
-import {BUILDING_FOOTPRINTS,footprintAnchor,footprintCells,footprintFits} from './pizza-city-footprints.js?v=20261015a';
-import {cityGround} from './pizza-city-ground.js?v=20261015a';
-import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261015a';
-import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261015a';
-import {openProperty} from './pizza-properties-ui.js?v=20261015a';
-import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Texture,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261015a';
-import {citySprite} from './pizza-city-art.js?v=20261015a';
-import {personSprite} from './pizza-sprites.js?v=20261015a';
-import {carSprite} from './pizza-city-traffic.js?v=20261015a';
+import {WAREHOUSES} from './pizza-procurement.js?v=20261015b';
+import {COMPETITORS} from './pizza-competitors.js?v=20261015b';
+import {openCommerce} from './pizza-commerce-ui.js?v=20261015b';
+import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261015b';
+import {frontageRow} from './pizza-city-frontages.js?v=20261015b';
+import {BUILDING_FOOTPRINTS,footprintAnchor,footprintCells,footprintFits} from './pizza-city-footprints.js?v=20261015b';
+import {cityGround} from './pizza-city-ground.js?v=20261015b';
+import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261015b';
+import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261015b';
+import {openProperty} from './pizza-properties-ui.js?v=20261015b';
+import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Texture,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261015b';
+import {citySprite} from './pizza-city-art.js?v=20261015b';
+import {personSprite} from './pizza-sprites.js?v=20261015b';
+import {carSprite} from './pizza-city-traffic.js?v=20261015b';
 
 let districts=districtOrder();
 function cityHash(x,y,s=0){return hash(x,y,(state.citySeed+s)>>>0);}
@@ -140,7 +140,7 @@ function block(objects,labels,b){
   const size=(kind,index)=>state.cityArt[kind]?.[index]?.groundSize||{width:1.65,depth:1.65};
   const item=(kind,index,extra={})=>({kind,index,...size(kind,index),...extra});
   const pool=[];
-  for(let index=8;index<16;index++)pool.push(item('buildings',index));
+  for(let index=0;index<(state.cityArt.buildings?.length||32);index++)pool.push(item('buildings',index));
   for(const index of [0,1,3,4,5,6,7])pool.push(item('buildingTypes',index));
   const sites=PROPERTIES.filter(p=>p.bx===bx&&p.by===by);
   const required=sites.map(site=>item(site.art,site.sprite,{site}));
@@ -168,8 +168,10 @@ function block(objects,labels,b){
     const allowed=(x,y)=>x>=x0&&x<=x1&&y>=y0+2&&y<=y1&&!road(x,y)&&!water(x,y);
     if(footprintFits(template,cx,cy,allowed)){
       row('back',required,shallow,y0+.15);
-      const object=citySprite('courtyardBuildings',courtIndex),anchor=footprintAnchor(template);
+      const variant=courtIndex+(state.cityArt.courtyardBuildings[courtIndex+2]&&cityHash(bx,by,191)>.5?2:0);
+      const object=citySprite('courtyardBuildings',variant),anchor=footprintAnchor(template);
       place(objects,object,cx+anchor[0],cy+anchor[1]);object.label='city-courtyard-building';
+      object.buildingVariant=variant;object.buildingKind='courtyardBuildings';
       object.footprintId=template.id;object.groundOrigin={x:cx,y:cy};object.blockKey=b.bx+','+b.by;
       object.occupiedGroundCells=footprintCells(template).map(([x,y])=>[cx+x,cy+y]);
       object.groundBounds={x0:cx,x1:cx+template.width,y0:cy,y1:cy+template.depth};

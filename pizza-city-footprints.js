@@ -3,11 +3,11 @@
 const rectangle=(w,d)=>[[0,0],[w,0],[w,d],[0,d]];
 export const BUILDING_FOOTPRINTS=[
   {id:'compact',name:'Kleines Stadthaus',width:2,depth:2,floors:2,outline:rectangle(2,2),holes:[],style:'Ockerputz, Terrakottadach, grüne Fensterläden'},
-  {id:'townhouse',name:'Schmales Reihenhaus',width:2,depth:3,floors:3,outline:rectangle(2,3),holes:[],style:'Schmale Putzfassade, Balkone, Laden im Erdgeschoss'},
-  {id:'streetfront',name:'Zusammenhängende Straßenfront',width:4,depth:2,floors:3,outline:rectangle(4,2),holes:[],style:'Mehrere Fassadenachsen, Arkaden, gemeinsame Dachlinie'},
-  {id:'corner-l',name:'L-förmiges Eckhaus',width:4,depth:3,floors:3,outline:[[0,0],[4,0],[4,1],[1,1],[1,3],[0,3]],holes:[],style:'Palazzo mit Seitenflügel und kleiner Hofterrasse'},
-  {id:'courtyard-u',name:'U-förmiger Palazzo',width:4,depth:4,floors:3,outline:[[0,0],[4,0],[4,4],[3,4],[3,1],[1,1],[1,4],[0,4]],holes:[],style:'Offener Innenhof mit Loggia, Brunnen und Terrakottadächern'},
-  {id:'courtyard-ring',name:'Geschlossener Innenhof',width:4,depth:4,floors:3,outline:rectangle(4,4),holes:[[[1,1],[3,1],[3,3],[1,3]]],style:'Italienischer Wohnblock mit Durchgang und begrüntem Innenhof'}
+  {id:'townhouse',name:'Schmales Reihenhaus',width:2,depth:3,floors:2,outline:rectangle(2,3),holes:[],style:'Schmale Putzfassade, Balkone, Laden im Erdgeschoss'},
+  {id:'streetfront',name:'Zusammenhängende Straßenfront',width:4,depth:2,floors:2,outline:rectangle(4,2),holes:[],style:'Mehrere Fassadenachsen, Arkaden, gemeinsame Dachlinie'},
+  {id:'corner-l',name:'L-förmiges Eckhaus',width:4,depth:3,floors:2,outline:[[0,0],[4,0],[4,1],[1,1],[1,3],[0,3]],holes:[],style:'Palazzo mit Seitenflügel und kleiner Hofterrasse'},
+  {id:'courtyard-u',name:'U-förmiger Palazzo',width:4,depth:4,floors:2,outline:[[0,0],[4,0],[4,4],[3,4],[3,1],[1,1],[1,4],[0,4]],holes:[],style:'Offener Innenhof mit Loggia, Brunnen und Terrakottadächern'},
+  {id:'courtyard-ring',name:'Geschlossener Innenhof',width:4,depth:4,floors:2,outline:rectangle(4,4),holes:[[[1,1],[3,1],[3,3],[1,3]]],style:'Italienischer Wohnblock mit Durchgang und begrüntem Innenhof'}
 ];
 
 function inside([x,y],polygon){

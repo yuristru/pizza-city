@@ -1,9 +1,9 @@
-import {restaurantPlan} from './pizza-floorplans.js?v=20261015a';
-import {state,saveLayout,updateMoney,notify,ensureRestaurants} from './pizza-core.js?v=20261015a';
-import {money} from './pizza-catalog.js?v=20261015a';
-import {PROPERTIES,PROPERTY_SIZES,property,buyProperty,propertyPurchaseIssue} from './pizza-properties.js?v=20261015a';
-import {WAREHOUSES} from './pizza-procurement.js?v=20261015a';
-import {openCommerce} from './pizza-commerce-ui.js?v=20261015a';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261015b';
+import {state,saveLayout,updateMoney,notify,ensureRestaurants} from './pizza-core.js?v=20261015b';
+import {money} from './pizza-catalog.js?v=20261015b';
+import {PROPERTIES,PROPERTY_SIZES,property,buyProperty,propertyPurchaseIssue} from './pizza-properties.js?v=20261015b';
+import {WAREHOUSES} from './pizza-procurement.js?v=20261015b';
+import {openCommerce} from './pizza-commerce-ui.js?v=20261015b';
 const el=id=>document.getElementById(id);
 let selected=null,filter='small';
 function render(){

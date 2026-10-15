@@ -28,12 +28,14 @@ const server=http.createServer((req,res)=>{
     await page.goto(`http://127.0.0.1:${server.address().port}/pizza.html`);
     await page.waitForSelector('#loading',{state:'hidden'});
     const cityPath=fs.readFileSync(path.join(root,'pizza.js'),'utf8').match(/from ['"](.\/pizza-city\.js[^'"]*)['"]/)[1].replace('./','/');
+    const courtyardStyles=new Set();
     for(const seed of [94117,0,1,42,81,1024,0xffffffff,993377]){
       const data=await page.evaluate(async({corePath,cityPath,seed})=>{
         const {state}=await import(corePath),{showCity}=await import(cityPath);state.citySeed=seed;state.scene=null;showCity();state.speed=0;
         const objects=state.camera.children.find(c=>c.label==='city-objects');
-        return {houses:objects.children.filter(c=>c.groundBounds).map(c=>({label:c.label,row:c.frontage,key:c.blockKey,b:c.groundBounds,cells:c.occupiedGroundCells})),properties:objects.children.filter(c=>c.propertyId).map(c=>c.propertyId),clear:objects.children.filter(c=>c.groundBounds).every(c=>{const b=c.groundBounds;return [[b.x0,b.y0],[b.x1,b.y0],[b.x1,b.y1],[b.x0,b.y1]].every(([x,y])=>!state.cityLayout.road(x,y)&&!state.cityLayout.water(x,y));})};
+        return {courts:objects.children.filter(c=>c.label==='city-courtyard-building').map(c=>c.buildingVariant),houses:objects.children.filter(c=>c.groundBounds).map(c=>({label:c.label,row:c.frontage,key:c.blockKey,b:c.groundBounds,cells:c.occupiedGroundCells})),properties:objects.children.filter(c=>c.propertyId).map(c=>c.propertyId),clear:objects.children.filter(c=>c.groundBounds).every(c=>{const b=c.groundBounds;return [[b.x0,b.y0],[b.x1,b.y0],[b.x1,b.y1],[b.x0,b.y1]].every(([x,y])=>!state.cityLayout.road(x,y)&&!state.cityLayout.water(x,y));})};
       },{corePath,cityPath,seed});
+      data.courts.forEach(v=>courtyardStyles.add(v));
       assert(data.clear,'Foundation stays out of street/water: '+seed);assert.equal(new Set(data.properties).size,9);
       assert.equal(data.houses.filter(c=>c.label==='city-courtyard-building').length,3);
       let seams=0;
@@ -52,6 +54,7 @@ const server=http.createServer((req,res)=>{
         await page.screenshot({path:path.join(out,'city-mix-overview.png')});
       }
     }
+    assert.deepEqual([...courtyardStyles].sort(),[0,1,2,3],'All four palazzo variants must appear across the sampled seeds.');
     assert.deepEqual(errors,[]);console.log('Mixed city passed: shared foundations, parcel containment, no overlaps, three courtyard groups and nine properties across eight seeds.');
   }finally{await browser.close();server.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;server.close();});

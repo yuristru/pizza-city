@@ -1,8 +1,8 @@
-import {state,saveLayout,updateMoney,notify} from './pizza-core.js?v=20261015a';
-import {warehouse,buyWarehouse,warehousePurchaseIssue,purchasingDiscount} from './pizza-procurement.js?v=20261015a';
-import {competitor} from './pizza-competitors.js?v=20261015a';
-import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261015a';
-import {money} from './pizza-catalog.js?v=20261015a';
+import {state,saveLayout,updateMoney,notify} from './pizza-core.js?v=20261015b';
+import {warehouse,buyWarehouse,warehousePurchaseIssue,purchasingDiscount} from './pizza-procurement.js?v=20261015b';
+import {competitor} from './pizza-competitors.js?v=20261015b';
+import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261015b';
+import {money} from './pizza-catalog.js?v=20261015b';
 const el=id=>document.getElementById(id);let selection=null;
 function render(){
  const w=warehouse(selection),r=competitor(selection),dialog=el('commerceDialog');if(!w&&!r)return;

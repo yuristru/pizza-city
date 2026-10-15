@@ -1,9 +1,8 @@
-import {app,world,state,Container,Graphics,iso,label} from './pizza-core.js?v=20261015a';
-import {ATLASES,loadCityArt,citySprite} from './pizza-city-art.js?v=20261015a';
-import {groundProjection} from './pizza-isometric-art.js?v=20261015a';
-import {BUILDING_FOOTPRINTS,footprintAnchor} from './pizza-city-footprints.js?v=20261015a';
-import {carSprite} from './pizza-city-traffic.js?v=20261015a';
-import {personSprite} from './pizza-sprites.js?v=20261015a';
+import {app,world,state,Container,Graphics,iso,label} from './pizza-core.js?v=20261015b';
+import {loadCityArt,citySprite} from './pizza-city-art.js?v=20261015b';
+import {BUILDING_FOOTPRINTS,footprintAnchor} from './pizza-city-footprints.js?v=20261015b';
+import {carSprite} from './pizza-city-traffic.js?v=20261015b';
+import {personSprite} from './pizza-sprites.js?v=20261015b';
 
 // Deliberately isolated study. No generator changes, navigation or save writes.
 app.renderer.background.color=0xe9e7dc;
@@ -28,11 +27,7 @@ function polygon(layer,vertices,color,alpha=1,lineColor){
 function rect(layer,x,y,w,d,color,alpha=1,lineColor){return polygon(layer,[[x,y],[x+w,y],[x+w,y+d],[x,y+d]],color,alpha,lineColor);}
 function line(layer,a,b,color,width=1){const g=new Graphics().moveTo(...point(...a)).lineTo(...point(...b)).stroke({color,width});layer.addChild(g);return g;}
 function at(layer,object,x,y){const p=iso(x,y);object.position.set(p.x,p.y);object.zIndex=p.y;layer.addChild(object);return object;}
-function measured(index){
-  const [,,w,,width,corners]=ATLASES.find(a=>a.key==='buildingExtras').frames[index],projection=groundProjection(corners);
-  const unit=projection.scaleX*width/w/32;
-  return {width:(corners[1][0]-corners[0][0])*unit,depth:(corners[2][0]-corners[1][0])*unit};
-}
+function measured(index){return state.cityArt.buildings[index+8].groundSize;}
 function select(record){
   selected=record;
   document.getElementById('selection').textContent=record.role+' · '+record.kind+' #'+record.index+'. '+(record.template?'Geplante Grundfläche '+record.template.width+' × '+record.template.depth+'.':'Gemessener Sockel '+record.width.toFixed(2)+' × '+record.depth.toFixed(2)+'.')+' Die Auswahl verwendet die tatsächliche Alpha-Fläche des Sprites.';

@@ -1,18 +1,34 @@
 import assert from 'node:assert/strict';
 import {MAX_STOREYS,STOREY_HEIGHT,buildingProjection} from '../pizza-city-building-rules.js';
 import {BUILDING_ART} from '../pizza-city-building-art.js';
+import {BUILDING_FOOTPRINTS} from '../pizza-city-footprints.js';
 assert.equal(MAX_STOREYS,2);
+const close=(a,b)=>assert(Math.abs(a-b)<1e-7,`${a} != ${b}`);
 let count=0;
-for(const [kind,frames]of Object.entries(BUILDING_ART))for(const art of frames){
- count++;assert(art.storeys<=2);assert(art.crop.every(Number.isFinite));const [left,front,right]=art.corners;
- for(const target of [{width:1.65,depth:1.65},{width:3,depth:1.1},{width:1,depth:4.1}]){
-  const p=buildingProjection(art.corners,target,art.storeys,art.facadePixels),a=p.project(left),b=p.project(front),c=p.project(right);
-  const close=(x,y)=>assert(Math.abs(x-y)<1e-8,`${kind}: ${x} != ${y}`);
-  close(a[0],-target.width*32);close(a[1],-target.width*16);close(b[0],0);close(b[1],0);close(c[0],target.depth*32);close(c[1],-target.depth*16);
-  assert(p.facadeHeight<=art.storeys*STOREY_HEIGHT+1e-8);
-  for(const point of [left,front,right]){const v=p.project([point[0],point[1]-20]),base=p.project(point);close(v[0],base[0]);assert(v[1]<base[1]);}
+for(const frames of Object.values(BUILDING_ART))for(const art of frames){
+ count++;assert(art.storeys<=2);assert(art.crop.every(Number.isFinite));if(art.uniform)continue;
+ const [left,front,right]=art.corners,u=left.map((n,i)=>n-front[i]),v=right.map((n,i)=>n-front[i]);
+ for(const width of [art.worldWidth,art.worldWidth*.6,art.worldWidth*1.4]){
+  const p=buildingProjection(art.corners,width,art.storeys,art.facadePixels),base=p.project(front);
+  close(base[0],0);close(base[1],0);assert(p.facadeHeight<=art.storeys*STOREY_HEIGHT+1e-8);
+  const sample=(a,b,z=0)=>[front[0]+a*u[0]+b*v[0],front[1]+a*u[1]+b*v[1]-z];
+  // Test whole roof ridges crossing x=front.x, and offset wings on either side.
+  // A different transform for each half fails parallelism and linearity here.
+  for(const origin of [[0,0],[-2,1],[2,-1],[.5,.5]])for(const direction of [u,v]){
+   const a=sample(...origin,art.facadePixels),b=a.map((n,i)=>n+3*direction[i]),pa=p.project(a),pb=p.project(b);
+   close(pb[1]-pa[1],(direction===u?.5:-.5)*(pb[0]-pa[0]));
+  }
+  for(const a of [sample(1,0),sample(-1,1),sample(2,-2)]){
+   const base=p.project(a),up=p.project([a[0],a[1]-25]);close(base[0],up[0]);close(base[1]-up[1],25*p.scaleY);
+  }
+  const a=sample(-2,1),b=sample(2,1),mid=a.map((n,i)=>(n+b[i])/2),pa=p.project(a),pb=p.project(b),pm=p.project(mid);close(pm[0],(pa[0]+pb[0])/2);close(pm[1],(pa[1]+pb[1])/2);
  }
 }
-assert.equal(count,29);assert.equal(BUILDING_ART.courtyardBuildings.length,2);assert.equal(BUILDING_ART.landmarks.length,2);
-for(const storeys of [0,3,4,1.5,NaN])assert.throws(()=>buildingProjection([[0,20],[100,70],[200,20]],{width:2,depth:2},storeys,100));
-console.log('City height passed: all 28 replacement variants plus the narrow-house source, maximum two storeys, exact unchanged footprint edges, vertical walls, bounded facade heights and invalid higher buildings rejected.');
+assert.equal(count,46);assert.equal(BUILDING_ART.buildings.length,32);assert.equal(BUILDING_ART.courtyardBuildings.length,4);
+assert(new Set(BUILDING_ART.buildings.map(a=>a.name)).size===32);
+assert(new Set(BUILDING_ART.buildings.map(a=>a.chimney.type)).size>=6);
+assert(new Set(BUILDING_ART.buildings.map(a=>a.chimney.position.join(','))).size>=6);
+assert(new Set(BUILDING_ART.buildings.map(a=>a.roof)).size>=3);
+assert(BUILDING_FOOTPRINTS.every(t=>t.floors<=2));
+for(const floors of [0,3,4,1.5,NaN])assert.throws(()=>buildingProjection([[0,20],[100,70],[200,20]],128,floors,100));
+console.log('Building art passed: 46 sprites, 32 distinct houses in one atlas, four palazzi, roof/chimney variety, two-storey limit and whole-building 2:1 parallelism across roof ridges and courtyard wings.');

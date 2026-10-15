@@ -1,12 +1,12 @@
-import {accrueReservePayroll} from './pizza-staff.js?v=20261015a';
-import {staffSchedule,nextShiftBoundary} from './pizza-shifts.js?v=20261015a';
-import {DAY_MINUTES,SECONDS_PER_MINUTE,completeDay,dayLabel} from './pizza-daily.js?v=20261015a';
-import {profilePlan} from './pizza-kitchen.js?v=20261015a';
-import {state,saveLayout,updateMoney,ensureRestaurants,notify} from './pizza-core.js?v=20261015a';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261015a';
-import {advanceService} from './pizza-service.js?v=20261015a';
+import {accrueReservePayroll} from './pizza-staff.js?v=20261015b';
+import {staffSchedule,nextShiftBoundary} from './pizza-shifts.js?v=20261015b';
+import {DAY_MINUTES,SECONDS_PER_MINUTE,completeDay,dayLabel} from './pizza-daily.js?v=20261015b';
+import {profilePlan} from './pizza-kitchen.js?v=20261015b';
+import {state,saveLayout,updateMoney,ensureRestaurants,notify} from './pizza-core.js?v=20261015b';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261015b';
+import {advanceService} from './pizza-service.js?v=20261015b';
 
-import {accrueWarehouseCosts,purchasingDiscount} from './pizza-procurement.js?v=20261015a';
+import {accrueWarehouseCosts,purchasingDiscount} from './pizza-procurement.js?v=20261015b';
 let checkpoint=0;
 export function tickService(seconds){
   if(!Number.isFinite(seconds)||seconds<=0)return [];

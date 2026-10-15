@@ -103,10 +103,10 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
         traffic:state.movers.map(m=>({sprite:m.g instanceof Sprite,scaleX:m.g.scale.x,scaleY:m.g.scale.y})),
         terraces:objects.children.filter(c=>c.label==='city-terrace').map(c=>({sprite:c instanceof Sprite,x:(c.x/32+c.y/16)/2,y:(c.y/16-c.x/32)/2}))};
     },corePath);
-    assert.deepEqual(cityArt.atlases,{buildings:16,buildingTypes:8,courtyardBuildings:2,landmarks:2,props:8});assert(cityArt.buildings>=30);
-    assert(cityArt.variants.filter(i=>i>=8).length>=6);
+    assert.deepEqual(cityArt.atlases,{buildings:32,buildingTypes:8,courtyardBuildings:4,landmarks:2,props:8});assert(cityArt.buildings>=30);
+    assert(cityArt.variants.filter(i=>i>=16).length>=8,'The expanded atlas must be used in the city.');
     assert(cityArt.ground.sprite);assert.equal(cityArt.ground.pixelScale,1);assert.equal(cityArt.ground.sampling,'nearest');assert(cityArt.ground.details.asphalt>200&&cityArt.ground.details.crossings>0&&cityArt.ground.details.curbs>0&&cityArt.ground.details.manholes>0);
-    assert.equal(cityArt.projected.length,19);assert(cityArt.projected.every(a=>a.projection&&a.anchor.x>0&&a.anchor.x<1&&a.anchor.y>0&&a.anchor.y<=1));
+    assert.equal(cityArt.projected.length,cityArt.atlases.buildings-8+cityArt.atlases.buildingTypes+cityArt.atlases.courtyardBuildings+1);assert(cityArt.projected.every(a=>a.projection&&a.anchor.x>0&&a.anchor.x<1&&a.anchor.y>0&&a.anchor.y<=1));
     assert.equal(cityArt.properties.length,9);assert.equal(new Set(cityArt.properties).size,9);
     assert(cityArt.types.length>=4);
     assert.equal(cityArt.landmarks.length,2);assert(cityArt.landmarks.every(item=>item.sprite));
@@ -116,7 +116,7 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     const {cityLayout}=await import(pathToFileURL(path.join(root,'pizza-city-layout.js')));
     const initialLayout=cityLayout();
     assert(cityArt.terraces.every(item=>item.sprite&&!initialLayout.road(item.x,item.y)),'Terraces must stay off the carriageway.');
-    console.log('City art passed: sixteen house variants, eight building types, nine properties, two landmarks, eight props, upright 2D traffic and restaurant terrace sprites off the roads.');
+    console.log('City art passed: thirty-two house variants, eight building types, nine properties, two landmarks, eight props, upright 2D traffic and restaurant terrace sprites off the roads.');
     await page.click('#propertiesBtn');
     assert.equal(await page.locator('[data-property]').count(),3);
     await page.click('[data-property="san-marco"]');

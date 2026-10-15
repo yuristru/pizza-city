@@ -1,14 +1,14 @@
-import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261015a';
-import {state,Container,ensureRestaurants,activePlan,label} from './pizza-core.js?v=20261015a';
-import {project,dimensions} from './pizza-layout.js?v=20261015a';
-import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261015a';
-import {routePosition,guestSeat} from './pizza-service.js?v=20261015a';
-import {machinePosition,MACHINE_RULES} from './pizza-machines.js?v=20261015a';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261015a';
+import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261015b';
+import {state,Container,ensureRestaurants,activePlan,label} from './pizza-core.js?v=20261015b';
+import {project,dimensions} from './pizza-layout.js?v=20261015b';
+import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261015b';
+import {routePosition,guestSeat} from './pizza-service.js?v=20261015b';
+import {machinePosition,MACHINE_RULES} from './pizza-machines.js?v=20261015b';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261015b';
 
-import {businessIssue,workPath,counterLayoutIssue,counterHandoff} from './pizza-business.js?v=20261015a';
-import {staffSchedule,shiftLabel} from './pizza-shifts.js?v=20261015a';
-import {personSprite,staffPersonSprite} from './pizza-sprites.js?v=20261015a';
+import {businessIssue,workPath,counterLayoutIssue,counterHandoff} from './pizza-business.js?v=20261015b';
+import {staffSchedule,shiftLabel} from './pizza-shifts.js?v=20261015b';
+import {personSprite,staffPersonSprite} from './pizza-sprites.js?v=20261015b';
 const maps=new WeakMap(),banners=new Map();
 export function syncServiceGuests(objects){
   let nodes=maps.get(objects);if(!nodes){nodes=new Map();maps.set(objects,nodes);}
