@@ -1,0 +1,44 @@
+// Two-storey Imagegen replacements. Crops and ground corners are in source pixels.
+export const BUILDING_ART={
+ buildings:[
+  {"crop":[30,92,353,414],"corners":[[41,422],[210,503],[370,431]],"facadePixels":226,"storeys":2},
+  {"crop":[407,107,360,403],"corners":[[421,425],[585,506],[754,430]],"facadePixels":219,"storeys":2},
+  {"crop":[782,135,364,394],"corners":[[796,441],[973,526],[1132,456]],"facadePixels":215,"storeys":2},
+  {"crop":[1165,107,339,410],"corners":[[1177,435],[1342,513],[1492,445]],"facadePixels":223,"storeys":2},
+  {"crop":[18,546,369,408],"corners":[[36,868],[204,951],[373,880]],"facadePixels":222,"storeys":2},
+  {"crop":[402,552,367,408],"corners":[[421,883],[596,957],[755,883]],"facadePixels":222,"storeys":2},
+  {"crop":[787,555,367,405],"corners":[[801,875],[968,957],[1142,882]],"facadePixels":221,"storeys":2},
+  {"crop":[1169,546,352,413],"corners":[[1181,870],[1344,956],[1509,877]],"facadePixels":225,"storeys":2}
+ ],
+ buildingExtras:[
+  {"crop":[30,98,347,423],"corners":[[52,445],[209,518],[368,443]],"facadePixels":230,"storeys":2},
+  {"crop":[406,142,371,396],"corners":[[413,455],[581,535],[767,461]],"facadePixels":216,"storeys":2},
+  {"crop":[797,98,342,425],"corners":[[815,445],[975,520],[1129,449]],"facadePixels":232,"storeys":2},
+  {"crop":[1146,142,381,396],"corners":[[1156,473],[1342,535],[1514,470]],"facadePixels":216,"storeys":2},
+  {"crop":[27,563,353,411],"corners":[[52,898],[209,970],[371,896]],"facadePixels":224,"storeys":2},
+  {"crop":[407,573,367,401],"corners":[[419,892],[595,971],[766,895]],"facadePixels":218,"storeys":2},
+  {"crop":[791,579,378,402],"corners":[[796,906],[1000,978],[1164,907]],"facadePixels":219,"storeys":2},
+  {"crop":[1193,570,322,398],"corners":[[1215,892],[1361,964],[1506,899]],"facadePixels":217,"storeys":2}
+ ],
+ buildingTypes:[
+  {"crop":[34,120,344,368],"corners":[[45,417],[218,485],[371,408]],"facadePixels":200,"storeys":2},
+  {"crop":[399,156,409,343],"corners":[[410,405],[605,495],[798,406]],"facadePixels":186,"storeys":1},
+  {"crop":[825,134,338,361],"corners":[[831,425],[983,492],[1157,405]],"facadePixels":196,"storeys":1},
+  {"crop":[1175,124,355,374],"corners":[[1183,404],[1377,495],[1520,429]],"facadePixels":204,"storeys":2},
+  {"crop":[14,524,402,434],"corners":[[21,848],[230,954],[399,869]],"facadePixels":237,"storeys":2},
+  {"crop":[428,549,353,412],"corners":[[433,874],[609,958],[773,876]],"facadePixels":224,"storeys":2},
+  {"crop":[797,535,361,413],"corners":[[805,858],[1052,940],[1151,901]],"facadePixels":225,"storeys":2},
+  {"crop":[1174,555,351,421],"corners":[[1182,888],[1358,973],[1516,895]],"facadePixels":229,"storeys":2}
+ ],
+ courtyardBuildings:[
+  {"crop":[58,249,695,524],"corners":[[375,638],[637,770],[746,709]],"facadePixels":260,"storeys":2},
+  {"crop":[793,236,726,632],"corners":[[1127,822],[1200,865],[1510,691]],"facadePixels":240,"storeys":2}
+ ],
+ landmarks:[
+  {"crop":[86,335,761,545],"corners":[[241,777],[583,877],[839,750]],"facadePixels":230,"storeys":2,"uniform":true},
+  {"crop":[904,284,699,579],"corners":[[952,759],[1153,860],[1457,720]],"facadePixels":285,"storeys":2}
+ ],
+ narrowTownhouse:[
+  {"crop":[406,56,836,934],"corners":[[423,846],[721,985],[1222,801]],"facadePixels":511,"storeys":2}
+ ],
+};

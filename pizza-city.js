@@ -1,17 +1,17 @@
-import {WAREHOUSES} from './pizza-procurement.js?v=20261014b';
-import {COMPETITORS} from './pizza-competitors.js?v=20261014b';
-import {openCommerce} from './pizza-commerce-ui.js?v=20261014b';
-import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261014b';
-import {frontageRow} from './pizza-city-frontages.js?v=20261014b';
-import {BUILDING_FOOTPRINTS,footprintAnchor,footprintCells,footprintFits} from './pizza-city-footprints.js?v=20261014b';
-import {cityGround} from './pizza-city-ground.js?v=20261014b';
-import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261014b';
-import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261014b';
-import {openProperty} from './pizza-properties-ui.js?v=20261014b';
-import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Texture,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261014b';
-import {citySprite} from './pizza-city-art.js?v=20261014b';
-import {personSprite} from './pizza-sprites.js?v=20261014b';
-import {carSprite} from './pizza-city-traffic.js?v=20261014b';
+import {WAREHOUSES} from './pizza-procurement.js?v=20261015a';
+import {COMPETITORS} from './pizza-competitors.js?v=20261015a';
+import {openCommerce} from './pizza-commerce-ui.js?v=20261015a';
+import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261015a';
+import {frontageRow} from './pizza-city-frontages.js?v=20261015a';
+import {BUILDING_FOOTPRINTS,footprintAnchor,footprintCells,footprintFits} from './pizza-city-footprints.js?v=20261015a';
+import {cityGround} from './pizza-city-ground.js?v=20261015a';
+import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261015a';
+import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261015a';
+import {openProperty} from './pizza-properties-ui.js?v=20261015a';
+import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Texture,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261015a';
+import {citySprite} from './pizza-city-art.js?v=20261015a';
+import {personSprite} from './pizza-sprites.js?v=20261015a';
+import {carSprite} from './pizza-city-traffic.js?v=20261015a';
 
 let districts=districtOrder();
 function cityHash(x,y,s=0){return hash(x,y,(state.citySeed+s)>>>0);}
@@ -64,7 +64,7 @@ function pizzaBadge(g,x){
 }
 function building(objects,labels,x,y,index=0,name=null,player=false,kind='buildings',rival=null){
   let object=citySprite(kind,index)||citySprite('buildings',0);
-  if(!object){const type=index>=4?'small':index%2?'medium':'big',textures=state.cityTex[type];object=new Sprite(textures[Math.floor(cityHash(x,y)*textures.length)]);object.anchor.set(.5,1);object.scale.set(2);}
+  if(!object){const type=index>=4?'small':index%2?'medium':'big',textures=state.cityTex[type];object=new Sprite(textures[Math.floor(cityHash(x,y)*textures.length)]);object.anchor.set(.5,1);object.scale.set(2);object.storeys=2;object.facadeHeight=48;}
   const p=iso(x,y);place(objects,object,x,y);object.label=rival?'city-competitor':player?'player-restaurant':'city-building';if(rival){object.competitorId=rival.id;object.eventMode='static';object.cursor='pointer';object.on('pointertap',()=>{if(!state.cityGesture?.moved)openCommerce(rival.id);});}object.buildingVariant=index;object.buildingKind=kind;
   if(player){object.eventMode='static';object.cursor='pointer';object.on('pointertap',openRestaurant);}
   if(name){
@@ -99,7 +99,7 @@ function propertyBuilding(objects,labels,x,y,site){
 }
 let warehouseTexture=null;
 function warehouseBuilding(objects,labels,x,y,site){
-  const texture=warehouseTexture||(warehouseTexture=Texture.from(warehouseCanvas()));texture.source.scaleMode='nearest';const object=new Sprite(texture);object.anchor.set(76/124,94/98);place(objects,object,x,y);object.label='city-warehouse';object.warehouseId=site.id;object.eventMode='static';object.cursor='pointer';object.on('pointertap',()=>{if(!state.cityGesture?.moved)openCommerce(site.id);});
+  const texture=warehouseTexture||(warehouseTexture=Texture.from(warehouseCanvas()));texture.source.scaleMode='nearest';const object=new Sprite(texture);object.anchor.set(76/124,94/98);place(objects,object,x,y);object.label='city-warehouse';object.storeys=1;object.facadeHeight=32;object.warehouseId=site.id;object.eventMode='static';object.cursor='pointer';object.on('pointertap',()=>{if(!state.cityGesture?.moved)openCommerce(site.id);});
   const p=iso(x,y),tag=new Container(),bg=new Graphics(),text=label('',9,'#fff1ce');tag.label='city-warehouse-marker';tag.warehouseId=site.id;tag.position.set(p.x,p.y-object.height-14);tag.zIndex=p.y+30;text.anchor.set(.5);tag.addChild(bg,text);tag.eventMode='static';tag.cursor='pointer';tag.hitArea=new Rectangle(-54,-12,108,28);tag.on('pointertap',()=>{if(!state.cityGesture?.moved)openCommerce(site.id);});labels.addChild(tag);return object;
 }
 function refreshPropertyMarkers(){

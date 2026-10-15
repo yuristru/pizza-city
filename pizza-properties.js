@@ -1,4 +1,4 @@
-import {restaurantPlan} from './pizza-floorplans.js?v=20261014b';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261015a';
 export const PROPERTY_SIZES={
   small:{name:'Klein',badge:'S',area:80,color:0x66834b},
   medium:{name:'Mittel',badge:'M',area:160,color:0xc09242},

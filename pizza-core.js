@@ -1,17 +1,17 @@
-import {restoreProcurement} from './pizza-procurement.js?v=20261014b';
-import {restoreStaff,syncStaffCounts} from './pizza-staff.js?v=20261014b';
-import {shiftAt} from './pizza-shifts.js?v=20261014b';
-import {restoreDaily,ensureDaily} from './pizza-daily.js?v=20261014b';
-import {profilePlan} from './pizza-kitchen.js?v=20261014b';
-import {restaurantPlan,DEFAULT_PLAN,withKitchen} from './pizza-floorplans.js?v=20261014b';
-import {DEFAULT_CITY_SEED} from './pizza-city-layout.js?v=20261014b';
-import {restoreProperties,propertySpend} from './pizza-properties.js?v=20261014b';
+import {restoreProcurement} from './pizza-procurement.js?v=20261015a';
+import {restoreStaff,syncStaffCounts} from './pizza-staff.js?v=20261015a';
+import {shiftAt} from './pizza-shifts.js?v=20261015a';
+import {restoreDaily,ensureDaily} from './pizza-daily.js?v=20261015a';
+import {profilePlan} from './pizza-kitchen.js?v=20261015a';
+import {restaurantPlan,DEFAULT_PLAN,withKitchen} from './pizza-floorplans.js?v=20261015a';
+import {DEFAULT_CITY_SEED} from './pizza-city-layout.js?v=20261015a';
+import {restoreProperties,propertySpend} from './pizza-properties.js?v=20261015a';
 import {Application,Container,Graphics,Sprite,Texture,Text,Rectangle} from './assets/pizza/vendor/pixi-8.22.0.mjs';
-import {copyLayout,upgradeLayout} from './pizza-layout.js?v=20261014b';
-import {START_MONEY,money,defaultFinishes,restoreFinishes} from './pizza-catalog.js?v=20261014b';
-import {freshService,restoreService} from './pizza-service.js?v=20261014b';
-import {MAIN_RESTAURANT,freshRestaurant,restoreRestaurants} from './pizza-restaurant-profiles.js?v=20261014b';
-import {property} from './pizza-properties.js?v=20261014b';
+import {copyLayout,upgradeLayout} from './pizza-layout.js?v=20261015a';
+import {START_MONEY,money,defaultFinishes,restoreFinishes} from './pizza-catalog.js?v=20261015a';
+import {freshService,restoreService} from './pizza-service.js?v=20261015a';
+import {MAIN_RESTAURANT,freshRestaurant,restoreRestaurants} from './pizza-restaurant-profiles.js?v=20261015a';
+import {property} from './pizza-properties.js?v=20261015a';
 export {Container,Graphics,Sprite,Texture,Text,Rectangle};
 
 export const root=document.querySelector('#app');
@@ -148,34 +148,21 @@ export function rememberEdit(){
 const fallbackCache=new Map();
 function fallback(){
   if(fallbackCache.has('city')) return fallbackCache.get('city');
-  const canvas=document.createElement('canvas');canvas.width=64;canvas.height=80;
+  const canvas=document.createElement('canvas');canvas.width=64;canvas.height=64;
   const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
   const polygon=(points,color)=>{ctx.fillStyle=color;ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.fill();};
-  polygon([[7,30],[32,43],[32,73],[7,60]],'#875c3c');polygon([[32,43],[57,30],[57,60],[32,73]],'#61472f');polygon([[7,30],[32,17],[57,30],[32,43]],'#b68452');
+  polygon([[7,18],[32,31],[32,55],[7,42]],'#c39362');polygon([[32,31],[57,18],[57,42],[32,55]],'#956f48');polygon([[7,18],[32,5],[57,18],[32,31]],'#b15e36');
+  for(const row of [0,1]){polygon([[12,24+row*12],[19,27.5+row*12],[19,35.5+row*12],[12,32+row*12]],'#345c47');polygon([[38,29+row*12],[45,25.5+row*12],[45,33.5+row*12],[38,37+row*12]],'#345c47');}
   const texture=Texture.from(canvas);texture.source.scaleMode='nearest';fallbackCache.set('city',texture);return texture;
 }
 
-async function loadCityAtlas(){
-  try{
-    const image=new Image();image.src='./assets/pizza/city/pixel-city.png';await image.decode();
-    const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;
-    const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);
-    const data=ctx.getImageData(0,0,canvas.width,canvas.height);
-    for(let i=0;i<data.data.length;i+=4) if(data.data[i]===255&&data.data[i+1]===0&&data.data[i+2]===255) data.data[i+3]=0;
-    ctx.putImageData(data,0,0);
-    const atlas=Texture.from(canvas);atlas.source.scaleMode='nearest';
-    const frames={small:[[83,400,34,29],[263,373,34,25],[304,403,34,25]],medium:[[45,224,52,65],[45,303,52,50],[4,370,52,58],[124,297,34,53]],big:[[3,227,34,60],[123,217,34,70],[163,220,34,67],[164,289,34,62],[124,368,34,60],[164,372,34,56]]};
-    for(const [type,rects] of Object.entries(frames)) state.cityTex[type]=rects.map(rect=>new Texture({source:atlas.source,frame:new Rectangle(...rect)}));
-  }catch(error){
-    console.warn('Unable to load city atlas',error);state.assetFailures.push('city');
-    for(const type of ['small','medium','big']) state.cityTex[type]=[fallback()];
-  }
-}
+// Missing sheets use a native two-storey drawing instead of the obsolete tall atlas.
+async function loadCityAtlas(){for(const type of ['small','medium','big'])state.cityTex[type]=[fallback()];}
 
 export async function loadAssets(){
-  const {loadCityArt}=await import('./pizza-city-art.js?v=20261014b');
-  const {loadRestaurantArt}=await import('./pizza-restaurant-art.js?v=20261014b');
-  const {loadIngredientArt}=await import('./pizza-ingredient-art.js?v=20261014b');
+  const {loadCityArt}=await import('./pizza-city-art.js?v=20261015a');
+  const {loadRestaurantArt}=await import('./pizza-restaurant-art.js?v=20261015a');
+  const {loadIngredientArt}=await import('./pizza-ingredient-art.js?v=20261015a');
   await Promise.all([loadCityArt(),loadRestaurantArt(),loadIngredientArt()]);
   if(!state.cityArt.buildings) await loadCityAtlas();
   loading.hidden=true;

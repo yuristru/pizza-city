@@ -334,10 +334,11 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     const storagePage=await context.newPage();storagePage.on('pageerror',error=>errors.push(error.message));
     await storagePage.addInitScript(()=>Object.defineProperty(window,'localStorage',{get(){throw new DOMException('Unavailable','SecurityError');}}));
     await loaded(storagePage,url);await storagePage.click('#restaurantBtn');await selectTool(storagePage,'plant');await placeCell(storagePage,0,3);assert.equal((await snapshot(storagePage)).items.length,model.DEFAULT_LAYOUT.length+1);await storagePage.close();
-    for(const asset of ['buildings','landmarks','props','courtyards']){
-      const pattern='**/assets/pizza/city/italian-'+asset+'-v*.png';
+    const atlases=await page.evaluate(async modulePath=>{const {ATLASES}=await import(modulePath.replace('pizza-core.js','pizza-city-art.js'));return ATLASES.map(({key,url})=>({key,url}));},corePath);
+    for(const key of ['buildings','landmarks','props','courtyardBuildings']){
+      const pattern='**/assets/pizza/city/'+atlases.find(a=>a.key===key).url;
       await page.route(pattern,route=>route.fulfill({status:404,body:'missing'}));
-      await loaded(page,url);assert.deepEqual((await snapshot(page)).assets,[asset==='courtyards'?'courtyardBuildings':asset]);
+      await loaded(page,url);assert.deepEqual((await snapshot(page)).assets,[key]);
       await page.click('#restaurantBtn');assert.equal(await page.locator('#placementTitle').innerText(),'Objekte auswählen');
       await page.unroute(pattern);
     }
@@ -345,7 +346,7 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     await loaded(page,url);await page.click('#restaurantBtn');await selectTool(page,'oven');await placeCell(page,8,1);
     await capture(page,'restaurant-art-fallback.png');await undoEdit(page);await page.unroute('**/assets/pizza/restaurant/*.png');
     await page.route('**/assets/pizza/city/*.png',route=>route.fulfill({status:404,body:'missing'}));
-    await loaded(page,url);assert.equal((await snapshot(page)).assets.length,7);
+    await loaded(page,url);assert.equal((await snapshot(page)).assets.length,atlases.length);
     await page.click('#restaurantBtn');await selectTool(page,'plant');await placeCell(page,0,3);
     await page.unroute('**/assets/pizza/city/*.png');
     await page.route('**/assets/pizza/vendor/pixi-8.22.0.mjs',route=>route.abort());

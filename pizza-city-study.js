@@ -1,9 +1,9 @@
-import {app,world,state,Container,Graphics,iso,label} from './pizza-core.js?v=20261014b';
-import {ATLASES,loadCityArt,citySprite} from './pizza-city-art.js?v=study3';
-import {groundProjection} from './pizza-isometric-art.js?v=20261014b';
-import {BUILDING_FOOTPRINTS,footprintAnchor} from './pizza-city-footprints.js?v=20261014b';
-import {carSprite} from './pizza-city-traffic.js?v=20261014b';
-import {personSprite} from './pizza-sprites.js?v=20261014b';
+import {app,world,state,Container,Graphics,iso,label} from './pizza-core.js?v=20261015a';
+import {ATLASES,loadCityArt,citySprite} from './pizza-city-art.js?v=20261015a';
+import {groundProjection} from './pizza-isometric-art.js?v=20261015a';
+import {BUILDING_FOOTPRINTS,footprintAnchor} from './pizza-city-footprints.js?v=20261015a';
+import {carSprite} from './pizza-city-traffic.js?v=20261015a';
+import {personSprite} from './pizza-sprites.js?v=20261015a';
 
 // Deliberately isolated study. No generator changes, navigation or save writes.
 app.renderer.background.color=0xe9e7dc;

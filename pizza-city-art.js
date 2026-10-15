@@ -1,16 +1,19 @@
-import {groundProjection} from './pizza-isometric-art.js?v=20261014b';
-import {Sprite,Texture,state} from './pizza-core.js?v=20261014b';
+import {BUILDING_ART} from './pizza-city-building-art.js?v=20261015a';
+import {buildingProjection} from './pizza-city-building-rules.js?v=20261015a';
+import {groundProjection} from './pizza-isometric-art.js?v=20261015a';
+import {Sprite,Texture,state} from './pizza-core.js?v=20261015a';
 
+// Legacy frame geometry retains the existing parcel measurements; BUILDING_ART supplies the lower replacements.
 // Atlas coordinates isolate complete flat drawings, including their ground contact.
 // Rasterize once at the city's pixel scale instead of scaling high-resolution art per frame.
 export const ATLASES=[
-  {key:'buildings',url:'italian-buildings-v2.png',frames:[
+  {key:'buildings',url:'italian-buildings-two-storey-v1.png',frames:[
     [43,52,315,460,116],[412,45,336,473,124],[795,92,340,420,116],[1206,40,287,478,106],
     [23,546,355,399,124,[[37,882],[213,942],[365,890]]],
     [414,557,345,401,124,[[430,897],[579,958],[747,894]]],
     [798,551,348,404,124],[1175,539,336,416,118]
   ]},
-  {key:'buildingExtras',url:'italian-buildings-extra-v1.png',frames:[
+  {key:'buildingExtras',url:'italian-buildings-extra-two-storey-v1.png',frames:[
     [38,27,331,485,116,[[49,442],[198,510],[361,434]]],
     [418,108,350,404,124,[[432,443],[584,510],[750,441]]],
     [811,27,322,485,116,[[816,442],[980,510],[1127,434]]],
@@ -20,7 +23,7 @@ export const ATLASES=[
     [803,604,358,394,124,[[817,928],[979,996],[1144,928]]],
     [1212,512,273,482,106,[[1226,941],[1294,990],[1475,908]]]
   ]},
-  {key:'buildingTypes',url:'italian-building-types-v2.png',frames:[
+  {key:'buildingTypes',url:'italian-building-types-two-storey-v1.png',frames:[
     [40,34,328,450,116,[[47,412],[214,480],[354,415]]],
     [404,143,396,351,144,[[416,416],[602,491],[790,416]]],
     [825,50,336,440,124,[[836,420],[982,486],[1151,412]]],
@@ -30,13 +33,14 @@ export const ATLASES=[
     [797,520,352,442,124,[[800,876],[1050,956],[1146,915]]],
     [1165,524,360,467,124,[[1178,914],[1353,984],[1511,921]]]
   ]},
-  {key:'courtyardBuildings',url:'italian-courtyards-v1.png',frames:[
+  {key:'courtyardBuildings',url:'italian-courtyards-two-storey-v1.png',frames:[
     [85,200,650,590,250,[[380,651],[625,781],[720,732]],3],
     [810,195,700,705,270,[[1118,847],[1191,890],[1492,718]],1]
   ]},
-  {key:'landmarks',url:'italian-landmarks-v3.png',frames:[
+  {key:'landmarks',url:'italian-landmarks-two-storey-v1.png',frames:[
     [104,202,743,664,224],[902,87,690,794,194,[[982,777],[1199,870],[1420,758]]]
   ]},
+  {key:'narrowTownhouse',url:'italian-townhouse-narrow-two-storey-v1.png',frames:[[1212,512,273,482,106,[[1226,941],[1294,990],[1475,908]]]]},
   {key:'props',url:'italian-props-v2.png',frames:[
     [16,74,433,472,58],[455,20,383,533,57],[896,23,168,540,22],[1118,97,404,453,58],
     [33,592,392,352,82],[488,664,292,283,33],[834,633,277,316,20],[1153,556,347,416,38]
@@ -63,11 +67,35 @@ function frame(image,[x,y,w,h,width,corners,edgeUnits]){
   }}};
 }
 
+function buildingFrame(image,original,art){
+  const [,,oldW,,oldWidth,oldCorners,edgeUnits]=original;
+  let groundSize;
+  if(oldCorners){
+    const p=groundProjection(oldCorners),scale=edgeUnits?edgeUnits*32/(p.scaleX*(oldCorners[1][0]-oldCorners[0][0])):oldWidth/oldW;
+    groundSize={width:(oldCorners[1][0]-oldCorners[0][0])*p.scaleX*scale/32,depth:(oldCorners[2][0]-oldCorners[1][0])*p.scaleX*scale/32};
+  }else if(oldWidth>150){
+    const [a,b,c]=art.corners,scale=oldWidth/(c[0]-a[0]);groundSize={width:(b[0]-a[0])*scale/32,depth:(c[0]-b[0])*scale/32};
+  }else groundSize={width:1.65,depth:1.65};
+  if(art.uniform){const result=frame(image,[...art.crop,oldWidth]);return {...result,groundSize,storeys:art.storeys,facadeHeight:art.facadePixels*oldWidth/art.crop[2],projection:groundProjection(art.corners)};}
+  const [x,y,w,h]=art.crop,corners=art.corners.map(([a,b])=>[a-x,b-y]),front=corners[1],p=buildingProjection(corners,groundSize,art.storeys,art.facadePixels);
+  const bounds=[[0,0],[front[0],0],[w,0],[0,h],[front[0],h],[w,h]].map(p.project);
+  const minX=Math.floor(Math.min(...bounds.map(v=>v[0]))),minY=Math.floor(Math.min(...bounds.map(v=>v[1])));
+  const canvas=document.createElement('canvas');canvas.width=Math.ceil(Math.max(...bounds.map(v=>v[0])))-minX;canvas.height=Math.ceil(Math.max(...bounds.map(v=>v[1])))-minY;
+  const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
+  for(const left of [true,false]){
+    const sx=left?p.leftScale:p.rightScale,skew=left?p.leftSkew:p.rightSkew,start=left?0:front[0],length=left?front[0]:w-front[0];
+    ctx.setTransform(sx,skew,0,p.verticalScale,-front[0]*sx-minX,-front[1]*p.verticalScale-front[0]*skew-minY);
+    ctx.drawImage(image,x+start,y,length,h,start,0,length,h);
+  }
+  const anchor={x:-minX/canvas.width,y:-minY/canvas.height},pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data,texture=Texture.from(canvas);texture.source.scaleMode='nearest';
+  return {texture,anchor,groundSize,storeys:art.storeys,facadeHeight:p.facadeHeight,projection:{...groundProjection(art.corners),verticalScale:p.verticalScale},hitArea:{contains(px,py){const ix=Math.floor(px+anchor.x*canvas.width),iy=Math.floor(py+anchor.y*canvas.height);return ix>=0&&iy>=0&&ix<canvas.width&&iy<canvas.height&&pixels[(iy*canvas.width+ix)*4+3]>100;}}};
+}
+
 export async function loadCityArt(){
   await Promise.all(ATLASES.map(async atlas=>{
     try{
       const image=new Image();image.src='./assets/pizza/city/'+atlas.url;await image.decode();
-      state.cityArt[atlas.key]=atlas.frames.map(rect=>frame(image,rect));
+      state.cityArt[atlas.key]=atlas.frames.map((rect,index)=>BUILDING_ART[atlas.key]?buildingFrame(image,rect,BUILDING_ART[atlas.key][index]):frame(image,rect));
     }catch(error){
       console.warn('City art unavailable: '+atlas.key,error);state.assetFailures.push(atlas.key);
     }
@@ -75,11 +103,12 @@ export async function loadCityArt(){
   if(state.cityArt.buildings&&state.cityArt.buildingExtras){
     state.cityArt.buildings.push(...state.cityArt.buildingExtras);
   }
-  delete state.cityArt.buildingExtras;
+  if(state.cityArt.narrowTownhouse&&state.cityArt.buildings?.length===16)state.cityArt.buildings[15]=state.cityArt.narrowTownhouse[0];
+  delete state.cityArt.narrowTownhouse;delete state.cityArt.buildingExtras;
 }
 
 export function citySprite(kind,index=0){
   const art=state.cityArt[kind]?.[index];if(!art)return null;
-  const sprite=new Sprite(art.texture);sprite.anchor.set(art.anchor.x,art.anchor.y);sprite.hitArea=art.hitArea;
+  const sprite=new Sprite(art.texture);sprite.anchor.set(art.anchor.x,art.anchor.y);sprite.hitArea=art.hitArea;if(art.storeys){sprite.storeys=art.storeys;sprite.facadeHeight=art.facadeHeight;}
   return sprite;
 }
