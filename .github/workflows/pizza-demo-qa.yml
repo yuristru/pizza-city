@@ -33,6 +33,8 @@ on:
       - 'tests/pizza-night-browser-qa.cjs'
       - 'tests/pizza-market-qa.mjs'
       - 'tests/pizza-market-browser-qa.cjs'
+      - 'tests/pizza-advertising-qa.mjs'
+      - 'tests/pizza-advertising-browser-qa.cjs'
       - 'tests/pizza-properties-qa.mjs'
       - 'tests/pizza-city-layout-qa.mjs'
       - 'tests/pizza-city-study-qa.cjs'
@@ -112,6 +114,8 @@ jobs:
           node tests/pizza-floorplans-browser-qa.cjs
           node tests/pizza-market-qa.mjs
           node tests/pizza-market-browser-qa.cjs
+          node tests/pizza-advertising-qa.mjs
+          node tests/pizza-advertising-browser-qa.cjs
           node tests/pizza-properties-qa.mjs
           node tests/pizza-city-layout-qa.mjs
           node tests/pizza-isometric-art-qa.mjs

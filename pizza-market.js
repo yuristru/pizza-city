@@ -1,6 +1,7 @@
-import {property} from './pizza-properties.js?v=20261016b';
-import {COMPETITORS} from './pizza-competitors.js?v=20261016b';
-import {shiftAt} from './pizza-shifts.js?v=20261016b';
+import {advertisingMultipliers} from './pizza-advertising.js?v=20261016c';
+import {property} from './pizza-properties.js?v=20261016c';
+import {COMPETITORS} from './pizza-competitors.js?v=20261016c';
+import {shiftAt} from './pizza-shifts.js?v=20261016c';
 export const CUSTOMER_TIERS=[{id:'simple',name:'Einfach',budget:900},{id:'middle',name:'Mittel',budget:1500},{id:'upscale',name:'Gehoben',budget:2400}];
 export const DISTRICTS=[
  {id:'altstadt',name:'Altstadt',bx:0,by:1,customers:[480,300,120]},
@@ -20,7 +21,7 @@ export function customerAppeal(profile,menu){
  return {furniture,renovation,weights:weights.map((n,i)=>menu.some(m=>m.active&&m.price<=CUSTOMER_TIERS[i].budget)?n*rating:0)};
 }
 export function marketReady(p){return p.business.open!==false&&['oven','bar','fridge','table'].every(type=>p.items.some(i=>i.type===type))&&(p.business.cook||0)>0&&(p.business.waiter||0)>0;}
-export function districtMarket(district,profiles,menu,rivalry={},minutes=0,{candidate=null,eligible=null}={}){
+export function districtMarket(district,profiles,menu,rivalry={},minutes=0,{candidate=null,eligible=null,advertising=null}={}){
  const participants=[];
  for(const [id,p]of Object.entries(profiles))if(restaurantDistrict(id)?.id===district.id&&(eligible?eligible[id]:marketReady(p))){const appeal=customerAppeal(p,menu);participants.push({id,own:true,...appeal});}
  if(candidate&&!participants.some(p=>p.id===candidate))participants.push({id:candidate,own:true,...customerAppeal({items:[{type:'table',seats:4,variant:'wood'}],finishes:{renovation:1},service:{rating:4}},menu.length?menu:[{active:true,price:850}])});
@@ -29,6 +30,7 @@ export function districtMarket(district,profiles,menu,rivalry={},minutes=0,{cand
   const appeal=customerAppeal({items:[{type:'table',seats:8,variant:r.id==='enzo'?'premium':'wood'}],finishes:{renovation:r.id==='enzo'?3:2},service:{rating:4.2}},[{active:true,price:r.id==='enzo'?1200:850}]);
   participants.push({id:r.id,own:false,...appeal,weights:appeal.weights.map(n=>n*factor)});
  }
+ for(const p of participants)if(p.own){p.advertising=advertisingMultipliers(advertising,p.id,minutes);p.weights=p.weights.map((n,i)=>n*p.advertising[i]);}
  const totals=CUSTOMER_TIERS.map((_,i)=>1+participants.reduce((n,p)=>n+p.weights[i],0));
  for(const p of participants){p.shares=p.weights.map((n,i)=>n/totals[i]);p.expected=p.shares.map((n,i)=>Math.floor(n*district.customers[i]));}
  return {district,participants,own:participants.filter(p=>p.own).length,rivals:participants.filter(p=>!p.own).length};
@@ -72,7 +74,7 @@ export function claimCustomers(m,id,size,offers){
  const credit=m.credits[id]||[0,0,0],tiers=CUSTOMER_TIERS.map((t,i)=>({t,i})).filter(({t,i})=>credit[i]+1e-8>=size&&offers.some(o=>o.price<=t.budget)).sort((a,b)=>credit[b.i]-credit[a.i]);
  if(!tiers.length)return null;const {t,i}=tiers[0];credit[i]=Math.max(0,credit[i]-size);(m.admitted[id]??=[0,0,0])[i]+=size;return {id:t.id,budget:t.budget};
 }
-export function purchaseMarket(id,profiles,menu,rivalry,minutes,market){
- const district=restaurantDistrict(id),snapshot=districtMarket(district,profiles,menu,rivalry,minutes,{candidate:(property(id)||id==='mamma-mia')?id:null}),site=snapshot.participants.find(p=>p.id===id&&p.own);
+export function purchaseMarket(id,profiles,menu,rivalry,minutes,market,advertising=null){
+ const district=restaurantDistrict(id),snapshot=districtMarket(district,profiles,menu,rivalry,minutes,{candidate:(property(id)||id==='mamma-mia')?id:null,advertising}),site=snapshot.participants.find(p=>p.id===id&&p.own);
  return {...snapshot,site,remaining:district.customers.map((n,i)=>Math.max(0,Math.floor(n-(market?.day===Math.floor(minutes/1440)?market.used[district.id]?.[i]||0:0))))};
 }

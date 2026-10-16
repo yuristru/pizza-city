@@ -1,21 +1,22 @@
-import {mountStaffUI,renderStaffUI} from './pizza-staff-ui.js?v=20261016b';
-import {mountBusinessUI,renderBusinessUI} from './pizza-business-ui.js?v=20261016b';
-import {mountKitchenUI,renderKitchenUI} from './pizza-kitchen-ui.js?v=20261016b';
-import {restaurantPlan} from './pizza-floorplans.js?v=20261016b';
-import {mountCommerceUI,renderCommerceUI} from './pizza-commerce-ui.js?v=20261016b';
-import {mountProperties} from './pizza-properties-ui.js?v=20261016b';
-import {mountMenu} from './pizza-menu-ui.js?v=20261016b';
-import {tickService} from './pizza-service-runtime.js?v=20261016b';
-import {renderServiceUI} from './pizza-service-ui.js?v=20261016b';
-import {mountNightUI,renderNightUI} from './pizza-night-ui.js?v=20261016b';
-import {showPizza} from './pizza-editor.js?v=20261016b';
-import {app,root,state,loadAssets,updateMoney,restaurantName,ensureRestaurants,setRestaurantOpen,notify} from './pizza-core.js?v=20261016b';
-import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261016b';
-import {showRestaurant,tickRestaurant,resizeRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView,toggleMove,clearSelection,rotateSelection,sellSelection,autoEquipRestaurant} from './pizza-restaurant.js?v=20261016b';
+import {mountAdvertisingUI,renderAdvertisingUI} from './pizza-advertising-ui.js?v=20261016c';
+import {mountStaffUI,renderStaffUI} from './pizza-staff-ui.js?v=20261016c';
+import {mountBusinessUI,renderBusinessUI} from './pizza-business-ui.js?v=20261016c';
+import {mountKitchenUI,renderKitchenUI} from './pizza-kitchen-ui.js?v=20261016c';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261016c';
+import {mountCommerceUI,renderCommerceUI} from './pizza-commerce-ui.js?v=20261016c';
+import {mountProperties} from './pizza-properties-ui.js?v=20261016c';
+import {mountMenu} from './pizza-menu-ui.js?v=20261016c';
+import {tickService} from './pizza-service-runtime.js?v=20261016c';
+import {renderServiceUI} from './pizza-service-ui.js?v=20261016c';
+import {mountNightUI,renderNightUI} from './pizza-night-ui.js?v=20261016c';
+import {showPizza} from './pizza-editor.js?v=20261016c';
+import {app,root,state,loadAssets,updateMoney,restaurantName,ensureRestaurants,setRestaurantOpen,notify} from './pizza-core.js?v=20261016c';
+import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261016c';
+import {showRestaurant,tickRestaurant,resizeRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView,toggleMove,clearSelection,rotateSelection,sellSelection,autoEquipRestaurant} from './pizza-restaurant.js?v=20261016c';
 
 const rotateBtn=document.querySelector('#rotateBtn'),deleteBtn=document.querySelector('#deleteBtn');
-import {mountCatalog,renderCatalog} from './pizza-catalog-ui.js?v=20261016b';
-mountCommerceUI();mountProperties();mountKitchenUI();mountBusinessUI();mountStaffUI();
+import {mountCatalog,renderCatalog} from './pizza-catalog-ui.js?v=20261016c';
+mountCommerceUI();mountProperties();mountKitchenUI();mountBusinessUI();mountStaffUI();mountAdvertisingUI();
 mountMenu();
 mountCatalog(()=>{if(restaurantView().panMode)toggleRestaurantPan();clearSelection();syncEditUI();});
 document.addEventListener('staff-changed',()=>{renderServiceUI();renderKitchenUI();renderBusinessUI(true);});
@@ -86,7 +87,7 @@ app.ticker.add(ticker=>{
   const seconds=Math.min(ticker.deltaMS,50)*state.speed/1000;
   if(seconds>0)tickService(seconds);updateClock();
   if(state.scene==='city'&&dt>0) tickCity(dt);else if(state.scene==='restaurant')tickRestaurant(dt);
-  renderServiceUI();renderKitchenUI();renderBusinessUI();renderCommerceUI();renderStaffUI();
+  renderServiceUI();renderKitchenUI();renderBusinessUI();renderCommerceUI();renderStaffUI();renderAdvertisingUI();
 });
 
 let resizeFrame;

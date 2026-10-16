@@ -1,5 +1,5 @@
-import {DAY_MINUTES} from './pizza-daily.js?v=20261016b';
-import {SHIFTS} from './pizza-shifts.js?v=20261016b';
+import {DAY_MINUTES} from './pizza-daily.js?v=20261016c';
+import {SHIFTS} from './pizza-shifts.js?v=20261016c';
 const minute=minutes=>((minutes%DAY_MINUTES)+DAY_MINUTES)%DAY_MINUTES;
 export function isNight(minutes){const n=minute(minutes);return n>=20*60||n<7*60;}
 export function cityBrightness(minutes){

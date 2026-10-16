@@ -1,19 +1,20 @@
-import {restoreMarket} from './pizza-market.js?v=20261016b';
-import {restoreRivalry} from './pizza-rivalry.js?v=20261016b';
-import {restoreProcurement} from './pizza-procurement.js?v=20261016b';
-import {restoreStaff,syncStaffCounts} from './pizza-staff.js?v=20261016b';
-import {shiftAt} from './pizza-shifts.js?v=20261016b';
-import {restoreDaily,ensureDaily} from './pizza-daily.js?v=20261016b';
-import {profilePlan} from './pizza-kitchen.js?v=20261016b';
-import {restaurantPlan,DEFAULT_PLAN,withKitchen} from './pizza-floorplans.js?v=20261016b';
-import {DEFAULT_CITY_SEED} from './pizza-city-layout.js?v=20261016b';
-import {restoreProperties,propertySpend} from './pizza-properties.js?v=20261016b';
+import {restoreAdvertising} from './pizza-advertising.js?v=20261016c';
+import {restoreMarket} from './pizza-market.js?v=20261016c';
+import {restoreRivalry} from './pizza-rivalry.js?v=20261016c';
+import {restoreProcurement} from './pizza-procurement.js?v=20261016c';
+import {restoreStaff,syncStaffCounts} from './pizza-staff.js?v=20261016c';
+import {shiftAt} from './pizza-shifts.js?v=20261016c';
+import {restoreDaily,ensureDaily} from './pizza-daily.js?v=20261016c';
+import {profilePlan} from './pizza-kitchen.js?v=20261016c';
+import {restaurantPlan,DEFAULT_PLAN,withKitchen} from './pizza-floorplans.js?v=20261016c';
+import {DEFAULT_CITY_SEED} from './pizza-city-layout.js?v=20261016c';
+import {restoreProperties,propertySpend} from './pizza-properties.js?v=20261016c';
 import {Application,Container,Graphics,Sprite,Texture,Text,Rectangle} from './assets/pizza/vendor/pixi-8.22.0.mjs';
-import {copyLayout,upgradeLayout} from './pizza-layout.js?v=20261016b';
-import {START_MONEY,money,defaultFinishes,restoreFinishes} from './pizza-catalog.js?v=20261016b';
-import {freshService,restoreService} from './pizza-service.js?v=20261016b';
-import {MAIN_RESTAURANT,freshRestaurant,restoreRestaurants} from './pizza-restaurant-profiles.js?v=20261016b';
-import {property} from './pizza-properties.js?v=20261016b';
+import {copyLayout,upgradeLayout} from './pizza-layout.js?v=20261016c';
+import {START_MONEY,money,defaultFinishes,restoreFinishes} from './pizza-catalog.js?v=20261016c';
+import {freshService,restoreService} from './pizza-service.js?v=20261016c';
+import {MAIN_RESTAURANT,freshRestaurant,restoreRestaurants} from './pizza-restaurant-profiles.js?v=20261016c';
+import {property} from './pizza-properties.js?v=20261016c';
 export {Container,Graphics,Sprite,Texture,Text,Rectangle};
 
 export const root=document.querySelector('#app');
@@ -32,7 +33,7 @@ function restore(){
   try{
     const saved=JSON.parse(localStorage.getItem(SAVE_KEY));
     const items=upgradeLayout(saved?.items,saved?.version,saved?.version>=8?withKitchen(restaurantPlan(saved.activeRestaurantId),saved.kitchenTiles||[]):saved?.version===7?restaurantPlan(saved.activeRestaurantId):DEFAULT_PLAN);
-    const current=[5,6,7,8,9,10,11].includes(saved?.version)&&Number.isSafeInteger(saved.balanceCents)&&saved.balanceCents>=0&&saved.balanceCents<=1e12;
+    const current=[5,6,7,8,9,10,11,12].includes(saved?.version)&&Number.isSafeInteger(saved.balanceCents)&&saved.balanceCents>=0&&saved.balanceCents<=1e12;
     const owned=restoreProperties(saved?.ownedProperties),ownedProperties=current||propertySpend(owned)<=START_MONEY?owned:[];
     if(items) return {hasLegacy:true,items,ownedProperties,service:current?restoreService(saved.service,saved.version>=8?withKitchen(restaurantPlan(saved.activeRestaurantId),saved.kitchenTiles||[]):saved.version===7?restaurantPlan(saved.activeRestaurantId):DEFAULT_PLAN):freshService(),gameMinutes:current&&Number.isFinite(saved.gameMinutes)&&saved.gameMinutes>=0&&saved.gameMinutes<=1e10?saved.gameMinutes:11*60+30,citySeed:Number.isInteger(saved.citySeed)&&saved.citySeed>=0&&saved.citySeed<=0xffffffff?saved.citySeed:DEFAULT_CITY_SEED,finishes:saved.version>=4?restoreFinishes(saved.finishes):defaultFinishes(),balance:current?saved.balanceCents/100:saved.version>=3&&Number.isInteger(saved.balance)&&saved.balance>=0&&saved.balance<=START_MONEY?Math.min(saved.balance,START_MONEY-propertySpend(ownedProperties)):START_MONEY-propertySpend(ownedProperties)};
   }catch{}
@@ -40,19 +41,20 @@ function restore(){
 }
 const restored=restore();
 let savedProfiles=null;
-try{const saved=JSON.parse(localStorage.getItem(SAVE_KEY));if([6,7,8,9,10,11].includes(saved?.version))savedProfiles=saved;}catch{}
+try{const saved=JSON.parse(localStorage.getItem(SAVE_KEY));if([6,7,8,9,10,11,12].includes(saved?.version))savedProfiles=saved;}catch{}
 const legacy=restored.hasLegacy?{items:restored.items,finishes:restored.finishes,service:restored.service,investmentCents:Math.max(0,Math.round((START_MONEY-propertySpend(restored.ownedProperties)-restored.balance)*100)+restored.service.netCents),history:[]}:null;
 const restaurants=restoreRestaurants(savedProfiles?.restaurants,restored.ownedProperties,savedProfiles?null:legacy);
 const staff=restoreStaff(savedProfiles?.staff,restaurants,shiftAt(restored.gameMinutes)||(restored.gameMinutes%1440>=960&&restored.gameMinutes%1440<1020?'lunch':'evening'));syncStaffCounts(staff,restaurants);
 const procurement=restoreProcurement(savedProfiles?.procurement);
 const market=restoreMarket(savedProfiles?.market,restored.gameMinutes,restored.ownedProperties),rivalry=restoreRivalry(savedProfiles?.rivalry);
+const advertising=restoreAdvertising(savedProfiles?.advertising,restored.gameMinutes,restaurants);
 const daily=restoreDaily(savedProfiles?.daily,restored.gameMinutes,restaurants,staff,procurement,rivalry);
 const activeRestaurantId=Object.hasOwn(restaurants,savedProfiles?.activeRestaurantId)?savedProfiles.activeRestaurantId:MAIN_RESTAURANT;
 const active=restaurants[activeRestaurantId];
 restored.balance+=Object.values(restaurants).reduce((sum,p)=>sum+(p.migrationRefundCents||0),0)/100;
 export function updateMoney(){const el=document.querySelector('.money');el.textContent=money(state.balance);el.dataset.fraction=String(Math.round(state.balance*100)%100!==0);el.setAttribute('aria-label','Kontostand: '+money(state.balance));}
 
-export const state={daily,staff,procurement,market,rivalry,scene:null,camera:null,restaurantCamera:null,restaurantSign:null,cityRestaurantSigns:{},restaurants,activeRestaurantId,kitchenTiles:active.kitchenTiles||[],service:active.service,cityView:null,cityGesture:null,citySeed:restored.citySeed,ownedProperties:restored.ownedProperties,onPropertyChange:null,movers:[],selectedTool:'table',selectedVariant:'wood',selectedSeats:4,balance:restored.balance,finishes:active.finishes,rotation:0,deleteMode:false,selectMode:true,moveMode:false,pendingPlacement:null,navigate:null,onEditChange:null,cityTex:{},cityArt:{},restaurantState:active.items,history:active.history,speed:1,gameMinutes:restored.gameMinutes,ready:false,assetFailures:[]};
+export const state={daily,staff,procurement,market,rivalry,advertising,scene:null,camera:null,restaurantCamera:null,restaurantSign:null,cityRestaurantSigns:{},restaurants,activeRestaurantId,kitchenTiles:active.kitchenTiles||[],service:active.service,cityView:null,cityGesture:null,citySeed:restored.citySeed,ownedProperties:restored.ownedProperties,onPropertyChange:null,movers:[],selectedTool:'table',selectedVariant:'wood',selectedSeats:4,balance:restored.balance,finishes:active.finishes,rotation:0,deleteMode:false,selectMode:true,moveMode:false,pendingPlacement:null,navigate:null,onEditChange:null,cityTex:{},cityArt:{},restaurantState:active.items,history:active.history,speed:1,gameMinutes:restored.gameMinutes,ready:false,assetFailures:[]};
 
 export function activePlan(){return profilePlan(state.activeRestaurantId,captureRestaurant());}
 export function restaurantName(id=state.activeRestaurantId){return id===MAIN_RESTAURANT?'Mamma Mia':property(id)?.name||'Restaurant';}
@@ -94,7 +96,7 @@ export function clearWorld(){
 
 export function sceneUI(scene){
   const restaurant=scene==='restaurant';
-  for(const id of ['commerceDialog','propertyDialog','menuDialog','kitchenDialog','businessDialog','staffDialog']){const dialog=document.getElementById(id);if(dialog?.open)dialog.close();}
+  for(const id of ['commerceDialog','propertyDialog','menuDialog','kitchenDialog','businessDialog','staffDialog','advertisingDialog']){const dialog=document.getElementById(id);if(dialog?.open)dialog.close();}
   root.dataset.scene=scene;
   document.querySelector('#pizzaEditor').hidden=scene!=='pizza';
   document.querySelector('#tools').hidden=!restaurant;
@@ -138,7 +140,7 @@ export function notify(message){
 
 export function saveLayout(quiet=false){
   const profiles=ensureRestaurants(),savedRestaurants=Object.fromEntries(Object.entries(profiles).map(([id,p])=>[id,{business:p.business,items:p.items,finishes:p.finishes,service:p.service,investmentCents:p.investmentCents,floorPlanVersion:1,kitchenVersion:1,kitchenTiles:p.kitchenTiles}]));
-  try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:11,market:state.market,rivalry:state.rivalry,procurement:state.procurement,daily:state.daily,staff:state.staff,kitchenTiles:state.kitchenTiles,activeRestaurantId:state.activeRestaurantId,restaurants:savedRestaurants,items:state.restaurantState,balance:state.balance,balanceCents:Math.round(state.balance*100),service:state.service,gameMinutes:state.gameMinutes,finishes:state.finishes,ownedProperties:state.ownedProperties,citySeed:state.citySeed}));return true;}
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:12,advertising:state.advertising,market:state.market,rivalry:state.rivalry,procurement:state.procurement,daily:state.daily,staff:state.staff,kitchenTiles:state.kitchenTiles,activeRestaurantId:state.activeRestaurantId,restaurants:savedRestaurants,items:state.restaurantState,balance:state.balance,balanceCents:Math.round(state.balance*100),service:state.service,gameMinutes:state.gameMinutes,finishes:state.finishes,ownedProperties:state.ownedProperties,citySeed:state.citySeed}));return true;}
   catch{if(!quiet)notify('Einrichtung bleibt in dieser Sitzung erhalten.');return false;}
 }
 
@@ -163,9 +165,9 @@ function fallback(){
 async function loadCityAtlas(){for(const type of ['small','medium','big'])state.cityTex[type]=[fallback()];}
 
 export async function loadAssets(){
-  const {loadCityArt}=await import('./pizza-city-art.js?v=20261016b');
-  const {loadRestaurantArt}=await import('./pizza-restaurant-art.js?v=20261016b');
-  const {loadIngredientArt}=await import('./pizza-ingredient-art.js?v=20261016b');
+  const {loadCityArt}=await import('./pizza-city-art.js?v=20261016c');
+  const {loadRestaurantArt}=await import('./pizza-restaurant-art.js?v=20261016c');
+  const {loadIngredientArt}=await import('./pizza-ingredient-art.js?v=20261016c');
   await Promise.all([loadCityArt(),loadRestaurantArt(),loadIngredientArt()]);
   if(!state.cityArt.buildings) await loadCityAtlas();
   loading.hidden=true;

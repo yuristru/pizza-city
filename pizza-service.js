@@ -1,13 +1,13 @@
-import {kitchenReadiness,kitchenWorkFlow,completionWorkFlow} from './pizza-kitchen.js?v=20261016b';
-import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261016b';
-import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261016b';
-import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261016b';
+import {kitchenReadiness,kitchenWorkFlow,completionWorkFlow} from './pizza-kitchen.js?v=20261016c';
+import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261016c';
+import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261016c';
+import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261016c';
 
-import {businessIssue,demandScore,operatingRates,counterLayoutIssue} from './pizza-business.js?v=20261016b';
-import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable,reconcileProduction} from './pizza-production.js?v=20261016b';
-import {workLayoutKey} from './pizza-work-targets.js?v=20261016b';
-import {restoreMachines,startMachineVisit,reconcileMachineVisits,advanceMachineVisits,machinePosition} from './pizza-machines.js?v=20261016b';
-import {ingredientPurchaseCost} from './pizza-procurement.js?v=20261016b';
+import {businessIssue,demandScore,operatingRates,counterLayoutIssue} from './pizza-business.js?v=20261016c';
+import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable,reconcileProduction} from './pizza-production.js?v=20261016c';
+import {workLayoutKey} from './pizza-work-targets.js?v=20261016c';
+import {restoreMachines,startMachineVisit,reconcileMachineVisits,advanceMachineVisits,machinePosition} from './pizza-machines.js?v=20261016c';
+import {ingredientPurchaseCost} from './pizza-procurement.js?v=20261016c';
 export const SERVICE_PHASES=['arriving','waiting','eating','leaving','paying'];
 export const tableKey=t=>[t.x,t.y,t.r,t.seats,t.variant||'wood'].join(':');
 export function freshService(){return {version:1,chainVersion:1,elapsed:0,untilArrival:2,nextId:1,groups:[],machineGuests:[],payments:[],dirtyTables:[],waiterTasks:[],staffPositions:{},plateReturns:[],cleanedTables:0,netCents:0,revenueCents:0,machineRevenueCents:0,machineUses:0,costCents:0,servedGuests:0};}
@@ -18,7 +18,7 @@ export function restoreService(raw,plan=DEFAULT_PLAN){
   const fresh=freshService();
   if(raw?.version!==1||!Number.isFinite(raw.elapsed)||raw.elapsed<0||raw.elapsed>1e10||!Number.isFinite(raw.untilArrival)||raw.untilArrival<0||raw.untilArrival>60||!integer(raw.nextId,1)||!integer(raw.revenueCents)||!integer(raw.costCents)||raw.netCents!==raw.revenueCents-raw.costCents||!integer(raw.servedGuests)||!Array.isArray(raw.groups)||raw.groups.length>12)return fresh;
   Object.assign(fresh,{elapsed:raw.elapsed,untilArrival:raw.untilArrival,nextId:raw.nextId,netCents:raw.netCents,revenueCents:raw.revenueCents,costCents:raw.costCents,servedGuests:raw.servedGuests});
-  for(const k of ['ingredientSavingsCents','staffCents','propertyCents','electricityCents','operatingCents','debtCents','lostGuests','reviews'])if(integer(raw[k]))fresh[k]=raw[k];
+  for(const k of ['ingredientSavingsCents','staffCents','propertyCents','electricityCents','advertisingCents','operatingCents','debtCents','lostGuests','reviews'])if(integer(raw[k]))fresh[k]=raw[k];
   for(const k of ['occupiedSeconds','capacitySeconds','billRemainder','staffAccrued','propertyAccrued','electricityAccrued','totalWaitingSeconds'])if(Number.isFinite(raw[k])&&raw[k]>=0&&raw[k]<=1e12)fresh[k]=raw[k];
   if(Number.isFinite(raw.rating)&&raw.rating>=1&&raw.rating<=5)fresh.rating=raw.rating;
   const ids=new Set();

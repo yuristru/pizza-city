@@ -1,7 +1,7 @@
-import {state,ensureRestaurants,restaurantName,saveLayout} from './pizza-core.js?v=20261016b';
-import {DAY_MINUTES,currentReport,reportMetrics,dayLabel,minuteLabel} from './pizza-daily.js?v=20261016b';
-import {money} from './pizza-catalog.js?v=20261016b';
-import {purchasingDiscount,warehouseDailyCost} from './pizza-procurement.js?v=20261016b';
+import {state,ensureRestaurants,restaurantName,saveLayout} from './pizza-core.js?v=20261016c';
+import {DAY_MINUTES,currentReport,reportMetrics,dayLabel,minuteLabel} from './pizza-daily.js?v=20261016c';
+import {money} from './pizza-catalog.js?v=20261016c';
+import {purchasingDiscount,warehouseDailyCost} from './pizza-procurement.js?v=20261016c';
 const el=id=>document.getElementById(id),number=new Intl.NumberFormat('de-DE',{maximumFractionDigits:1,minimumFractionDigits:1});
 let selectedDay='current',selectedRestaurant='all',dayOptions='',branchOptions='',trendStamp='',branchStamp='';
 function node(tag,value,className){const e=document.createElement(tag);if(value!==undefined)e.textContent=value;if(className)e.className=className;return e;}
@@ -36,7 +36,7 @@ function renderFigures(report){
  el('dailyTitle').textContent=(selectedRestaurant==='all'?'Alle Restaurants':restaurantName(selectedRestaurant))+' · '+dayLabel(report.day);
  el('dailyPeriod').textContent=(report.closed?'Abgeschlossen':'Laufender Spieltag')+' · '+minuteLabel(since)+' bis '+(report.closed?'24:00':minuteLabel(report.endMinute))+' Uhr'+(since>report.day*DAY_MINUTES?' · Teil des Tages erfasst':'');
  const costs=el('dailyCosts');costs.replaceChildren(node('h3','Kosten im Detail'));
- const rows=[['Zutaten',m.ingredientsCents],[selectedRestaurant==='all'?'Löhne in Restaurants':'Löhne',m.staffCents],['Gebäude',m.propertyCents],['Strom',m.electricityCents]];
+ const rows=[['Zutaten',m.ingredientsCents],[selectedRestaurant==='all'?'Löhne in Restaurants':'Löhne',m.staffCents],['Gebäude',m.propertyCents],['Strom',m.electricityCents],['Werbung',m.advertisingCents]];
  if(selectedRestaurant==='all')rows.push(['Löhne ohne Restaurant',m.reserveCents],['Lagerbetrieb',m.warehouseCents],['Konkurrenzaktionen und Strafen',m.rivalryCents]);
  for(const [label,cents]of rows)costs.append(meter(label,cents,Math.max(1,m.costCents),money(cents/100)));
  const procurement=el('dailyProcurement');procurement.replaceChildren(node('h3','Zentraler Einkauf'),node('p',purchasingDiscount(state.procurement)?'Aktuell aktiv · 20 % Zutatenrabatt für alle eigenen Restaurants · '+money(warehouseDailyCost(state.procurement)/100)+' Lagerbetrieb pro Spieltag':'Aktuell kein Lager · Zutaten zum regulären Einkaufspreis'),kpi('Eingesparte Zutatenkosten im gewählten Zeitraum',money(m.ingredientSavingsCents/100)));

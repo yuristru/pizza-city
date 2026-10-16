@@ -1,10 +1,10 @@
-import {renderDistrictPanel} from './pizza-market-ui.js?v=20261016b';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261016b';
-import {state,ensureRestaurants,restaurantName,setRestaurantOpen} from './pizza-core.js?v=20261016b';
-import {restaurantPlan} from './pizza-floorplans.js?v=20261016b';
-import {STAFF,businessMetrics} from './pizza-business.js?v=20261016b';
-import {money} from './pizza-catalog.js?v=20261016b';
-import {mountDailyUI,renderDailyUI,openDailyReport} from './pizza-daily-ui.js?v=20261016b';
+import {renderDistrictPanel} from './pizza-market-ui.js?v=20261016c';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261016c';
+import {state,ensureRestaurants,restaurantName,setRestaurantOpen} from './pizza-core.js?v=20261016c';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261016c';
+import {STAFF,businessMetrics} from './pizza-business.js?v=20261016c';
+import {money} from './pizza-catalog.js?v=20261016c';
+import {mountDailyUI,renderDailyUI,openDailyReport} from './pizza-daily-ui.js?v=20261016c';
 const el=id=>document.getElementById(id);let stamp=0,view='daily';
 function text(tag,value){const e=document.createElement(tag);e.textContent=value;return e;}
 export function renderBusinessUI(force=false){
@@ -19,7 +19,7 @@ export function renderBusinessUI(force=false){
  for(const [id,p]of Object.entries(profiles)){
   const m=businessMetrics(p,restaurantPlan(id)),row=document.createElement('tr');row.dataset.branch=id;
   const b=text('button',restaurantName(id));b.type='button';b.onclick=()=>{d.close();state.navigate('restaurant',id);};const cell=document.createElement('th');cell.scope='row';cell.append(b);row.append(cell);
-  for(const value of [money(m.revenue/100),money(m.machines/100),money(m.ingredients/100),money(m.staff/100),money(m.property/100),money(m.electricity/100),money(m.profit/100),Math.round(m.utilization)+' %',m.rating.toFixed(1)+' / 5',m.averageWait.toFixed(1)+' min',m.served+' / '+m.lost,money(m.debt/100)])row.append(text('td',value));table.append(row);
+  for(const value of [money(m.revenue/100),money(m.machines/100),money(m.ingredients/100),money(m.staff/100),money(m.property/100),money(m.electricity/100),money(m.advertising/100),money(m.profit/100),Math.round(m.utilization)+' %',m.rating.toFixed(1)+' / 5',m.averageWait.toFixed(1)+' min',m.served+' / '+m.lost,money(m.debt/100)])row.append(text('td',value));table.append(row);
  }
  const total=Object.entries(profiles).reduce((sum,[id,p])=>sum+businessMetrics(p,restaurantPlan(id)).profit,0)-(state.staff.reserveCostCents||0)-state.procurement.costCents-state.rivalry.costCents-state.rivalry.fineCents;el('financeSummary').textContent='Ergebnis aller Filialen: '+money(total/100)+' · Konto: '+money(state.balance)+' · Personal ohne Restaurant: '+money((state.staff.reserveCostCents||0)/100)+' Kosten, '+money((state.staff.reserveDebtCents||0)/100)+' offen · Lagerbetrieb: '+money(state.procurement.costCents/100)+' Kosten, '+money(state.procurement.debtCents/100)+' offen · Einkaufsvorteil: '+money((Object.values(profiles).reduce((sum,p)=>sum+(p.service.ingredientSavingsCents||0),0)-state.procurement.costCents)/100);
  el('financeSummary').textContent+=' · Konkurrenzaktionen '+money(state.rivalry.costCents/100)+' · Strafen '+money(state.rivalry.fineCents/100)+', davon offen '+money(state.rivalry.debtCents/100);

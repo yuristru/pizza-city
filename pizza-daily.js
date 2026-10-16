@@ -1,6 +1,6 @@
 export const DAY_MINUTES=1440,SECONDS_PER_MINUTE=5,HISTORY_DAYS=30;
 const START_DATE=Date.UTC(2001,3,12);
-const moneyKeys=['revenueCents','machineRevenueCents','ingredientsCents','ingredientSavingsCents','staffCents','propertyCents','electricityCents'];
+const moneyKeys=['revenueCents','machineRevenueCents','ingredientsCents','ingredientSavingsCents','staffCents','propertyCents','electricityCents','advertisingCents'];
 const countKeys=['servedGuests','machineUses','lostGuests','reviews'];
 const measureKeys=['reviewPoints','waitingSeconds','occupiedSeconds','capacitySeconds'];
 const counterKeys=[...moneyKeys,...countKeys,...measureKeys];
@@ -11,11 +11,11 @@ export function dayLabel(day){return new Intl.DateTimeFormat('de-DE',{day:'2-dig
 export function minuteLabel(minutes){const n=Math.floor(minutes)%DAY_MINUTES;return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');}
 function counters(service){
  const reviews=service.reviews||0;
- return {revenueCents:service.revenueCents||0,machineRevenueCents:service.machineRevenueCents||0,ingredientsCents:service.costCents||0,ingredientSavingsCents:service.ingredientSavingsCents||0,staffCents:service.staffCents||0,propertyCents:service.propertyCents||0,electricityCents:service.electricityCents||0,servedGuests:service.servedGuests||0,machineUses:service.machineUses||0,lostGuests:service.lostGuests||0,reviews,reviewPoints:(service.rating||4)*reviews,waitingSeconds:service.totalWaitingSeconds||0,occupiedSeconds:service.occupiedSeconds||0,capacitySeconds:service.capacitySeconds||0};
+ return {revenueCents:service.revenueCents||0,machineRevenueCents:service.machineRevenueCents||0,ingredientsCents:service.costCents||0,ingredientSavingsCents:service.ingredientSavingsCents||0,staffCents:service.staffCents||0,propertyCents:service.propertyCents||0,electricityCents:service.electricityCents||0,advertisingCents:service.advertisingCents||0,servedGuests:service.servedGuests||0,machineUses:service.machineUses||0,lostGuests:service.lostGuests||0,reviews,reviewPoints:(service.rating||4)*reviews,waitingSeconds:service.totalWaitingSeconds||0,occupiedSeconds:service.occupiedSeconds||0,capacitySeconds:service.capacitySeconds||0};
 }
 function opening(minutes,profiles,staff,procurement={},rivalry={}){return {day:gameDay(minutes),since:minutes,branches:Object.fromEntries(Object.entries(profiles).map(([id,p])=>[id,{since:minutes,baseline:counters(p.service)}])),rivalryBaseline:(rivalry.costCents||0)+(rivalry.fineCents||0),warehouseBaseline:procurement.costCents||0,reserveBaseline:staff.reserveCostCents||0};}
 export function freshDaily(minutes,profiles,staff,procurement={},rivalry={}){return {version:1,current:opening(minutes,profiles,staff,procurement,rivalry),history:[],viewedDay:-1};}
-const withMachines=value=>({...value,ingredientSavingsCents:value.ingredientSavingsCents===undefined?0:value.ingredientSavingsCents,machineRevenueCents:value.machineRevenueCents===undefined?0:value.machineRevenueCents,machineUses:value.machineUses===undefined?0:value.machineUses});
+const withMachines=value=>({...value,advertisingCents:value.advertisingCents??0,ingredientSavingsCents:value.ingredientSavingsCents===undefined?0:value.ingredientSavingsCents,machineRevenueCents:value.machineRevenueCents===undefined?0:value.machineRevenueCents,machineUses:value.machineUses===undefined?0:value.machineUses});
 function validCounters(value){if(!value)return false;value=withMachines(value);return [...moneyKeys,...countKeys].every(k=>validInteger(value[k]))&&value.machineRevenueCents<=value.revenueCents&&measureKeys.every(k=>validNumber(value[k]))&&value.reviewPoints<=value.reviews*5+1e-6&&value.reviewPoints+1e-6>=value.reviews;}
 function validSince(n,day){return validNumber(n)&&n>=day*DAY_MINUTES&&n<(day+1)*DAY_MINUTES;}
 function validReport(r,profiles,day){return r&&validInteger(r.day)&&r.day<day&&validSince(r.startMinute,r.day)&&r.endMinute===(r.day+1)*DAY_MINUTES&&r.closed===true&&validInteger(r.rivalryCents??0)&&validInteger(r.rivalryDebtCents??0)&&validInteger(r.reserveCents)&&validInteger(r.reserveDebtCents)&&validInteger(r.warehouseCents??0)&&validInteger(r.warehouseDebtCents??0)&&r.branches&&Object.keys(r.branches).length>0&&Object.keys(r.branches).length<=32&&Object.entries(r.branches).every(([id,b])=>Object.hasOwn(profiles,id)&&validCounters(b)&&validInteger(b.debtCents)&&validSince(b.since,r.day));}
@@ -58,7 +58,7 @@ export function reportMetrics(report,id='all'){
  m.rivalryCents=id==='all'?(report.rivalryCents||0):0;
  m.warehouseCents=id==='all'?(report.warehouseCents||0):0;
  m.debtCents=branches.reduce((s,b)=>s+b.debtCents,0)+(id==='all'?report.reserveDebtCents+(report.warehouseDebtCents||0)+(report.rivalryDebtCents||0):0);
- m.costCents=m.ingredientsCents+m.staffCents+m.propertyCents+m.electricityCents+m.reserveCents+m.warehouseCents+m.rivalryCents;
+ m.costCents=m.ingredientsCents+m.staffCents+m.propertyCents+m.electricityCents+m.advertisingCents+m.reserveCents+m.warehouseCents+m.rivalryCents;
  m.profitCents=m.revenueCents-m.costCents;
  m.rating=m.reviews?Math.max(1,Math.min(5,m.reviewPoints/m.reviews)):null;
  m.averageWait=m.servedGuests?m.waitingSeconds/m.servedGuests/SECONDS_PER_MINUTE:null;

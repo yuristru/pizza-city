@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#dec9a5">
   <title>Pizza City · Mamma Mia</title>
-  <link rel="stylesheet" href="pizza.css?v=20261016b">
+  <link rel="stylesheet" href="pizza.css?v=20261016c">
 </head>
 <body>
 <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -91,6 +91,29 @@
     <section id="staffContent" role="tabpanel" aria-labelledby="staff-tab-market"></section>
     <p class="staffFootnote">Mittagsschicht: 11:00 bis 16:00 Uhr. Abendschicht: 17:00 bis 23:00 Uhr. Weise jede Person einem Restaurant und einer Schicht zu. Während der Schicht bleibt sie auch ohne Auftrag sichtbar. Zum Schichtende werden laufende Bestellungen und das Abräumen abgeschlossen. Je Fachbereich gibt es drei Kompetenzen. Gehälter werden anteilig über 30 Spieltage abgerechnet, auch ohne Restaurantzuordnung. Pause hält Zeit und Abrechnung an.</p>
   </dialog>
+  <dialog id="advertisingDialog" aria-labelledby="advertisingTitle">
+    <header class="adHeader"><div><span>LA PUBBLICITÀ · Pizza City</span><h2 id="advertisingTitle">Bring dein Viertel auf den Geschmack.</h2></div><button id="advertisingClose" type="button" aria-label="Werbung schließen">×</button></header>
+    <p class="adIntro">Vier Formate. Drei Zielgruppen. Deine nächste Stammkundschaft wartet im Viertel.</p>
+    <form id="advertisingForm">
+      <div class="adRestaurantRow"><label for="advertisingRestaurant">Werbung für<select id="advertisingRestaurant"></select></label><span id="advertisingBalance"></span></div>
+      <div class="adLayout">
+        <div class="adConfiguration">
+          <fieldset><legend><span>01</span> Wähle dein Format</legend><div id="advertisingFormats" class="adFormats"></div></fieldset>
+          <fieldset><legend><span>02</span> Qualität und Zielgruppe</legend><div id="advertisingQualities" class="adQualities"></div></fieldset>
+          <fieldset><legend><span>03</span> Wie lange soll es laufen?</legend><div id="advertisingDurations" class="adDurations"></div></fieldset>
+        </div>
+        <aside class="adQuote" aria-label="Dein Werbeauftrag">
+          <span class="adEyebrow">DEIN AUFTRAG</span><h3 id="advertisingQuoteTitle"></h3><p id="advertisingTarget"></p>
+          <span class="adTotalLabel">Einmalig beim Start</span><strong id="advertisingTotal"></strong><span id="advertisingDaily"></span><span id="advertisingDiscount"></span>
+          <p id="advertisingEnd"></p><p id="advertisingEffect"></p><p id="advertisingForecast"></p><small id="advertisingReadiness"></small>
+          <button id="advertisingOrder" type="submit">Beauftragen</button><p id="advertisingIssue"></p><small class="adPaymentNote">Vollständig im Voraus bezahlt. Endet automatisch, ohne Verlängerung und ohne weitere Abbuchung.</small>
+        </aside>
+      </div>
+      <p id="advertisingStatus" class="adStatus" role="status" aria-live="polite"></p>
+    </form>
+    <section class="adRunning" aria-labelledby="advertisingRunningTitle"><h3 id="advertisingRunningTitle">Laufende Kampagnen <span id="advertisingCount">0</span></h3><div id="advertisingCampaigns"></div><div id="advertisingHistory" hidden></div></section>
+    <p class="adFootnote">Werbung gewinnt Gäste aus dem bestehenden Viertelmarkt. Qualität 1 spricht die einfache, Qualität 2 die mittlere und Qualität 3 die gehobene Zielgruppe an. Passende Preise, Mobiliar, Renovierung, Bewertungen und freie Plätze bestimmen, wie viele Gäste tatsächlich kommen. Laufzeiten zählen in Spieltagen, auch nachts. Pause hält die Kampagnen an.</p>
+  </dialog>
   <dialog id="businessDialog" aria-labelledby="businessTitle">
     <div class="financeTop">
     <header class="propertyHeader"><h2 id="businessTitle">Finanzen</h2><button id="businessClose" type="button" aria-label="Finanzen schließen">×</button></header>
@@ -111,12 +134,12 @@
       <section id="dailyProcurement" class="dailyPanel"></section>
       <section id="dailyBranches"></section>
       <section id="dailyTrend"></section>
-      <p class="dailyFootnote">Der Abschluss entsteht automatisch um 00:00 Uhr. Die letzten 30 abgeschlossenen Spieltage bleiben gespeichert. Gewinn ist Umsatz minus Zutaten, Löhne, Gebäude, Strom und Lagerbetrieb. Immobilien, Lagerkäufe und Einrichtung gelten als Investitionen. Offene Kosten sind bereits im Ergebnis enthalten; ihre spätere Zahlung zählt nicht erneut als Aufwand. Zufriedenheit und Wartezeit beziehen sich auf die Bewertungen und Zahlungen dieses Tages. Pause hält den Tag und die Kosten an.</p>
+      <p class="dailyFootnote">Der Abschluss entsteht automatisch um 00:00 Uhr. Die letzten 30 abgeschlossenen Spieltage bleiben gespeichert. Gewinn ist Umsatz minus Zutaten, Löhne, Gebäude, Strom, Werbung, Lagerbetrieb sowie Konkurrenzaktionen und Strafen. Werbung zählt einmalig beim Auftrag als Aufwand. Immobilien, Lagerkäufe und Einrichtung gelten als Investitionen. Offene Kosten sind bereits im Ergebnis enthalten; ihre spätere Zahlung zählt nicht erneut als Aufwand. Zufriedenheit und Wartezeit beziehen sich auf die Bewertungen und Zahlungen dieses Tages. Pause hält den Tag und die Kosten an.</p>
     </section>
     <section id="financeLifetimeContent" role="tabpanel" aria-labelledby="finance-tab-lifetime" hidden>
     <div id="businessControls"></div><p id="businessRates"></p>
     <h3>Filialvergleich seit Spielbeginn</h3><p id="financeSummary"></p>
-    <div class="financeScroll"><table class="financeTable"><thead><tr><th>Restaurant</th><th>Umsatz</th><th>davon Automaten</th><th>Zutaten</th><th>Personal</th><th>Gebäude</th><th>Strom</th><th>Gewinn</th><th>Auslastung</th><th>Bewertung</th><th>Wartezeit</th><th>Bedient / verloren</th><th>Offene Kosten</th></tr></thead><tbody id="branchRows"></tbody></table></div>
+    <div class="financeScroll"><table class="financeTable"><thead><tr><th>Restaurant</th><th>Umsatz</th><th>davon Automaten</th><th>Zutaten</th><th>Personal</th><th>Gebäude</th><th>Strom</th><th>Werbung</th><th>Gewinn</th><th>Auslastung</th><th>Bewertung</th><th>Wartezeit</th><th>Bedient / verloren</th><th>Offene Kosten</th></tr></thead><tbody id="branchRows"></tbody></table></div>
     <p>Auslastung zählt belegte Sitzplätze über die gesamte Spielzeit. Offene Kosten werden aus dem nächsten Guthaben beglichen. Standort, Preise, Auswahl, Einrichtung und Bewertungen bestimmen die Nachfrage. Lange Wartezeiten kosten Gäste und Sterne.</p>
     </section>
   </dialog>
@@ -180,14 +203,14 @@
     <button type="button" id="restaurantBtn" class="navbtn" aria-pressed="false"><svg aria-hidden="true"><use href="#icon-cutlery"/></svg>Restaurant</button>
     <button type="button" id="pizzaBtn" class="navbtn" aria-pressed="false"><svg aria-hidden="true"><use href="#icon-pizza"/></svg>Pizza</button>
     <button type="button" id="staffBtn" class="navbtn"><svg aria-hidden="true"><use href="#icon-people"/></svg>Personal</button>
-    <button type="button" class="navbtn" disabled title="In dieser Demo noch nicht verfügbar"><svg aria-hidden="true"><use href="#icon-megaphone"/></svg>Werbung</button>
+    <button type="button" id="advertisingBtn" class="navbtn"><svg aria-hidden="true"><use href="#icon-megaphone"/></svg>Werbung</button>
     <button type="button" id="financeBtn" class="navbtn"><svg aria-hidden="true"><use href="#icon-coins"/></svg>Finanzen</button>
   </nav>
   <div id="credit" class="credit" aria-hidden="true">Pizza City</div>
 </div>
 <noscript>Bitte JavaScript aktivieren, um die Pizza-Demo zu starten.</noscript>
 <script type="module">
-  import('./pizza.js?v=20261016b').catch(error=>{
+  import('./pizza.js?v=20261016c').catch(error=>{
     console.error('Pizza demo could not start',error);
     const loading=document.querySelector('#loading');loading.hidden=false;loading.replaceChildren();
     const message=document.createElement('p');message.textContent='Die Demo konnte nicht starten. Bitte erneut laden.';

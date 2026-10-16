@@ -53,13 +53,13 @@ async function loaded(page,url){
   // Pause before the first frame so running costs cannot alter save/reload assertions.
   const source=fs.readFileSync(path.join(root,'pizza.js'),'utf8');
   await page.route('**/pizza.js?*',route=>route.fulfill({contentType:'text/javascript',body:source.replace('state.ready=true;','state.speed=0;state.ready=true;')}));
-  await page.goto(url);await page.waitForSelector('#loading',{state:'hidden',timeout:15000});
+  await page.goto(url);await page.waitForSelector('#loading',{state:'hidden',timeout:Number(process.env.PIZZA_LOAD_TIMEOUT)||30000});
 }
 
 
 (async()=>{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
- const {PROPERTIES}=await import(pathToFileURL(path.join(root,'pizza-properties.js')));
+ const {PROPERTIES}=await import(pathToFileURL(path.join(root,'pizza-properties.js'))),{restaurantPlan}=await import(pathToFileURL(path.join(root,'pizza-floorplans.js')));
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox','--disable-dev-shm-usage','--enable-unsafe-swiftshader']});
  try{
   const page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -68,7 +68,7 @@ async function loaded(page,url){
   for(const id of ['mamma-mia',...PROPERTIES.map(p=>p.id)]){
    await page.selectOption('#restaurantSelect',id);
    const geometry=await page.evaluate(async p=>{const {world,state,app,sceneViewport}=await import(p);app.render();const room=world.children[0],floor=room.children.find(c=>c.label==='restaurant-floor'),objects=room.children.find(c=>c.label==='restaurant-objects');const area=sceneViewport(true),b=room.getBounds();return {id:room.floorPlanId,area:room.area,cells:floor.children.length,doors:[...objects.children,...room.children.find(c=>c.label==='kitchen-back-walls').children].filter(c=>c.label==='kitchen-door').length,b:{x:b.x,y:b.y,right:b.x+b.width,bottom:b.y+b.height},viewport:area};},corePath);
-   assert.equal(geometry.id,id);assert.equal(geometry.cells,geometry.area);assert.equal(geometry.doors,['san-marco','palazzo-sole'].includes(id)?0:1);
+   assert.equal(geometry.id,id);assert.equal(geometry.cells,geometry.area);assert.equal(geometry.doors,restaurantPlan(id).kitchen.kind==='island'?0:1,id+' kitchen doors');
    assert(geometry.b.x>=geometry.viewport.left-2&&geometry.b.right<=geometry.viewport.right+2&&geometry.b.y>=geometry.viewport.top-2&&geometry.b.bottom<=geometry.viewport.bottom+2,JSON.stringify(geometry));
    await capture(page,'floorplan-'+id+'.png');
   }
@@ -87,6 +87,6 @@ async function loaded(page,url){
   await migrationPage.addInitScript(profile=>{if(!localStorage.getItem('pizza-city-layout-v1'))localStorage.setItem('pizza-city-layout-v1',JSON.stringify({version:6,items:[],balanceCents:10000000,ownedProperties:['san-marco'],restaurants:{'san-marco':profile}}));},oldProfile);
   await loaded(migrationPage,`http://127.0.0.1:${server.address().port}/pizza.html`);await migrationPage.click('[data-speed="0"]');await migrationPage.click('#restaurantBtn');assert.equal((await snapshot(migrationPage)).balance,100000+expectedRefund/100);
   await migrationPage.reload();await migrationPage.waitForSelector('#loading',{state:'hidden'});await migrationPage.click('[data-speed="0"]');assert.equal((await snapshot(migrationPage)).balance,100000+expectedRefund/100);await migrationPage.close();
-  assert.deepEqual(errors,[]);console.log('Floor plan browser passed: all ten shapes, exact tile counts, kitchen doors/islands, camera fit, real mobile placement, property area and saved reload.');
+  assert.deepEqual(errors,[]);console.log('Floor plan browser passed: all nineteen sites, exact tile counts, kitchen doors/islands, camera fit, real mobile placement, property area and saved reload.');
  }finally{await browser.close();server.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;server.close();});

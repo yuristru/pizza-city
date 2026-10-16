@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import {AD_FORMATS,AD_QUALITIES,AD_DURATIONS,campaignQuote,freshAdvertising,commissionCampaign,restoreAdvertising,activeCampaigns,advertisingMultipliers} from '../pizza-advertising.js';
+import {districtMarket,restaurantDistrict,freshMarket,advanceMarket} from '../pizza-market.js';
+import {freshService,restoreService} from '../pizza-service.js';
+import {freshDaily,currentReport,reportMetrics,completeDay,restoreDaily} from '../pizza-daily.js';
+import {businessMetrics} from '../pizza-business.js';
+assert.equal(AD_FORMATS.length,4);assert.equal(AD_QUALITIES.length,3);
+for(const f of AD_FORMATS)for(const q of AD_QUALITIES){
+ let previous=null;for(const d of AD_DURATIONS){const quote=campaignQuote({formatId:f.id,qualityId:q.id,days:d.days});assert(Number.isSafeInteger(quote.totalCents));assert.equal(quote.totalCents,quote.dailyCents*d.days);if(previous){assert(quote.dailyCents<previous.dailyCents);assert(quote.totalCents>previous.totalCents);}previous=quote;}
+}
+for(const invalid of [null,{}, {formatId:'tv',qualityId:'simple',days:1},{formatId:'radio',qualityId:'all',days:1},{formatId:'flyer',qualityId:'middle',days:-1}])assert.equal(campaignQuote(invalid),null);
+const profile=()=>({items:[{type:'oven'},{type:'bar'},{type:'fridge'},{type:'table',seats:4,variant:'wood'}],business:{open:true,cook:1,waiter:1},finishes:{renovation:1},service:freshService()}),profiles={'mamma-mia':profile(),fontana:profile(),teatro:profile()},staff={reserveCostCents:0,reserveDebtCents:0};
+const ads=freshAdvertising(),minutes=690,menu=[{active:true,price:850}],d=restaurantDistrict('mamma-mia'),before=districtMarket(d,profiles,menu),request={restaurantId:'mamma-mia',formatId:'radio',qualityId:'upscale',days:7},daily=freshDaily(minutes,profiles,staff);
+const failed=structuredClone({ads,profiles});assert.equal(commissionCampaign(ads,request,profiles,100,minutes).ok,false);assert.deepEqual({ads,profiles},failed);assert.equal(commissionCampaign(ads,{...request,restaurantId:'enzo'},profiles,1e8,minutes).ok,false);assert.equal(commissionCampaign(ads,null,profiles,1e8,minutes).ok,false);
+const result=commissionCampaign(ads,request,profiles,1000000,minutes);assert(result.ok);assert.equal(result.balanceCents,1000000-result.quote.totalCents);assert.equal(result.campaign.until,minutes+7*1440);
+const after=districtMarket(d,profiles,menu,{},minutes,{advertising:ads}),site=(s,id)=>s.participants.find(p=>p.id===id);
+assert.deepEqual(site(after,'mamma-mia').shares.slice(0,2),site(before,'mamma-mia').shares.slice(0,2));assert(site(after,'mamma-mia').shares[2]>site(before,'mamma-mia').shares[2]);assert(site(after,'fontana').shares[2]<site(before,'fontana').shares[2]);
+assert.deepEqual(districtMarket(restaurantDistrict('teatro'),profiles,menu,{},minutes,{advertising:ads}),districtMarket(restaurantDistrict('teatro'),profiles,menu,{},minutes), 'Distant districts do not change.');
+assert.deepEqual(advertisingMultipliers(ads,'mamma-mia',minutes),[1,1,1.9]);assert.deepEqual(advertisingMultipliers(ads,'fontana',minutes),[1,1,1]);
+assert.equal(activeCampaigns(ads,result.campaign.until-.00001).length,1);assert.equal(activeCampaigns(ads,result.campaign.until).length,0);assert.deepEqual(advertisingMultipliers(ads,'mamma-mia',result.campaign.until),[1,1,1]);assert.deepEqual(districtMarket(d,profiles,menu,{},result.campaign.until,{advertising:ads}),before);
+const balance=result.balanceCents,snapshot=structuredClone({ads,profiles});assert.equal(commissionCampaign(ads,{...request,days:14},profiles,balance,minutes+20).ok,false);assert.deepEqual({ads,profiles},snapshot,'A duplicate must not charge or extend the campaign.');
+const restore=restoreAdvertising(ads,minutes+20,profiles);assert.deepEqual(restore,ads);assert.deepEqual(restoreAdvertising(ads,minutes+20,{fontana:profiles.fontana}).campaigns,[]);assert.deepEqual(restoreAdvertising(null,minutes,profiles),freshAdvertising());
+const malformed={...ads,campaigns:[null,{},...ads.campaigns,...ads.campaigns,{...result.campaign,id:99,starts:minutes+100},{...result.campaign,id:100,totalCents:1}]};assert.deepEqual(restoreAdvertising(malformed,minutes,profiles).campaigns,ads.campaigns);
+assert.equal(restoreService(profiles['mamma-mia'].service).advertisingCents,result.quote.totalCents);
+const metrics=reportMetrics(currentReport(daily,minutes,profiles,staff));assert.equal(metrics.advertisingCents,result.quote.totalCents);assert.equal(metrics.costCents,result.quote.totalCents);assert.equal(metrics.profitCents,-result.quote.totalCents);assert.equal(businessMetrics(profiles['mamma-mia'],{area:100}).profit,-result.quote.totalCents);
+const restoredDaily=restoreDaily(daily,minutes,profiles,staff);assert.deepEqual(restoredDaily,daily);const closed=completeDay(daily,profiles,staff);assert.equal(reportMetrics(closed).advertisingCents,result.quote.totalCents);assert.equal(reportMetrics(currentReport(daily,1440,profiles,staff)).advertisingCents,0,'A seven-day campaign is charged only on the order day.');
+for(const f of AD_FORMATS.filter(f=>f.id!=='radio'))assert(commissionCampaign(ads,{...request,formatId:f.id},profiles,1e8,minutes).ok);assert.deepEqual(advertisingMultipliers(ads,'mamma-mia',minutes),[1,1,3],'Combined formats have a finite bonus.');
+const market=freshMarket(minutes);for(let i=0;i<10;i++)advanceMarket(market,[districtMarket(d,profiles,menu,{},minutes,{advertising:ads})],3300,minutes);assert(market.used[d.id].every((n,i)=>n<=d.customers[i]));
+assert(commissionCampaign(ads,request,profiles,balance,result.campaign.until).ok,'The same format can be commissioned again after expiry.');
+const legacy=structuredClone(daily);for(const b of Object.values(legacy.current.branches))delete b.baseline.advertisingCents;for(const r of legacy.history)for(const b of Object.values(r.branches))delete b.advertisingCents;assert.equal(restoreDaily(legacy,1440,profiles,staff).history.length,1,'Older daily reports survive migration.');
+console.log('Advertising passed: 4 formats x 3 tiers, discounted durations and exact upfront totals, atomic failures/duplicates, district and tier targeting, competition and finite pools, stacking cap, exact expiry, branch profit/daily cost once, legacy and malformed save recovery.');

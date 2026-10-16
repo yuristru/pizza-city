@@ -1,13 +1,13 @@
-import {SABOTAGE_ACTIONS,sabotageIssue,executeSabotage} from './pizza-rivalry.js?v=20261016b';
-import {renderDistrictPanel} from './pizza-market-ui.js?v=20261016b';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261016b';
-import {ensureRestaurants} from './pizza-core.js?v=20261016b';
-import {minuteLabel,dayLabel} from './pizza-daily.js?v=20261016b';
-import {state,saveLayout,updateMoney,notify} from './pizza-core.js?v=20261016b';
-import {warehouse,buyWarehouse,warehousePurchaseIssue,purchasingDiscount} from './pizza-procurement.js?v=20261016b';
-import {competitor} from './pizza-competitors.js?v=20261016b';
-import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261016b';
-import {money} from './pizza-catalog.js?v=20261016b';
+import {SABOTAGE_ACTIONS,sabotageIssue,executeSabotage} from './pizza-rivalry.js?v=20261016c';
+import {renderDistrictPanel} from './pizza-market-ui.js?v=20261016c';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261016c';
+import {ensureRestaurants} from './pizza-core.js?v=20261016c';
+import {minuteLabel,dayLabel} from './pizza-daily.js?v=20261016c';
+import {state,saveLayout,updateMoney,notify} from './pizza-core.js?v=20261016c';
+import {warehouse,buyWarehouse,warehousePurchaseIssue,purchasingDiscount} from './pizza-procurement.js?v=20261016c';
+import {competitor} from './pizza-competitors.js?v=20261016c';
+import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261016c';
+import {money} from './pizza-catalog.js?v=20261016c';
 const el=id=>document.getElementById(id);let selection=null,action=null,stamp=0;
 function render(){
  const w=warehouse(selection),r=competitor(selection),dialog=el('commerceDialog');if(!w&&!r)return;
