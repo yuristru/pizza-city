@@ -1,4 +1,4 @@
-import {competitor} from './pizza-competitors.js?v=20261016d';
+import {competitor} from './pizza-competitors.js?v=20261016e';
 export const SABOTAGE_ACTIONS=[
  {id:'inspection',name:'Beim Ordnungsamt melden',costCents:75000,risk:.15,fineCents:1500000,duration:360,factor:.55,description:'Kontrolle: 45 % weniger Nachfrage für 6 Spielstunden.'},
  {id:'roaches',name:'Kakerlaken aussetzen',costCents:240000,risk:.42,fineCents:4500000,duration:1440,factor:.2,description:'Hygienevorfall: 80 % weniger Nachfrage für 24 Spielstunden.'},

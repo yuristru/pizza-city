@@ -1,7 +1,7 @@
-import {avatarTraits} from './pizza-staff-avatar.js?v=20261016d';
-import {Sprite,Texture,Rectangle} from './pizza-core.js?v=20261016d';
-import {restaurantSprite,restaurantIcon} from './pizza-restaurant-art.js?v=20261016d';
-import {project,tableChairs} from './pizza-layout.js?v=20261016d';
+import {avatarTraits} from './pizza-staff-avatar.js?v=20261016e';
+import {Sprite,Texture,Rectangle} from './pizza-core.js?v=20261016e';
+import {restaurantSprite,restaurantIcon} from './pizza-restaurant-art.js?v=20261016e';
+import {project,tableChairs} from './pizza-layout.js?v=20261016e';
 
 // Pixel bitmaps with four fixed views. The scene places only flat 2D sprites.
 const WIDTH=256,HEIGHT=192,FOOT={x:128,y:144},cache=new Map();

@@ -1,7 +1,7 @@
-import {BUILDING_ART} from './pizza-city-building-art.js?v=20261016d';
-import {buildingProjection} from './pizza-city-building-rules.js?v=20261016d';
-import {groundProjection} from './pizza-isometric-art.js?v=20261016d';
-import {Sprite,Texture,state} from './pizza-core.js?v=20261016d';
+import {BUILDING_ART} from './pizza-city-building-art.js?v=20261016e';
+import {buildingProjection} from './pizza-city-building-rules.js?v=20261016e';
+import {groundProjection} from './pizza-isometric-art.js?v=20261016e';
+import {Sprite,Texture,state} from './pizza-core.js?v=20261016e';
 
 export const ATLASES=[
  {key:'contacts',url:'italian-city-contacts-v1.png',frames:[[0,0,512,480,50],[512,0,512,480,50],[1024,0,512,480,40],[0,512,512,450,38],[512,512,512,450,38],[1024,512,512,450,38]]},

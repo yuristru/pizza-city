@@ -1,13 +1,13 @@
-import {kitchenReadiness,kitchenWorkFlow,completionWorkFlow} from './pizza-kitchen.js?v=20261016d';
-import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261016d';
-import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261016d';
-import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261016d';
+import {kitchenReadiness,kitchenWorkFlow,completionWorkFlow} from './pizza-kitchen.js?v=20261016e';
+import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261016e';
+import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261016e';
+import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261016e';
 
-import {businessIssue,demandScore,operatingRates,counterLayoutIssue} from './pizza-business.js?v=20261016d';
-import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable,reconcileProduction} from './pizza-production.js?v=20261016d';
-import {workLayoutKey} from './pizza-work-targets.js?v=20261016d';
-import {restoreMachines,startMachineVisit,reconcileMachineVisits,advanceMachineVisits,machinePosition} from './pizza-machines.js?v=20261016d';
-import {ingredientPurchaseCost} from './pizza-procurement.js?v=20261016d';
+import {businessIssue,demandScore,operatingRates,counterLayoutIssue} from './pizza-business.js?v=20261016e';
+import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable,reconcileProduction} from './pizza-production.js?v=20261016e';
+import {workLayoutKey} from './pizza-work-targets.js?v=20261016e';
+import {restoreMachines,startMachineVisit,reconcileMachineVisits,advanceMachineVisits,machinePosition} from './pizza-machines.js?v=20261016e';
+import {ingredientPurchaseCost} from './pizza-procurement.js?v=20261016e';
 export const SERVICE_PHASES=['arriving','waiting','eating','leaving','paying'];
 export const tableKey=t=>[t.x,t.y,t.r,t.seats,t.variant||'wood'].join(':');
 export function freshService(){return {version:1,chainVersion:1,elapsed:0,untilArrival:2,nextId:1,groups:[],machineGuests:[],payments:[],dirtyTables:[],waiterTasks:[],staffPositions:{},plateReturns:[],cleanedTables:0,netCents:0,revenueCents:0,machineRevenueCents:0,machineUses:0,costCents:0,servedGuests:0};}

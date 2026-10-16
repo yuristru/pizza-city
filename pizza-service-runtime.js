@@ -1,17 +1,17 @@
-import {DISTRICTS,districtMarket,advanceMarket,claimCustomers} from './pizza-market.js?v=20261016d';
-import {activeCampaigns} from './pizza-advertising.js?v=20261016d';
-import {collectFine,advanceRivalry} from './pizza-rivalry.js?v=20261016d';
-import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261016d';
-import {accrueReservePayroll} from './pizza-staff.js?v=20261016d';
-import {staffSchedule,nextShiftBoundary} from './pizza-shifts.js?v=20261016d';
-import {DAY_MINUTES,SECONDS_PER_MINUTE,completeDay,dayLabel} from './pizza-daily.js?v=20261016d';
-import {profilePlan} from './pizza-kitchen.js?v=20261016d';
-import {state,saveLayout,updateMoney,ensureRestaurants,notify} from './pizza-core.js?v=20261016d';
-import {money} from './pizza-catalog.js?v=20261016d';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261016d';
-import {advanceService} from './pizza-service.js?v=20261016d';
+import {DISTRICTS,districtMarket,advanceMarket,claimCustomers} from './pizza-market.js?v=20261016e';
+import {activeCampaigns} from './pizza-advertising.js?v=20261016e';
+import {collectFine,advanceRivalry} from './pizza-rivalry.js?v=20261016e';
+import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261016e';
+import {accrueReservePayroll} from './pizza-staff.js?v=20261016e';
+import {staffSchedule,nextShiftBoundary} from './pizza-shifts.js?v=20261016e';
+import {DAY_MINUTES,SECONDS_PER_MINUTE,completeDay,dayLabel} from './pizza-daily.js?v=20261016e';
+import {profilePlan} from './pizza-kitchen.js?v=20261016e';
+import {state,saveLayout,updateMoney,ensureRestaurants,notify} from './pizza-core.js?v=20261016e';
+import {money} from './pizza-catalog.js?v=20261016e';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261016e';
+import {advanceService} from './pizza-service.js?v=20261016e';
 
-import {accrueWarehouseCosts,purchasingDiscount} from './pizza-procurement.js?v=20261016d';
+import {accrueWarehouseCosts,purchasingDiscount} from './pizza-procurement.js?v=20261016e';
 let checkpoint=0;
 export function tickService(seconds){
   if(!Number.isFinite(seconds)||seconds<=0)return [];

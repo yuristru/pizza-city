@@ -1,11 +1,11 @@
-import {renderDistrictPanel} from './pizza-market-ui.js?v=20261016d';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261016d';
-import {restaurantPlan} from './pizza-floorplans.js?v=20261016d';
-import {state,saveLayout,updateMoney,notify,ensureRestaurants} from './pizza-core.js?v=20261016d';
-import {money} from './pizza-catalog.js?v=20261016d';
-import {PROPERTIES,PROPERTY_SIZES,property,buyProperty,propertyPurchaseIssue} from './pizza-properties.js?v=20261016d';
-import {WAREHOUSES} from './pizza-procurement.js?v=20261016d';
-import {openCommerce} from './pizza-commerce-ui.js?v=20261016d';
+import {renderDistrictPanel} from './pizza-market-ui.js?v=20261016e';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261016e';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261016e';
+import {state,saveLayout,updateMoney,notify,ensureRestaurants} from './pizza-core.js?v=20261016e';
+import {money} from './pizza-catalog.js?v=20261016e';
+import {PROPERTIES,PROPERTY_SIZES,property,buyProperty,propertyPurchaseIssue} from './pizza-properties.js?v=20261016e';
+import {WAREHOUSES} from './pizza-procurement.js?v=20261016e';
+import {openCommerce} from './pizza-commerce-ui.js?v=20261016e';
 const el=id=>document.getElementById(id);
 let selected=null,filter='small';
 function render(){
