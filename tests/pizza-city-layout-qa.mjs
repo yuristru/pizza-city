@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import {districtOrder,nextCitySeed,DEFAULT_CITY_SEED,cityLayout,advanceStreetActor} from '../pizza-city-layout.js';
+import {landmarkGarden,inGardenRect} from '../pizza-city-landscape.js';
+import {BUILDING_ART} from '../pizza-city-building-art.js';
+import {buildingProjection} from '../pizza-city-building-rules.js';
 assert.deepEqual(districtOrder(),[0,1,2,3,4,5,6,7,8]);
 for(const seed of [0,1,42,0xffffffff,DEFAULT_CITY_SEED]){
   const order=districtOrder(seed);assert.deepEqual([...order].sort(),[0,1,2,3,4,5,6,7,8]);
@@ -39,6 +42,18 @@ for(let i=0;i<128;i++){
   for(const b of core){
     assert(b.x1-b.x0>=5.7&&b.y1-b.y0>=6.2,'Properties and full courtyard groups must fit every core parcel.');
     for(const x of [b.x0,(b.x0+b.x1)/2,b.x1])for(const y of [b.y0,(b.y0+b.y1)/2,b.y1])assert(!layout.road(x,y)&&!layout.water(x,y));
+    if(b.source===0||b.source===1){
+      const art=BUILDING_ART.landmarks[b.source],scale=art.worldWidth/art.crop[2];
+      const size=art.uniform?{width:(art.corners[1][0]-art.corners[0][0])*scale/32,depth:(art.corners[2][0]-art.corners[1][0])*scale/32}:buildingProjection(art.corners,art.worldWidth,art.storeys,art.facadePixels).groundSize;
+      const garden=landmarkGarden(b,b.source,size);
+      for(const r of [garden.foundation,garden.apron,garden.lawn,...garden.paths,...garden.beds])assert(r.x0>=b.x0&&r.x1<=b.x1&&r.y0>=b.y0&&r.y1<=b.y1&&r.x1>r.x0&&r.y1>r.y0,'Gardens, forecourts and paths stay inside their parcel.');
+      assert(garden.trees.length>=2&&garden.benches.length===4&&garden.lamps.length===2);
+      assert(garden.trees.every(t=>!inGardenRect(garden.apron,t.x,t.y)),'Trees leave the landmark and forecourt clear.');
+      for(let y=garden.entrance.y;y<=garden.streetEntrance.y;y+=.05)assert(garden.paths.some(p=>inGardenRect(p,garden.entrance.x,y)),'Every entrance has a continuous approach to the street.');
+      let green=0,total=0;
+      for(let x=b.x0+.1;x<b.x1;x+=.2)for(let y=b.y0+.1;y<b.y1;y+=.2){total++;if(inGardenRect(garden.lawn,x,y)&&!inGardenRect(garden.apron,x,y)&&!garden.paths.some(p=>inGardenRect(p,x,y)))green++;}
+      assert(green/total>.22,'Landmarks receive substantial green space rather than another paved square.');
+    }
   }
   while(pending.length)for(const n of layout.nodes[pending.pop()].neighbors)if(!visited.has(n)){visited.add(n);pending.push(n);}
   assert.equal(visited.size,layout.nodes.length,'Side lanes and merged perimeter blocks remain connected.');
@@ -59,6 +74,7 @@ for(let i=0;i<128;i++){
 assert(blockCounts.size>=5&&streetCounts.size>=5,'Road and block counts must vary between cities.');
 assert.deepEqual([...shores].sort(),['east','north','south','west']);
 console.log('City variety passed: 128 distinct plans, variable block/road counts, all four canal shores, parks, plazas, connected side lanes and nine protected gameplay districts.');
+console.log('Landmark gardens passed: 256 contained precincts, substantial lawns, trees, seating and continuous street approaches.');
 
 // Keep the footprint geometry checks in the existing city QA entry point.
 await import('./pizza-city-footprints-qa.mjs');

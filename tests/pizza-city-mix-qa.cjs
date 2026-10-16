@@ -40,6 +40,12 @@ const server=http.createServer((req,res)=>{
         return {canal:state.cityLayout.canal.side,streets:state.cityLayout.streets.length,blocks:state.cityLayout.blocks.length,expectedPlans:state.cityLayout.blocks.filter(b=>b.landUse==='housing'&&b.source!==0&&b.source!==1).length,courts:state.cityBlockPlans.map(b=>({coverage:b.coverage,court:b.court,gate:b.gate,parts:b.parts})),houses:objects.children.filter(c=>c.groundBounds).map(c=>({label:c.label,row:c.frontage,key:c.blockKey,b:c.groundBounds,cells:c.occupiedGroundCells})),properties:objects.children.filter(c=>c.propertyId).map(c=>c.propertyId),warehouses:objects.children.filter(c=>c.warehouseId).map(c=>c.warehouseId),restaurants:objects.children.filter(c=>['city-competitor','player-restaurant'].includes(c.label)).length,clear:objects.children.filter(c=>c.groundBounds).every(c=>{const b=c.groundBounds;return [[b.x0,b.y0],[b.x1,b.y0],[b.x1,b.y1],[b.x0,b.y1]].every(([x,y])=>!state.cityLayout.road(x,y)&&!state.cityLayout.water(x,y));})};
       },{corePath,cityPath,seed});
       assert.equal(data.courts.length,data.expectedPlans);
+      const gardens=await page.evaluate(async p=>{
+        const {state}=await import(p),objects=state.camera.children.find(c=>c.label==='city-objects');
+        return {details:state.camera.children.find(c=>c.label==='city-ground').groundDetails,parks:state.cityLandmarkGardens.map(g=>({id:g.id,trees:objects.children.filter(c=>c.landmarkBlock===g.id&&c.label==='city-tree').length,benches:objects.children.filter(c=>c.landmarkBlock===g.id&&c.label==='city-park-bench').length,landmark:objects.children.filter(c=>c.landmarkBlock===g.id&&c.landmarkFoundation).length}))};
+      },corePath);
+      assert.equal(gardens.details.landmarkGardens,2);assert.equal(gardens.details.gardenPaths,14);
+      assert(gardens.details.gardenBeds>=2&&gardens.parks.every(g=>g.trees>=2&&g.benches===4&&g.landmark===1),'Both landmarks are embedded in rendered gardens with seating.');
       const overlap=(p,q)=>Math.min(p.x1,q.x1)-Math.max(p.x0,q.x0)>1e-7&&Math.min(p.y1,q.y1)-Math.max(p.y0,q.y0)>1e-7;
       for(const b of data.courts){
         assert(Object.values(b.coverage).every(c=>c.ratio>=.9),'Every street front is closed except its narrow entrance.');

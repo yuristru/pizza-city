@@ -3,7 +3,8 @@ import {COMPETITORS} from './pizza-competitors.js?v=20261015b';
 import {openCommerce} from './pizza-commerce-ui.js?v=20261015b';
 import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261015b';
 import {closedCityBlock} from './pizza-city-perimeter.js?v=20261015e';
-import {cityGround} from './pizza-city-ground.js?v=20261015e';
+import {cityGround} from './pizza-city-ground.js?v=20261016a';
+import {landmarkGarden} from './pizza-city-landscape.js?v=20261016a';
 import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261015e';
 import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261015b';
 import {openProperty} from './pizza-properties-ui.js?v=20261015b';
@@ -96,9 +97,17 @@ function building(objects,labels,x,y,index=0,name=null,player=false,kind='buildi
   }
   return object;
 }
-function landmark(objects,labels,x,y,index){
-  const object=citySprite('landmarks',index)||building(objects,labels,x,y,7);
-  place(objects,object,x,y);object.label=index?'city-cathedral':'city-colosseum';
+function landmarkPark(objects,labels,b,index){
+  const garden=state.cityLandmarkGardens.find(g=>g.id===b.id),f=garden.foundation;
+  const object=citySprite('landmarks',index)||building(objects,labels,f.x1,f.y1,7);
+  const art=BUILDING_ART.landmarks[index];
+  if(art.uniform&&object.artId===art.id){
+    const [ax,ay,aw,ah]=art.crop,[fx,fy]=art.corners[1];object.anchor.set((fx-ax)/aw,(fy-ay)/ah);
+  }
+  place(objects,object,f.x1,f.y1);object.label=index?'city-cathedral':'city-colosseum';object.landmarkBlock=b.id;object.landmarkFoundation=f;
+  for(const t of garden.trees){const g=tree(t.index,t.scale);g.landmarkBlock=b.id;place(objects,g,t.x,t.y);}
+  for(const p of garden.benches){const g=bench();g.label='city-park-bench';g.landmarkBlock=b.id;place(objects,g,p.x,p.y);}
+  for(const p of garden.lamps){const g=lamp();g.label='city-park-lamp';g.landmarkBlock=b.id;place(objects,g,p.x,p.y);}
 }
 function propertyBuilding(objects,labels,x,y,site,scale=1){
   const owned=state.ownedProperties.includes(site.id),size=PROPERTY_SIZES[site.size];
@@ -148,14 +157,7 @@ function block(objects,labels,b){
     put(bench(),Math.max(.8,w/2-1.7),h/2+.9);put(bench(),Math.min(w-.8,w/2+1.7),h/2+.9);
     put(lamp(),w-.1,h-.1);return;
   }
-  if(bx===0&&by===0){
-    landmark(objects,labels,x0+w*.55,y0+h-.4,0);
-    put(tree(2,.85),.3,h*.45);put(tree(3,.8),w-.3,h*.5);put(lamp(),w-.25,.3);return;
-  }
-  if(bx===1&&by===0){
-    landmark(objects,labels,x0+w*.48,y0+h-.5,1);
-    put(tree(2,.85),.3,1);put(tree(2,.8),w-.2,h-.4);return;
-  }
+  if(by===0&&(bx===0||bx===1)){landmarkPark(objects,labels,b,bx);return;}
   const size=(kind,index)=>state.cityArt[kind]?.[index]?.groundSize||foundation(kind,index);
   const item=(kind,index,extra={})=>({kind,index,...size(kind,index),...extra});
   const pool=[];
@@ -237,7 +239,12 @@ export function showCity(){
   clearWorld();state.scene='city';sceneUI('city');
   state.restaurantSign=null;state.cityRestaurantSigns={};
   state.camera=new Container();world.addChild(state.camera);
-  const ground=cityGround({...layout,park,fountainCell},state.citySeed),markings=new Container(),objects=new Container(),labels=new Container();
+  state.cityLandmarkGardens=layout.blocks.filter(b=>b.source===0||b.source===1).map(b=>{
+    const index=b.source,art=BUILDING_ART.landmarks[index];
+    const size=art.uniform?{width:(art.corners[1][0]-art.corners[0][0])*Math.min(art.worldWidth/art.crop[2],72/art.facadePixels)/32,depth:(art.corners[2][0]-art.corners[1][0])*Math.min(art.worldWidth/art.crop[2],72/art.facadePixels)/32}:foundation('landmarks',index);
+    return landmarkGarden(b,index,size);
+  });
+  const ground=cityGround({...layout,park,fountainCell,landmarkGardens:state.cityLandmarkGardens},state.citySeed),markings=new Container(),objects=new Container(),labels=new Container();
   ground.label='city-ground';objects.label='city-objects';objects.sortableChildren=true;labels.sortableChildren=true;
   state.camera.addChild(ground,markings,objects,labels);
   state.cityBlockPlans=[];

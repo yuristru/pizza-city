@@ -1,14 +1,14 @@
 import {Sprite,Texture,CITY_N,hash} from './pizza-core.js?v=20261015b';
 
 // One texture pixel per world pixel matches the city sprites; bake once per map.
-export function cityGround({road,water,park,fountainCell,streets,links,nodes,canal,crossings},seed){
+export function cityGround({road,water,park,fountainCell,streets,links,nodes,canal,crossings,landmarkGardens=[]},seed){
   const min=-8,max=CITY_N+7,left=(min-max)*32-32,top=min*32-16;
   const canvas=document.createElement('canvas');
   canvas.width=(max-min)*64+64;canvas.height=(max-min)*32+32;
   const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
   const random=(x,y,s=0)=>hash(x,y,(seed+s)>>>0);
   const point=(x,y)=>[(x-y)*32-left,(x+y)*16-top];
-  const stats={asphalt:0,crossings:0,manholes:0,curbs:0};
+  const stats={asphalt:0,crossings:0,manholes:0,curbs:0,landmarkGardens:landmarkGardens.length,gardenBeds:0,gardenPaths:0};
   function polygon(points,color,worn=0){
     const ys=points.map(p=>p[1]),start=Math.ceil(Math.min(...ys)-.5),end=Math.ceil(Math.max(...ys)-.5);
     ctx.fillStyle=color;
@@ -61,6 +61,32 @@ export function cityGround({road,water,park,fountainCell,streets,links,nodes,can
       quad(x-.5,y-.5,1,1,'#788851');
       for(let n=0;n<60;n++){const p=point(x-.45+random(x,y,n+170)*.9,y-.45+random(y,x,n+190)*.9);pixel(p[0],p[1],n%2?'#87995c':'#677a49');}
     }else stone(x,y);
+  }
+  // Fractional, contained garden surfaces replace the empty paved landmark
+  // parcels. Paint before streets so curbs and asphalt retain priority.
+  const surface=(r,color)=>quad(r.x0,r.y0,r.x1-r.x0,r.y1-r.y0,color);
+  for(const garden of landmarkGardens){
+    const r=garden.lawn;
+    surface(r,'#d3c5a5');surface({x0:r.x0+.07,y0:r.y0+.07,x1:r.x1-.07,y1:r.y1-.07},'#7e9055');
+    const area=(r.x1-r.x0)*(r.y1-r.y0);
+    for(let n=0;n<area*42;n++){
+      const p=point(r.x0+.09+random(r.x0,r.y0,n+710)*(r.x1-r.x0-.18),r.y0+.09+random(r.y0,r.x0,n+810)*(r.y1-r.y0-.18));
+      pixel(p[0],p[1],n%3?'#889b60':'#6f834d',n%3?1:2);
+    }
+    for(const path of garden.paths){
+      surface(path,'#b7a685');
+      surface({x0:path.x0+.04,y0:path.y0+.04,x1:path.x1-.04,y1:path.y1-.04},garden.index?'#d8c9a8':'#c7b58e');stats.gardenPaths++;
+    }
+    const a=garden.apron;surface(a,'#a99d83');
+    surface({x0:a.x0+.05,y0:a.y0+.05,x1:a.x1-.05,y1:a.y1-.05},garden.index?'#d0c4a8':'#cbbb98');
+    for(let x=a.x0+.4;x<a.x1;x+=.4)line(point(x,a.y0+.05),point(x,a.y1-.05),'#b5a88d');
+    for(let y=a.y0+.4;y<a.y1;y+=.4)line(point(a.x0+.05,y),point(a.x1-.05,y),'#b5a88d');
+    for(const [i,bed]of garden.beds.entries()){
+      surface(bed,'#cab995');surface({x0:bed.x0+.06,y0:bed.y0+.06,x1:bed.x1-.06,y1:bed.y1-.06},'#3e6240');
+      surface({x0:bed.x0+.14,y0:bed.y0+.14,x1:bed.x1-.14,y1:bed.y1-.14},'#6b7750');
+      for(let x=bed.x0+.2;x<bed.x1-.14;x+=.18)for(let y=bed.y0+.2;y<bed.y1-.14;y+=.18){const p=point(x,y);pixel(p[0],p[1],i%2?'#d3bc65':'#b56c65',2);}
+      stats.gardenBeds++;
+    }
   }
   function ribbon(s,width,color){
     if(s.axis===0)quad(s.from,s.center-width/2,s.to-s.from,width,color);
