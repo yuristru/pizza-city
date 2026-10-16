@@ -1,19 +1,19 @@
-import {WAREHOUSES} from './pizza-procurement.js?v=20261015b';
-import {COMPETITORS} from './pizza-competitors.js?v=20261015b';
-import {openCommerce} from './pizza-commerce-ui.js?v=20261015b';
-import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261015b';
-import {closedCityBlock} from './pizza-city-perimeter.js?v=20261015e';
-import {cityGround} from './pizza-city-ground.js?v=20261016a';
-import {landmarkGarden} from './pizza-city-landscape.js?v=20261016a';
-import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261015e';
-import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261015b';
-import {openProperty} from './pizza-properties-ui.js?v=20261015b';
-import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Texture,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261015b';
-import {BUILDING_ART} from './pizza-city-building-art.js?v=20261015b';
-import {buildingProjection} from './pizza-city-building-rules.js?v=20261015b';
-import {citySprite} from './pizza-city-art.js?v=20261015b';
-import {personSprite} from './pizza-sprites.js?v=20261015b';
-import {carSprite} from './pizza-city-traffic.js?v=20261015b';
+import {WAREHOUSES} from './pizza-procurement.js?v=20261016b';
+import {COMPETITORS} from './pizza-competitors.js?v=20261016b';
+import {openCommerce} from './pizza-commerce-ui.js?v=20261016b';
+import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261016b';
+import {closedCityBlock} from './pizza-city-perimeter.js?v=20261016b';
+import {cityGround} from './pizza-city-ground.js?v=20261016b';
+import {landmarkGarden} from './pizza-city-landscape.js?v=20261016b';
+import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261016b';
+import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261016b';
+import {openProperty} from './pizza-properties-ui.js?v=20261016b';
+import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Texture,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261016b';
+import {BUILDING_ART} from './pizza-city-building-art.js?v=20261016b';
+import {buildingProjection} from './pizza-city-building-rules.js?v=20261016b';
+import {citySprite} from './pizza-city-art.js?v=20261016b';
+import {personSprite} from './pizza-sprites.js?v=20261016b';
+import {carSprite} from './pizza-city-traffic.js?v=20261016b';
 
 const foundation=(kind,index)=>{const art=BUILDING_ART[kind]?.[index];return art?buildingProjection(art.corners,art.worldWidth,art.storeys,art.facadePixels).groundSize:{width:1.65,depth:1.65};};
 let districts=districtOrder();
@@ -138,6 +138,13 @@ function refreshPropertyMarkers(){
   }
 }
 
+function refreshRivalryMarkers(){
+  if(state.scene!=='city')return;
+  const objects=state.camera.children.find(c=>c.label==='city-objects'),labels=state.camera.children.at(-1);
+  for(const g of objects.children.filter(c=>c.competitorId)){const e=state.rivalry.effects[g.competitorId];g.tint=e?.until>state.gameMinutes?0xb7aba2:0xffffff;}
+  for(const tag of labels.children.filter(c=>c.label==='city-competitor-sign')){const e=state.rivalry.effects[tag.competitorId];tag.children[2].text=e?.until>state.gameMinutes?'BEEINTRÄCHTIGT':'KONKURRENZ';}
+}
+
 function block(objects,labels,b){
   let {bx,by,x0,x1,y0,y1}=b;const w=x1-x0,h=y1-y0;
   [bx,by]=sourceBlock(bx,by);
@@ -247,6 +254,7 @@ export function showCity(){
   const ground=cityGround({...layout,park,fountainCell,landmarkGardens:state.cityLandmarkGardens},state.citySeed),markings=new Container(),objects=new Container(),labels=new Container();
   ground.label='city-ground';objects.label='city-objects';objects.sortableChildren=true;labels.sortableChildren=true;
   state.camera.addChild(ground,markings,objects,labels);
+  state.onRivalryChange=refreshRivalryMarkers;
   state.cityBlockPlans=[];
   bridges(objects);waterfront(objects);
   for(const b of layout.blocks)block(objects,labels,b);
@@ -262,7 +270,7 @@ export function showCity(){
   }
   state.restaurantSign=state.cityRestaurantSigns[state.activeRestaurantId]||state.cityRestaurantSigns['mamma-mia'];
   state.onPropertyChange=refreshPropertyMarkers;refreshPropertyMarkers();
-  resizeCity();bindGestures();tickCity(0);
+  refreshRivalryMarkers();resizeCity();bindGestures();tickCity(0);
 }
 
 export function randomizeCity(){
@@ -273,6 +281,7 @@ export function randomizeCity(){
 }
 
 export function tickCity(dt){
+  refreshRivalryMarkers();
   for(const mover of state.movers){
     const previous=mover.axis+':'+mover.dir;
     advanceStreetActor(mover,layout,mover.speed*dt*.035,()=>cityHash(mover.variant,Math.floor(state.gameMinutes*17),mover.to));

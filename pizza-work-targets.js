@@ -1,6 +1,6 @@
-import {counterHandoff,counterSurfaces,deviceApproaches,workPath} from './pizza-business.js?v=20261015b';
-import {dimensions} from './pizza-layout.js?v=20261015b';
-import {roomStep} from './pizza-floorplans.js?v=20261015b';
+import {counterHandoff,counterSurfaces,deviceApproaches,workPath} from './pizza-business.js?v=20261016b';
+import {dimensions} from './pizza-layout.js?v=20261016b';
+import {roomStep} from './pizza-floorplans.js?v=20261016b';
 
 const checked=new WeakMap();
 export function workLayoutKey(items,plan){return items.map(i=>[i.type,i.x,i.y,i.r,i.seats].join(':')).join(';')+'|'+[...plan.kitchenKeys].join(';');}

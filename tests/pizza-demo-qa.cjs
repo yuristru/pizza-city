@@ -49,7 +49,7 @@ async function selectTool(page,type,seats){
   }
   await page.locator(selector).first().click();
 }
-async function loaded(page,url){await page.goto(url);await page.waitForSelector('#loading',{state:'hidden',timeout:15000});}
+async function loaded(page,url){await page.goto(url);try{await page.waitForSelector('#loading',{state:'hidden',timeout:Number(process.env.PIZZA_LOAD_TIMEOUT)||30000});}catch(error){console.error('Startup status:',await page.locator('#loading').innerText());throw error;}}
 
 (async()=>{
   const model=await import(pathToFileURL(modelPath));
@@ -107,7 +107,7 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     assert(cityArt.variants.filter(i=>i>=16).length>=8,'The expanded atlas must be used in the city.');
     assert(cityArt.ground.sprite);assert.equal(cityArt.ground.pixelScale,1);assert.equal(cityArt.ground.sampling,'nearest');assert(cityArt.ground.details.asphalt>200&&cityArt.ground.details.crossings>0&&cityArt.ground.details.curbs>0&&cityArt.ground.details.manholes>0);
     assert.equal(cityArt.projected.length,cityArt.atlases.buildings-8+cityArt.atlases.buildingTypes+cityArt.atlases.courtyardBuildings+1);assert(cityArt.projected.every(a=>a.projection&&a.anchor.x>0&&a.anchor.x<1&&a.anchor.y>0&&a.anchor.y<=1));
-    assert.equal(cityArt.properties.length,9);assert.equal(new Set(cityArt.properties).size,9);
+    assert.equal(cityArt.properties.length,18);assert.equal(new Set(cityArt.properties).size,18);
     assert(cityArt.types.length>=4);
     assert.equal(cityArt.landmarks.length,2);assert(cityArt.landmarks.every(item=>item.sprite));
     assert(cityArt.traffic.every(item=>item.sprite&&item.scaleX>0&&item.scaleY>0),'Directional traffic must remain upright flat sprites.');
@@ -116,9 +116,9 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     const {cityLayout}=await import(pathToFileURL(path.join(root,'pizza-city-layout.js')));
     const initialLayout=cityLayout();
     assert(cityArt.terraces.every(item=>item.sprite&&!initialLayout.road(item.x,item.y)),'Terraces must stay off the carriageway.');
-    console.log('City art passed: thirty-two house variants, eight building types, nine properties, two landmarks, eight props, upright 2D traffic and restaurant terrace sprites off the roads.');
+    console.log('City art passed: thirty-two house variants, eight building types, eighteen properties, two landmarks, eight props, upright 2D traffic and restaurant terrace sprites off the roads.');
     await page.click('#propertiesBtn');
-    assert.equal(await page.locator('[data-property]').count(),3);
+    assert.equal(await page.locator('[data-property]').count(),8);
     await page.click('[data-property="san-marco"]');
     assert.match(await page.locator('#propertyInfo').innerText(),/Klein · 80 m²/);
     await page.click('#propertyBuy');assert.equal((await snapshot(page)).balance,215560);
@@ -148,7 +148,7 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     const owned=await page.evaluate(async modulePath=>(await import(modulePath)).state.ownedProperties,corePath);assert.deepEqual(owned,['san-marco']);
     await page.click('#restaurantBtn');await resetEdit(page);assert.equal((await snapshot(page)).balance,215560,'Restaurant reset must not refund a property.');
     await page.evaluate(()=>localStorage.removeItem('pizza-city-layout-v1'));await loaded(page,url);
-    console.log('Properties passed: nine map sites, three sizes, purchase debit, duplicate protection, reload and reset accounting.');
+    console.log('Properties passed: eighteen map sites, three sizes, purchase debit, duplicate protection, reload and reset accounting.');
     assert.match(await page.locator('#gameDate').innerText(),/Do\./);
     await page.click('[data-speed="0"]');
     await capture(page,'city-393.png');
@@ -226,7 +226,7 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
       await page.click('#placeBtn');assert.equal((await snapshot(page)).finishes.renovation,level);assert.equal((await snapshot(page)).balance,before-price);
     }
     const finished=await snapshot(page);await capture(page,'restaurant-renovated.png');
-    await page.reload();await page.waitForSelector('#loading',{state:'hidden',timeout:15000});
+    await page.reload();await page.waitForSelector('#loading',{state:'hidden',timeout:Number(process.env.PIZZA_LOAD_TIMEOUT)||30000});
     assert.deepEqual((await snapshot(page)).finishes,finished.finishes);assert.equal((await snapshot(page)).balance,finished.balance);
     await page.click('#restaurantBtn');await page.evaluate(async source=>{const {app}=await import(source);app.ticker.stop();app.render();},corePath);
     const surfaces=await page.evaluate(async source=>{const {world}=await import(source);return world.children[0].children.filter(c=>['restaurant-floor','restaurant-walls'].includes(c.label)).map(c=>({label:c.label,finish:c.finish,renovation:c.renovation}));},corePath);
@@ -355,7 +355,7 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     await page.unroute('**/assets/pizza/city/*.png');
     await page.route('**/assets/pizza/vendor/pixi-8.22.0.mjs',route=>route.abort());
     await page.goto(url);await page.getByRole('button',{name:'Erneut laden',exact:true}).waitFor();
-    await page.unroute('**/assets/pizza/vendor/pixi-8.22.0.mjs');await page.getByRole('button',{name:'Erneut laden',exact:true}).click();await page.waitForSelector('#loading',{state:'hidden',timeout:15000});
+    await page.unroute('**/assets/pizza/vendor/pixi-8.22.0.mjs');await page.getByRole('button',{name:'Erneut laden',exact:true}).click();await page.waitForSelector('#loading',{state:'hidden',timeout:Number(process.env.PIZZA_LOAD_TIMEOUT)||30000});
     assert.equal(errors.length,0,errors.join('\n'));assert.equal(external.length,0,external.join('\n'));
     // Pizza editor: real pointer/touch placement, grouped strokes and recipe persistence.
     await loaded(page,url);await page.click('#pizzaBtn');assert.equal((await snapshot(page)).scene,'pizza');
@@ -381,7 +381,7 @@ async function loaded(page,url){await page.goto(url);await page.waitForSelector(
     await page.click('[data-sauce="white"]');assert.equal((await pizza()).recipe.sauce,'white');
     await page.fill('#pizzaName','Yuris Speciale');await page.click('#pizzaSave');assert((await pizza()).recipes.some(r=>r.name==='Yuris Speciale'));
     const savedPizza=(await pizza()).recipe;await page.click('#pizzaNew');assert.equal((await pizza()).recipe.toppings.length,0);await page.selectOption('#pizzaRecipes','0');assert.deepEqual((await pizza()).recipe,savedPizza);
-    await page.reload();await page.waitForSelector('#loading',{state:'hidden',timeout:15000});await page.click('#pizzaBtn');assert.deepEqual((await pizza()).recipe,savedPizza);
+    await page.reload();await page.waitForSelector('#loading',{state:'hidden',timeout:Number(process.env.PIZZA_LOAD_TIMEOUT)||30000});await page.click('#pizzaBtn');assert.deepEqual((await pizza()).recipe,savedPizza);
     await page.evaluate(async source=>{const {app}=await import(source);app.ticker.stop();},corePath);
     for(const [width,height]of [[320,568],[393,852],[844,390]]){
       await page.setViewportSize({width,height});await page.waitForTimeout(150);

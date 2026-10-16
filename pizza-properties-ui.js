@@ -1,14 +1,16 @@
-import {restaurantPlan} from './pizza-floorplans.js?v=20261015b';
-import {state,saveLayout,updateMoney,notify,ensureRestaurants} from './pizza-core.js?v=20261015b';
-import {money} from './pizza-catalog.js?v=20261015b';
-import {PROPERTIES,PROPERTY_SIZES,property,buyProperty,propertyPurchaseIssue} from './pizza-properties.js?v=20261015b';
-import {WAREHOUSES} from './pizza-procurement.js?v=20261015b';
-import {openCommerce} from './pizza-commerce-ui.js?v=20261015b';
+import {renderDistrictPanel} from './pizza-market-ui.js?v=20261016b';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261016b';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261016b';
+import {state,saveLayout,updateMoney,notify,ensureRestaurants} from './pizza-core.js?v=20261016b';
+import {money} from './pizza-catalog.js?v=20261016b';
+import {PROPERTIES,PROPERTY_SIZES,property,buyProperty,propertyPurchaseIssue} from './pizza-properties.js?v=20261016b';
+import {WAREHOUSES} from './pizza-procurement.js?v=20261016b';
+import {openCommerce} from './pizza-commerce-ui.js?v=20261016b';
 const el=id=>document.getElementById(id);
 let selected=null,filter='small';
 function render(){
   const owned=state.ownedProperties;
-  el('propertySummary').textContent=`9 Restaurantstandorte · ${owned.length} eigene · ${state.procurement.owned.length} von 2 Lagern · Konto ${money(state.balance)}`;
+  el('propertySummary').textContent=`${PROPERTIES.length} Restaurantstandorte · ${owned.length} eigene · ${state.procurement.owned.length} von 2 Lagern · Konto ${money(state.balance)}`;
   el('propertyList').hidden=!!selected;el('propertyDetail').hidden=!selected;el('propertyFilters').hidden=!!selected;
   el('propertyTitle').textContent=selected?'Standort ansehen':'Immobilien';
   if(!selected){
@@ -28,6 +30,7 @@ function render(){
   el('propertyPrice').textContent=money(p.price);el('propertyBuy').disabled=!!issue;el('propertyBuy').textContent=isOwned?'Bereits gekauft':'Standort kaufen';
   el('propertyStatus').textContent=isOwned?'Dein Restaurant. Einrichtung und Gäste werden separat gespeichert.':issue||'Einmaliger Kaufpreis. Keine automatische Abbuchung.';
   el('propertyOpen').hidden=!isOwned;
+  renderDistrictPanel(el('propertyMarket'),p.id,state,ensureRestaurants(),serviceMenu());
   const fc=el('propertyFloorplan'),fx=fc.getContext('2d'),scale=Math.min(260/plan.w,180/plan.h);fx.clearRect(0,0,280,200);
   const tiles=new Set((ensureRestaurants()[p.id]?.kitchenTiles||[]).map(t=>`${t.x},${t.y}`));
   for(const c of plan.cells){fx.fillStyle=tiles.has(`${c.x},${c.y}`)?'#7d9c90':'#e8cdaa';fx.fillRect(10+c.x*scale,10+c.y*scale,scale-1,scale-1);}
@@ -42,7 +45,7 @@ function render(){
 export function openProperty(id=null){
   if(id&&!property(id))return;
   selected=id;render();const dialog=el('propertyDialog');if(!dialog.open)dialog.showModal();
-  (selected?el('propertyBuy'):el('propertyFilters').querySelector('button')).focus();
+  (selected?el('propertyClose'):el('propertyFilters').querySelector('button')).focus({preventScroll:true});dialog.scrollTop=0;
 }
 export function mountProperties(){
   el('propertyOpen').onclick=()=>{el('propertyDialog').close();state.navigate('restaurant',selected);};

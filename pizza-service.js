@@ -1,13 +1,13 @@
-import {kitchenReadiness,kitchenWorkFlow,completionWorkFlow} from './pizza-kitchen.js?v=20261015b';
-import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261015b';
-import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261015b';
-import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261015b';
+import {kitchenReadiness,kitchenWorkFlow,completionWorkFlow} from './pizza-kitchen.js?v=20261016b';
+import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261016b';
+import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261016b';
+import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261016b';
 
-import {businessIssue,demandScore,operatingRates,counterLayoutIssue} from './pizza-business.js?v=20261015b';
-import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable,reconcileProduction} from './pizza-production.js?v=20261015b';
-import {workLayoutKey} from './pizza-work-targets.js?v=20261015b';
-import {restoreMachines,startMachineVisit,reconcileMachineVisits,advanceMachineVisits,machinePosition} from './pizza-machines.js?v=20261015b';
-import {ingredientPurchaseCost} from './pizza-procurement.js?v=20261015b';
+import {businessIssue,demandScore,operatingRates,counterLayoutIssue} from './pizza-business.js?v=20261016b';
+import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable,reconcileProduction} from './pizza-production.js?v=20261016b';
+import {workLayoutKey} from './pizza-work-targets.js?v=20261016b';
+import {restoreMachines,startMachineVisit,reconcileMachineVisits,advanceMachineVisits,machinePosition} from './pizza-machines.js?v=20261016b';
+import {ingredientPurchaseCost} from './pizza-procurement.js?v=20261016b';
 export const SERVICE_PHASES=['arriving','waiting','eating','leaving','paying'];
 export const tableKey=t=>[t.x,t.y,t.r,t.seats,t.variant||'wood'].join(':');
 export function freshService(){return {version:1,chainVersion:1,elapsed:0,untilArrival:2,nextId:1,groups:[],machineGuests:[],payments:[],dirtyTables:[],waiterTasks:[],staffPositions:{},plateReturns:[],cleanedTables:0,netCents:0,revenueCents:0,machineRevenueCents:0,machineUses:0,costCents:0,servedGuests:0};}
@@ -75,10 +75,13 @@ function admit(service,layout,menu,balance,plan,business){
   const available=layout.filter(t=>t.type==='table'&&!reserved.has(tableKey(t))&&!dirtyTable(service,t)).map(table=>({table,route:tableRoute(layout,table,plan)})).filter(t=>t.route);
   const size=Math.min(sizes[(service.nextId-1)%sizes.length],Math.max(0,...layout.filter(t=>t.type==='table').map(t=>t.seats)));if(!size){if(business)service.lostGuests=(service.lostGuests||0)+2;return;}
   const choices=available.filter(t=>t.table.seats>=size).sort((a,b)=>a.table.seats-b.table.seats||a.route.length-b.route.length);
-  const offers=menu.filter(item=>item.active&&validRecipe(item.recipe)&&integer(item.price,1,99999)&&ingredientPurchaseCost(recipeCost(item.recipe),size,business?.ingredientDiscount||0)<=balance);
+  let offers=menu.filter(item=>item.active&&validRecipe(item.recipe)&&integer(item.price,1,99999)&&ingredientPurchaseCost(recipeCost(item.recipe),size,business?.ingredientDiscount||0)<=balance);
+  const segment=business?.market&&offers.length?business.market.claim(size,offers):null;
+  if(business?.market&&!segment)return;
+  if(segment)offers=offers.filter(o=>o.price<=segment.budget);
   if(!choices.length||!offers.length){if(business&&offers.length)service.lostGuests=(service.lostGuests||0)+size;return;}
   const choice=choices[0],offer=offers[(service.nextId*7)%offers.length],id=service.nextId++;
-  service.groups.push({id,size,table:{...choice.table},phase:'arriving',route:choice.route,progress:0,timer:0,eatDuration:18+(id*7%13),order:{name:offer.recipe.name,price:offer.price,cost:recipeCost(offer.recipe)},charged:false,ate:false,paid:false});
+  service.groups.push({id,size,...(segment?{customerTier:segment.id}:{}),table:{...choice.table},phase:'arriving',route:choice.route,progress:0,timer:0,eatDuration:18+(id*7%13),order:{name:offer.recipe.name,price:offer.price,cost:recipeCost(offer.recipe)},charged:false,ate:false,paid:false});
 }
 export function advanceService(service,seconds,layout,menu,balanceCents,plan=DEFAULT_PLAN,business=null){
   const events=[];if(!Number.isFinite(seconds)||seconds<=0)return {balanceCents,events};
@@ -108,7 +111,7 @@ export function advanceService(service,seconds,layout,menu,balanceCents,plan=DEF
       service.capacitySeconds=(service.capacitySeconds||0)+layout.filter(i=>i.type==='table').reduce((s,t)=>s+t.seats,0)*dt;
       service.occupiedSeconds=(service.occupiedSeconds||0)+service.groups.filter(g=>['waiting','eating'].includes(g.phase)).reduce((s,g)=>s+g.size,0)*dt;
     }
-    if(menu.some(item=>item.active)){service.untilArrival-=dt;if(service.untilArrival<=0){admit(service,layout,menu,balanceCents,plan,business);service.untilArrival=(8+(service.nextId*3%5))/(business?demandScore(service,menu,layout,business.finishes,business.location):1);}}
+    if(menu.some(item=>item.active)){service.untilArrival-=dt;if(service.untilArrival<=0){admit(service,layout,menu,balanceCents,plan,business);service.untilArrival=(8+(service.nextId*3%5))/(business&&!business.market?demandScore(service,menu,layout,business.finishes,business.location):1);}}
     for(const g of service.groups.slice()){
       if(!['leaving','paying'].includes(g.phase)&&!layout.some(t=>t.type==='table'&&tableKey(t)===tableKey(g.table)))leave(g,layout,plan);
       if(['arriving','leaving'].includes(g.phase)&&g.route.some(p=>!free.has(`${p.x},${p.y}`)))leave(g,layout,plan);

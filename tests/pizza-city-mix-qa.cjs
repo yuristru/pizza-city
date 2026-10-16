@@ -52,7 +52,7 @@ const server=http.createServer((req,res)=>{
         assert(b.parts.every(p=>!overlap(p,b.court)&&!overlap(p,b.gate)),'Courtyard and entrance remain clear.');
         assert(b.parts.every(p=>p.scale>=.9&&p.scale<=1));
       }
-      assert(data.clear,'Foundation stays out of street/water: '+seed);assert.equal(new Set(data.properties).size,9);
+      assert(data.clear,'Foundation stays out of street/water: '+seed);assert.equal(new Set(data.properties).size,18);
       assert.equal(new Set(data.warehouses).size,2);assert.equal(data.restaurants,4,'Player and all competitors remain available.');
 
       let seams=0;
@@ -72,6 +72,6 @@ const server=http.createServer((req,res)=>{
       }
     }
 
-    assert.equal(overviewSides.size,4);assert.deepEqual(errors,[]);console.log('Mixed city passed: shared foundations, parcel containment, no overlaps, closed perimeters and clear inner courtyards, nine properties, two warehouses and four restaurants across 32 seeds and all four canal shores.');
+    assert.equal(overviewSides.size,4);assert.deepEqual(errors,[]);console.log('Mixed city passed: shared foundations, parcel containment, no overlaps, closed perimeters and clear inner courtyards, eighteen properties, two warehouses and four restaurants across 32 seeds and all four canal shores.');
   }finally{await browser.close();server.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;server.close();});

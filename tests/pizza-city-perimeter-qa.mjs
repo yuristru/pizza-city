@@ -61,6 +61,6 @@ for(const seed of [94117,0,1,42,...Array.from({length:124},(_,i)=>Math.imul(i+1,
     count++;
   }
   if(++cityCount%16===0)console.log(`Checked ${cityCount} production cities.`);
-  assert.equal(identities.length,15);assert.equal(new Set(identities).size,15);
+  assert.equal(identities.length,24);assert.equal(new Set(identities).size,24);
 }
-console.log(`Production perimeters passed: ${count} closed parcels across 128 city layouts, all 15 gameplay identities, clear courts and gates, uniform scaling and no overlaps.`);
+console.log(`Production perimeters passed: ${count} closed parcels across 128 city layouts, all 24 gameplay identities, clear courts and gates, uniform scaling and no overlaps.`);

@@ -19,6 +19,8 @@ export const FLOORPLANS={
   'mercato':plan('mercato','Großer quadratischer Saal mit breiter Rückküche',17,17,[rect(0,0,17,17)],kitchen(0,0,6,4,'room','south',3),{x:16,y:16}),
   'teatro':plan('teatro','Tiefer Saal mit eigenem seitlichen Küchenraum',20,17,[rect(0,0,15,17),rect(15,4,5,6)],kitchen(15,4,5,6,'annex','west',3),{x:14,y:16})
 };
+// Additional sites reuse proven room shapes while keeping their own identity.
+for(const [id,base]of Object.entries({'vicolo':'san-marco','fontana':'piazza-limone','corso':'via-roma','officina':'bottega','forno':'san-marco','portici':'palazzo-sole','darsena':'lungofiume','ponte':'belvedere','giardino':'bottega'}))FLOORPLANS[id]={...FLOORPLANS[base],id};
 export const DEFAULT_PLAN=FLOORPLANS['mamma-mia'];
 export function restaurantPlan(id){return FLOORPLANS[id]||DEFAULT_PLAN;}
 export function roomCell(x,y,p=DEFAULT_PLAN){return p.keys.has(`${x},${y}`);}

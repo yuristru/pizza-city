@@ -12,9 +12,9 @@ export function packPerimeterRow(length,pool,{seed=1,required=[],thicknessLimit=
   const trackThickness=candidates.some(p=>(p.thickness||0)>thicknessLimit);
   const limit=length/MIN_PERIMETER_SCALE,initial=required.reduce((n,p)=>n+p.span,0);
   if(initial>limit+EPS)throw new Error('Required building cannot fit this street front.');
-  let frontier=[{sum:initial,picks:[...required]}],best=null;
+  let frontier=[{sum:initial,picks:[...required],thickness:Math.max(0,...required.map(p=>p.thickness||0))}],best=null;
   const consider=entry=>{
-    if(entry.sum<length-EPS||(trackThickness&&entry.picks.some(p=>(p.thickness||0)*length/entry.sum>thicknessLimit+EPS)))return false;
+    if(entry.sum<length-EPS||(trackThickness&&entry.thickness*length/entry.sum>thicknessLimit+EPS))return false;
     const repeats=entry.picks.reduce((n,p,i)=>n+(i>0&&p.index===entry.picks[i-1].index),0);
     const score=entry.sum-length+repeats*.08;
     if(!best||score<best.score)best={...entry,score};
@@ -25,9 +25,9 @@ export function packPerimeterRow(length,pool,{seed=1,required=[],thicknessLimit=
     const next=new Map();
     for(const entry of frontier)for(const part of candidates){
       const sum=entry.sum+part.span;if(sum>limit+EPS)continue;
-      const result={sum,picks:[...entry.picks,part]};
+      const result={sum,picks:[...entry.picks,part],thickness:Math.max(entry.thickness,part.thickness||0)};
       if(consider(result))continue;
-      const key=trackThickness?Math.round(sum*256)+':'+Math.round(Math.max(...result.picks.map(p=>p.thickness||0))*256):Math.round(sum*256);if(!next.has(key))next.set(key,result);
+      const key=trackThickness?Math.round(sum*256)+':'+Math.round(result.thickness*256):Math.round(sum*256);if(!next.has(key))next.set(key,result);
     }
     frontier=[...next.values()];
   }

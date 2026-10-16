@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#dec9a5">
   <title>Pizza City · Mamma Mia</title>
-  <link rel="stylesheet" href="pizza.css?v=20261015b">
+  <link rel="stylesheet" href="pizza.css?v=20261016b">
 </head>
 <body>
 <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -54,6 +54,7 @@
       <figure class="floorplanPreview"><canvas id="propertyFloorplan" width="280" height="200" aria-label="Grundriss mit Türen und Küchenboden"></canvas><figcaption>Grundriss · Rot: Eingang · Grün: Tür / Küchenboden · 1 Feld = 1 m²</figcaption></figure>
       <h3 id="propertyName"></h3><p id="propertyInfo"></p>
       <p id="propertyDescription">Unmöblierte Restaurantimmobilie. Der Kauf sichert dir diesen Standort.</p>
+      <section id="propertyMarket" class="districtPanel" aria-label="Kundenpotenzial und Konkurrenz"></section>
       <strong id="propertyPrice"></strong><p id="propertyStatus" role="status"></p>
       <button id="propertyBuy" type="button">Standort kaufen</button>
       <button id="propertyOpen" type="button" hidden>Restaurant öffnen</button>
@@ -63,6 +64,8 @@
     <header class="propertyHeader"><h2 id="commerceTitle"></h2><button id="commerceClose" type="button" aria-label="Gebäude schließen">×</button></header>
     <canvas id="commercePreview" width="180" height="160"></canvas>
     <p id="commerceInfo"></p><p id="commerceDescription"></p><strong id="commercePrice"></strong>
+    <section id="competitorMarket" class="districtPanel" hidden></section>
+    <section id="sabotagePanel" class="sabotagePanel" hidden><h3>Konkurrenz sabotieren</h3><p>Kosten fallen sofort an. Bei Entdeckung scheitert die Aktion und die volle Strafe wird fällig.</p><div id="sabotageActions" class="sabotageActions"></div><p id="sabotageChoice"></p><button id="sabotageExecute" type="button" disabled>Aktion auswählen</button><p id="sabotageResult" role="status" aria-live="polite"></p><div id="sabotageHistory"></div></section>
     <p id="commerceStatus" role="status"></p><button id="commerceBuy" type="button">Lager kaufen</button>
   </dialog>
   <dialog id="menuDialog" aria-labelledby="menuTitle">
@@ -184,7 +187,7 @@
 </div>
 <noscript>Bitte JavaScript aktivieren, um die Pizza-Demo zu starten.</noscript>
 <script type="module">
-  import('./pizza.js?v=20261016a').catch(error=>{
+  import('./pizza.js?v=20261016b').catch(error=>{
     console.error('Pizza demo could not start',error);
     const loading=document.querySelector('#loading');loading.hidden=false;loading.replaceChildren();
     const message=document.createElement('p');message.textContent='Die Demo konnte nicht starten. Bitte erneut laden.';

@@ -1,7 +1,7 @@
-import {BUILDING_ART} from './pizza-city-building-art.js?v=20261015b';
-import {buildingProjection} from './pizza-city-building-rules.js?v=20261015b';
-import {groundProjection} from './pizza-isometric-art.js?v=20261015b';
-import {Sprite,Texture,state} from './pizza-core.js?v=20261015b';
+import {BUILDING_ART} from './pizza-city-building-art.js?v=20261016b';
+import {buildingProjection} from './pizza-city-building-rules.js?v=20261016b';
+import {groundProjection} from './pizza-isometric-art.js?v=20261016b';
+import {Sprite,Texture,state} from './pizza-core.js?v=20261016b';
 
 export const ATLASES=[
  {key:'buildings',url:'italian-houses-32-two-storey-v2.png',frames:BUILDING_ART.buildings},
