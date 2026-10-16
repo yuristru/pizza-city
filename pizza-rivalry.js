@@ -1,12 +1,13 @@
-import {competitor} from './pizza-competitors.js?v=20261016f';
+import {competitor} from './pizza-competitors.js?v=20261016g';
 export const SABOTAGE_ACTIONS=[
+ {id:'doodle',name:'Kleine Schmiererei',costCents:0,risk:.12,fineCents:500000,duration:120,factor:.94,giftOnly:true,description:'Kleiner Schriftzug: 6 % weniger Nachfrage für 2 Spielstunden.'},
  {id:'inspection',name:'Beim Ordnungsamt melden',costCents:75000,risk:.15,fineCents:1500000,duration:360,factor:.55,description:'Kontrolle: 45 % weniger Nachfrage für 6 Spielstunden.'},
  {id:'roaches',name:'Kakerlaken aussetzen',costCents:240000,risk:.42,fineCents:4500000,duration:1440,factor:.2,description:'Hygienevorfall: 80 % weniger Nachfrage für 24 Spielstunden.'},
  {id:'stinkbomb',name:'Stinkbombe',costCents:120000,risk:.28,fineCents:2400000,duration:240,factor:.35,description:'Geruchsbelästigung: 65 % weniger Nachfrage für 4 Spielstunden.'},
  {id:'graffiti',name:'Fassade ansprühen',costCents:90000,risk:.36,fineCents:1800000,duration:720,factor:.75,description:'Beschädigte Fassade: 25 % weniger Nachfrage für 12 Spielstunden.'}
 ];
-export const ORDER_CHANNELS={bench:['roaches','stinkbomb'],skate:['graffiti'],phone:['inspection']};
-export const ORDER_DELAY={inspection:45,roaches:90,stinkbomb:30,graffiti:60};
+export const ORDER_CHANNELS={bench:['roaches','stinkbomb'],skate:['graffiti','doodle'],phone:['inspection']};
+export const ORDER_DELAY={inspection:45,roaches:90,stinkbomb:30,graffiti:60,doodle:30};
 export const phoneRisk=credibility=>[.45,.35,.25,.15,.08][Math.max(0,Math.min(4,Math.floor(credibility)))];
 const contactChannel=id=>['bench-nino','bench-rocco'].includes(id)?'bench':id==='skate-crew'?'skate':['phone-arena','phone-dom','phone-piazza'].includes(id)?'phone':null;
 export function freshRivalry(){return {version:2,nextId:1,pending:[],costCents:0,fineCents:0,debtCents:0,effects:{},cooldowns:{},history:[]};}
@@ -20,8 +21,8 @@ export function restoreRivalry(raw){
  const ids=new Set(r.history.map(h=>h.orderId).filter(Boolean)),targets=new Set();let plannedCost=0;
  if(raw.version===2&&Array.isArray(raw.pending))for(const j of raw.pending.slice(0,3)){
   if(!competitor(j?.target)||targets.has(j.target)||!ORDER_CHANNELS[j.channel]?.includes(j.action)||contactChannel(j.contactId)!==j.channel||!Number.isSafeInteger(j.id)||j.id<1||j.id>=1e9||ids.has(j.id)||!Number.isFinite(j.minute)||j.minute<0||j.minute>1e10||j.due!==j.minute+ORDER_DELAY[j.action]||!Number.isFinite(j.roll)||j.roll<0||j.roll>=1||(j.channel==='phone'&&(!Number.isInteger(j.credibility)||j.credibility<0||j.credibility>4)))continue;
-  const price=SABOTAGE_ACTIONS.find(a=>a.id===j.action).costCents;if(plannedCost+price>r.costCents)continue;plannedCost+=price;
-  r.pending.push({id:j.id,target:j.target,action:j.action,channel:j.channel,contactId:j.contactId,minute:j.minute,due:j.due,roll:j.roll,...(j.channel==='phone'?{credibility:j.credibility}:{})});r.cooldowns[j.target]=Math.max(r.cooldowns[j.target]||0,j.due+360);ids.add(j.id);targets.add(j.target);
+  if(j.action==='doodle'&&j.gift!==true)continue;const price=SABOTAGE_ACTIONS.find(a=>a.id===j.action).costCents;if(plannedCost+price>r.costCents)continue;plannedCost+=price;
+  r.pending.push({id:j.id,target:j.target,action:j.action,channel:j.channel,contactId:j.contactId,minute:j.minute,due:j.due,roll:j.roll,...(j.action==='doodle'?{gift:true}:{}),...(j.channel==='phone'?{credibility:j.credibility}:{})});r.cooldowns[j.target]=Math.max(r.cooldowns[j.target]||0,j.due+360);ids.add(j.id);targets.add(j.target);
  }
  r.nextId=Math.max(0,...ids,...r.history.map(h=>h.orderId||0))+1;if(Number.isSafeInteger(raw.nextId)&&raw.nextId>=r.nextId&&raw.nextId<1e9)r.nextId=raw.nextId;return r;
 }
@@ -53,8 +54,8 @@ export function orderQuote(action,channel,credibility=3){
 }
 export function commissionSabotage(r,request,balanceCents,minutes,roll=Math.random()){
  const quote=orderQuote(request?.action,request?.channel,request?.credibility),issue=sabotageIssue(r,request?.target,request?.action,balanceCents,minutes);
- if(r.nextId>=1e9||!quote||(request.channel==='phone'&&!Number.isInteger(request.credibility))||contactChannel(request.contactId)!==request.channel||issue||!Number.isFinite(roll)||roll<0||roll>=1)return {ok:false,message:issue||'Dieser Auftrag ist bei diesem Kontakt nicht verfügbar.'};
- const job={id:r.nextId++,target:request.target,action:request.action,channel:request.channel,contactId:request.contactId,minute:minutes,due:minutes+quote.delay,roll,...(request.channel==='phone'?{credibility:request.credibility}:{})};
+ if(r.nextId>=1e9||!quote||quote.giftOnly&&request?.gift!==true||(request.channel==='phone'&&!Number.isInteger(request.credibility))||contactChannel(request.contactId)!==request.channel||issue||!Number.isFinite(roll)||roll<0||roll>=1)return {ok:false,message:issue||'Dieser Auftrag ist bei diesem Kontakt nicht verfügbar.'};
+ const job={id:r.nextId++,target:request.target,action:request.action,channel:request.channel,contactId:request.contactId,minute:minutes,due:minutes+quote.delay,roll,...(request.action==='doodle'?{gift:true}:{}),...(request.channel==='phone'?{credibility:request.credibility}:{})};
  r.pending.push(job);r.costCents+=quote.costCents;r.cooldowns[job.target]=job.due+360;
  return {ok:true,job,quote,balanceCents:balanceCents-quote.costCents};
 }

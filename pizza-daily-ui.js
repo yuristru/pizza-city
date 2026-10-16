@@ -1,7 +1,7 @@
-import {state,ensureRestaurants,restaurantName,saveLayout} from './pizza-core.js?v=20261016f';
-import {DAY_MINUTES,currentReport,reportMetrics,dayLabel,minuteLabel} from './pizza-daily.js?v=20261016f';
-import {money} from './pizza-catalog.js?v=20261016f';
-import {purchasingDiscount,warehouseDailyCost} from './pizza-procurement.js?v=20261016f';
+import {state,ensureRestaurants,restaurantName,saveLayout} from './pizza-core.js?v=20261016g';
+import {DAY_MINUTES,currentReport,reportMetrics,dayLabel,minuteLabel} from './pizza-daily.js?v=20261016g';
+import {money} from './pizza-catalog.js?v=20261016g';
+import {purchasingDiscount,warehouseDailyCost} from './pizza-procurement.js?v=20261016g';
 const el=id=>document.getElementById(id),number=new Intl.NumberFormat('de-DE',{maximumFractionDigits:1,minimumFractionDigits:1});
 let selectedDay='current',selectedRestaurant='all',dayOptions='',branchOptions='',trendStamp='',branchStamp='';
 function node(tag,value,className){const e=document.createElement(tag);if(value!==undefined)e.textContent=value;if(className)e.className=className;return e;}
@@ -31,13 +31,13 @@ function meter(label,value,max,caption){
 function renderFigures(report){
  const m=reportMetrics(report,selectedRestaurant),overview=el('dailyOverview');
  overview.replaceChildren(kpi('Umsatz',money(m.revenueCents/100)),kpi('Kosten',money(m.costCents/100)),kpi('Gewinn',money(m.profitCents/100),m.profitCents<0?'loss':'profit'),kpi('Bediente Gäste',String(m.servedGuests)));
- const machines=node('small','davon Automaten: '+money(m.machineRevenueCents/100));machines.dataset.machineRevenue=String(m.machineRevenueCents);overview.firstElementChild.append(machines);
+ const machines=node('small','davon Automaten: '+money(m.machineRevenueCents/100));machines.dataset.machineRevenue=String(m.machineRevenueCents);overview.firstElementChild.append(machines);if(selectedRestaurant==='all')overview.firstElementChild.append(node('small','davon Obsthandel: '+money(m.fruitRevenueCents/100)));
  const since=selectedRestaurant==='all'?report.startMinute:report.branches[selectedRestaurant].since;
  el('dailyTitle').textContent=(selectedRestaurant==='all'?'Alle Restaurants':restaurantName(selectedRestaurant))+' · '+dayLabel(report.day);
  el('dailyPeriod').textContent=(report.closed?'Abgeschlossen':'Laufender Spieltag')+' · '+minuteLabel(since)+' bis '+(report.closed?'24:00':minuteLabel(report.endMinute))+' Uhr'+(since>report.day*DAY_MINUTES?' · Teil des Tages erfasst':'');
  const costs=el('dailyCosts');costs.replaceChildren(node('h3','Kosten im Detail'));
  const rows=[['Zutaten',m.ingredientsCents],[selectedRestaurant==='all'?'Löhne in Restaurants':'Löhne',m.staffCents],['Gebäude',m.propertyCents],['Strom',m.electricityCents],['Werbung',m.advertisingCents]];
- if(selectedRestaurant==='all')rows.push(['Löhne ohne Restaurant',m.reserveCents],['Lagerbetrieb',m.warehouseCents],['Konkurrenzaktionen und Strafen',m.rivalryCents]);
+ if(selectedRestaurant==='all')rows.push(['Obsteinkauf',m.fruitCostCents],['Löhne ohne Restaurant',m.reserveCents],['Lagerbetrieb',m.warehouseCents],['Konkurrenzaktionen und Strafen',m.rivalryCents]);
  for(const [label,cents]of rows)costs.append(meter(label,cents,Math.max(1,m.costCents),money(cents/100)));
  const procurement=el('dailyProcurement');procurement.replaceChildren(node('h3','Zentraler Einkauf'),node('p',purchasingDiscount(state.procurement)?'Aktuell aktiv · 20 % Zutatenrabatt für alle eigenen Restaurants · '+money(warehouseDailyCost(state.procurement)/100)+' Lagerbetrieb pro Spieltag':'Aktuell kein Lager · Zutaten zum regulären Einkaufspreis'),kpi('Eingesparte Zutatenkosten im gewählten Zeitraum',money(m.ingredientSavingsCents/100)));
  if(selectedRestaurant==='all')procurement.append(kpi('Lagerbetrieb im gewählten Zeitraum',money(m.warehouseCents/100)),kpi('Vorteil nach Lagerkosten',money((m.ingredientSavingsCents-m.warehouseCents)/100)));
@@ -64,8 +64,8 @@ function renderTrend(force=false){
  host.append(chart,node('p','Grün: Gewinn · Rot: Verlust. Tippe auf einen Tag, um den Abschluss zu öffnen.','dailyChartCaption'));
 }
 export function renderDailyUI(force=false){
- const profiles=ensureRestaurants();let report=selectedDay==='current'?currentReport(state.daily,state.gameMinutes,profiles,state.staff,state.procurement,state.rivalry):state.daily.history.find(r=>String(r.day)===selectedDay);
- if(!report){selectedDay='current';report=currentReport(state.daily,state.gameMinutes,profiles,state.staff,state.procurement,state.rivalry);}
+ const profiles=ensureRestaurants();let report=selectedDay==='current'?currentReport(state.daily,state.gameMinutes,profiles,state.staff,state.procurement,state.rivalry,state.fruit):state.daily.history.find(r=>String(r.day)===selectedDay);
+ if(!report){selectedDay='current';report=currentReport(state.daily,state.gameMinutes,profiles,state.staff,state.procurement,state.rivalry,state.fruit);}
  filters(report);renderFigures(report);renderTrend(force);
  if(report.closed&&state.daily.viewedDay<report.day){state.daily.viewedDay=report.day;saveLayout(true);}
  updateDailyNotice();

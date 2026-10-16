@@ -1,9 +1,9 @@
-import {TAXI_DRIVERS,TAXI_DURATIONS,taxiQuote,activeTaxiContracts,commissionTaxi} from './pizza-taxis.js?v=20261016f';
-import {state,ensureRestaurants,restaurantName,saveLayout,updateMoney,notify} from './pizza-core.js?v=20261016f';
-import {renderCapacityCard} from './pizza-capacity-ui.js?v=20261016f';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261016f';
-import {money} from './pizza-catalog.js?v=20261016f';
-import {dayLabel,minuteLabel} from './pizza-daily.js?v=20261016f';
+import {TAXI_DRIVERS,TAXI_DURATIONS,taxiQuote,activeTaxiContracts,commissionTaxi} from './pizza-taxis.js?v=20261016g';
+import {state,ensureRestaurants,restaurantName,saveLayout,updateMoney,notify} from './pizza-core.js?v=20261016g';
+import {renderCapacityCard} from './pizza-capacity-ui.js?v=20261016g';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261016g';
+import {money} from './pizza-catalog.js?v=20261016g';
+import {dayLabel,minuteLabel} from './pizza-daily.js?v=20261016g';
 const el=id=>document.getElementById(id),node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 const when=m=>dayLabel(Math.floor(m/1440))+' · '+minuteLabel(m)+' Uhr';
 let driverId='gino',restaurantId='',days=7,stamp=0,optionsKey='';

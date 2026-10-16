@@ -2,18 +2,21 @@
 // reduced, never stretched, rotated or enlarged beyond their facade-height cap.
 export const MIN_PERIMETER_SCALE=.9;
 const EPS=1e-7;
+const sameBuilding=(a,b)=>!!a&&!!b&&(a.kind||'buildings')===(b.kind||'buildings')&&a.index===b.index;
 const randomFrom=seed=>{let n=seed>>>0;return()=>{n=(n+0x6d2b79f5)>>>0;let t=n;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};};
 
-export function packPerimeterRow(length,pool,{seed=1,required=[],thicknessLimit=Infinity}={}){
+export function packPerimeterRow(length,pool,{seed=1,required=[],thicknessLimit=Infinity,start=null,end=null}={}){
   if(!(length>0&&Number.isFinite(length))||!pool.length)throw new Error('Invalid frontage or empty building catalog.');
   const random=randomFrom(seed),candidates=[...pool].sort((a,b)=>a.index-b.index);
   for(let i=candidates.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[candidates[i],candidates[j]]=[candidates[j],candidates[i]];}
   if([...required,...candidates].some(p=>!(p.span>0&&p.width>0&&p.depth>0)))throw new Error('Invalid building foundation.');
+  if(required.some((p,i)=>sameBuilding(p,i?required[i-1]:start)))throw new Error('Required neighboring buildings repeat.');
   const trackThickness=candidates.some(p=>(p.thickness||0)>thicknessLimit);
   const limit=length/MIN_PERIMETER_SCALE,initial=required.reduce((n,p)=>n+p.span,0);
   if(initial>limit+EPS)throw new Error('Required building cannot fit this street front.');
   let frontier=[{sum:initial,picks:[...required],thickness:Math.max(0,...required.map(p=>p.thickness||0))}],best=null;
   const consider=entry=>{
+    if(sameBuilding(entry.picks.at(-1),end))return false;
     if(entry.sum<length-EPS||(trackThickness&&entry.thickness*length/entry.sum>thicknessLimit+EPS))return false;
     const repeats=entry.picks.reduce((n,p,i)=>n+(i>0&&p.index===entry.picks[i-1].index),0);
     const score=entry.sum-length+repeats*.08;
@@ -24,10 +27,16 @@ export function packPerimeterRow(length,pool,{seed=1,required=[],thicknessLimit=
   for(let count=0;count<14&&frontier.length;count++){
     const next=new Map();
     for(const entry of frontier)for(const part of candidates){
+      if(sameBuilding(entry.picks.at(-1)||start,part))continue;
       const sum=entry.sum+part.span;if(sum>limit+EPS)continue;
       const result={sum,picks:[...entry.picks,part],thickness:Math.max(entry.thickness,part.thickness||0)};
       if(consider(result))continue;
-      const key=trackThickness?Math.round(sum*256)+':'+Math.round(result.thickness*256):Math.round(sum*256);if(!next.has(key))next.set(key,result);
+      const key=trackThickness?Math.round(sum*256)+':'+Math.round(result.thickness*256):String(Math.round(sum*256));
+      const previous=next.get(key);
+      // Two different final models per geometric state suffice to avoid any one
+      // forbidden next neighbor, without multiplying the whole search catalog.
+      if(!previous)next.set(key,result);
+      else if(!sameBuilding(previous.picks.at(-1),part)&&!next.has(key+':alt'))next.set(key+':alt',result);
     }
     frontier=[...next.values()];
   }
@@ -40,6 +49,7 @@ export function packPerimeterRow(length,pool,{seed=1,required=[],thicknessLimit=
 }
 
 export const foundationsOverlap=(a,b)=>Math.min(a.x1,b.x1)-Math.max(a.x0,b.x0)>EPS&&Math.min(a.y1,b.y1)-Math.max(a.y0,b.y0)>EPS;
+export const neighboringFoundations=(a,b)=>((Math.abs(a.x1-b.x0)<EPS||Math.abs(b.x1-a.x0)<EPS)&&Math.min(a.y1,b.y1)-Math.max(a.y0,b.y0)>EPS)||((Math.abs(a.y1-b.y0)<EPS||Math.abs(b.y1-a.y0)<EPS)&&Math.min(a.x1,b.x1)-Math.max(a.x0,b.x0)>EPS);
 
 export function perimeterCoverage(block,parts=block.parts){
   const {x0,x1,y0,y1}=block,edges={north:[],south:[],west:[],east:[]};
@@ -144,7 +154,7 @@ export function closedCityBlock(catalog,{id,x0,x1,y0,y1,seed=1,required=[]}){
         const horizontal=side==='north'||side==='south',a=corners[side==='north'?'nw':side==='south'?'sw':side==='west'?'nw':'ne'],b=corners[side==='north'?'ne':side==='south'?'se':side==='west'?'sw':'se'];
         const from=horizontal?a.x1:a.y1,to=horizontal?b.x0:b.y0,thickness=horizontal?(depth/2-.2):Math.min(a.width,b.width),gap=side===gateSide?gateWidth:0;
         const pool=ordinary.filter(p=>(horizontal?p.depth:p.width)*.9<=thickness+EPS).map(p=>({...p,span:horizontal?p.width:p.depth,thickness:horizontal?p.depth:p.width}));
-        const packed=packPerimeterRow(to-from-gap,pool,{seed:(seed+attempt*17+parts.length*971)>>>0,thicknessLimit:thickness});
+        const packed=packPerimeterRow(to-from-gap,pool,{seed:(seed+attempt*17+parts.length*971)>>>0,thicknessLimit:thickness,start:a,end:b});
         if(packed.some(p=>(horizontal?p.depth:p.width)>thickness+EPS))throw new Error('Frontage exceeds corner depth.');
         let cursor=from;
         for(const [i,p] of packed.entries()){
@@ -154,6 +164,7 @@ export function closedCityBlock(catalog,{id,x0,x1,y0,y1,seed=1,required=[]}){
       const court={x0:x0+Math.max(...parts.filter(p=>Math.abs(p.x0-x0)<EPS).map(p=>p.width))+.05,x1:x1-Math.max(...parts.filter(p=>Math.abs(p.x1-x1)<EPS).map(p=>p.width))-.05,y0:y0+Math.max(...parts.filter(p=>Math.abs(p.y0-y0)<EPS).map(p=>p.depth))+.05,y1:y1-Math.max(...parts.filter(p=>Math.abs(p.y1-y1)<EPS).map(p=>p.depth))-.05};
       if(court.x1-court.x0<.3||court.y1-court.y0<.3)continue;
       if(parts.some((p,i)=>parts.slice(i+1).some(q=>foundationsOverlap(p,q))))continue;
+      if(parts.some((p,i)=>parts.slice(i+1).some(q=>sameBuilding(p,q)&&neighboringFoundations(p,q))))continue;
       // The western entrance continues through the entire frontage band.
       gate.x1=court.x0;
       if(gate.y1<court.y0+.05||gate.y0>court.y1-.05||parts.some(p=>foundationsOverlap(p,gate)))continue;

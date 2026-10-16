@@ -1,18 +1,18 @@
-import {DISTRICTS,districtMarket,advanceMarket,claimCustomers} from './pizza-market.js?v=20261016f';
-import {activeCampaigns} from './pizza-advertising.js?v=20261016f';
-import {activeTaxiContracts} from './pizza-taxis.js?v=20261016f';
-import {collectFine,advanceRivalry} from './pizza-rivalry.js?v=20261016f';
-import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261016f';
-import {accrueReservePayroll} from './pizza-staff.js?v=20261016f';
-import {staffSchedule,nextShiftBoundary} from './pizza-shifts.js?v=20261016f';
-import {DAY_MINUTES,SECONDS_PER_MINUTE,completeDay,dayLabel} from './pizza-daily.js?v=20261016f';
-import {profilePlan} from './pizza-kitchen.js?v=20261016f';
-import {state,saveLayout,updateMoney,ensureRestaurants,notify} from './pizza-core.js?v=20261016f';
-import {money} from './pizza-catalog.js?v=20261016f';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261016f';
-import {advanceService} from './pizza-service.js?v=20261016f';
+import {DISTRICTS,districtMarket,advanceMarket,claimCustomers} from './pizza-market.js?v=20261016g';
+import {activeCampaigns} from './pizza-advertising.js?v=20261016g';
+import {activeTaxiContracts} from './pizza-taxis.js?v=20261016g';
+import {collectFine,advanceRivalry} from './pizza-rivalry.js?v=20261016g';
+import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261016g';
+import {accrueReservePayroll} from './pizza-staff.js?v=20261016g';
+import {staffSchedule,nextShiftBoundary} from './pizza-shifts.js?v=20261016g';
+import {DAY_MINUTES,SECONDS_PER_MINUTE,completeDay,dayLabel} from './pizza-daily.js?v=20261016g';
+import {profilePlan} from './pizza-kitchen.js?v=20261016g';
+import {state,saveLayout,updateMoney,ensureRestaurants,notify} from './pizza-core.js?v=20261016g';
+import {money} from './pizza-catalog.js?v=20261016g';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261016g';
+import {advanceService} from './pizza-service.js?v=20261016g';
 
-import {accrueWarehouseCosts,purchasingDiscount} from './pizza-procurement.js?v=20261016f';
+import {accrueWarehouseCosts,purchasingDiscount} from './pizza-procurement.js?v=20261016g';
 let checkpoint=0;
 export function tickService(seconds){
   if(!Number.isFinite(seconds)||seconds<=0)return [];
@@ -34,9 +34,11 @@ export function tickService(seconds){
       state.balance=result.balanceCents/100;events.push(...result.events.map(event=>({...event,restaurantId:id})));
     }
     seconds-=step;
-    state.gameMinutes=step===untilMidnight?midnight:step===untilShift?shiftBoundary:step===untilAd?adBoundary:step===untilJob?jobBoundary:step===untilTaxi?taxiBoundary:state.gameMinutes+step/SECONDS_PER_MINUTE;
-    if(step===untilTaxi)events.push(...state.taxis.contracts.filter(c=>c.until===state.gameMinutes).map(c=>({type:'taxi-expired',driverId:c.driverId,restaurantId:c.restaurantId})));
-    if(step===untilMidnight){const report=completeDay(state.daily,profiles,state.staff,state.procurement,state.rivalry);events.push({type:'day-closed',day:report.day});}
+    // Snap equivalent floating-point slices to their exact clock boundary.
+    const reached=distance=>Math.abs(step-distance)<1e-7;
+    state.gameMinutes=reached(untilMidnight)?midnight:reached(untilShift)?shiftBoundary:reached(untilAd)?adBoundary:reached(untilJob)?jobBoundary:reached(untilTaxi)?taxiBoundary:state.gameMinutes+step/SECONDS_PER_MINUTE;
+    if(reached(untilTaxi))events.push(...state.taxis.contracts.filter(c=>c.until===state.gameMinutes).map(c=>({type:'taxi-expired',driverId:c.driverId,restaurantId:c.restaurantId})));
+    if(reached(untilMidnight)){const report=completeDay(state.daily,profiles,state.staff,state.procurement,state.rivalry,state.fruit);events.push({type:'day-closed',day:report.day});}
     settle();
   }
   checkpoint+=elapsed;

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {BUILDING_ART} from '../pizza-city-building-art.js';
 import {buildingProjection} from '../pizza-city-building-rules.js';
-import {oldtownQuarter,perimeterBlock,packPerimeterRow,foundationsOverlap,MIN_PERIMETER_SCALE} from '../pizza-city-perimeter.js';
+import {oldtownQuarter,perimeterBlock,packPerimeterRow,foundationsOverlap,neighboringFoundations,MIN_PERIMETER_SCALE} from '../pizza-city-perimeter.js';
 
 const catalog=BUILDING_ART.buildings.map((a,index)=>({kind:'buildings',index,...buildingProjection(a.corners,a.worldWidth,a.storeys,a.facadePixels).groundSize}));
 for(const seed of [0,1,61,94117,0xffffffff,...Array.from({length:64},(_,i)=>Math.imul(i+1,2654435761)>>>0)]){
@@ -39,7 +39,7 @@ const {cityLayout}=await import('../pizza-city-layout.js');
 const {PROPERTIES}=await import('../pizza-properties.js');
 const {WAREHOUSES}=await import('../pizza-procurement.js');
 const {COMPETITORS}=await import('../pizza-competitors.js');
-const productionCatalog=Object.entries(BUILDING_ART).filter(([kind])=>['buildings','buildingTypes'].includes(kind)).flatMap(([kind,art])=>art.map((a,index)=>({kind,index,...buildingProjection(a.corners,a.worldWidth,a.storeys,a.facadePixels).groundSize})));
+const productionCatalog=Object.entries(BUILDING_ART).filter(([kind])=>['buildings','buildingTypes'].includes(kind)).flatMap(([kind,art])=>art.map((a,index)=>({kind,index,...buildingProjection(a.corners,a.worldWidth,a.storeys,a.facadePixels).groundSize}))).filter(p=>!(p.kind==='buildings'&&p.index===28)&&!(p.kind==='buildingTypes'&&p.index===2));
 const item=(kind,index,extra={})=>({...productionCatalog.find(p=>p.kind===kind&&p.index===index),...extra});
 let count=0,cityCount=0;
 for(const seed of [94117,0,1,42,...Array.from({length:124},(_,i)=>Math.imul(i+1,2654435761)>>>0)]){
@@ -57,10 +57,10 @@ for(const seed of [94117,0,1,42,...Array.from({length:124},(_,i)=>Math.imul(i+1,
       assert(p.x0>=b.x0-1e-7&&p.x1<=b.x1+1e-7&&p.y0>=b.y0-1e-7&&p.y1<=b.y1+1e-7);
       if(p.identity)identities.push(p.identity);
     }
-    for(let i=0;i<plan.parts.length;i++)for(let j=i+1;j<plan.parts.length;j++)assert(!foundationsOverlap(plan.parts[i],plan.parts[j]));
+    for(let i=0;i<plan.parts.length;i++)for(let j=i+1;j<plan.parts.length;j++){const a=plan.parts[i],b=plan.parts[j];assert(!foundationsOverlap(a,b));assert(!(neighboringFoundations(a,b)&&a.kind===b.kind&&a.index===b.index),'Direct neighbors must never use the same building model.');}
     count++;
   }
   if(++cityCount%16===0)console.log(`Checked ${cityCount} production cities.`);
   assert.equal(identities.length,24);assert.equal(new Set(identities).size,24);
 }
-console.log(`Production perimeters passed: ${count} closed parcels across 128 city layouts, all 24 gameplay identities, clear courts and gates, uniform scaling and no overlaps.`);
+console.log(`Production perimeters passed: ${count} closed parcels across 128 city layouts, all 24 gameplay identities, clear courts and gates, uniform scaling, no overlaps and no identical direct neighbors.`);

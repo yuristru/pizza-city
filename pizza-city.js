@@ -1,24 +1,25 @@
-import {cityContactPlan} from './pizza-city-contacts.js?v=20261016f';
-import {drawCityContact,drawSkatepark,tickCityLife} from './pizza-city-life.js?v=20261016f';
-import {openCityContact} from './pizza-underworld-ui.js?v=20261016f';
-import {WAREHOUSES} from './pizza-procurement.js?v=20261016f';
-import {COMPETITORS} from './pizza-competitors.js?v=20261016f';
-import {openCommerce} from './pizza-commerce-ui.js?v=20261016f';
-import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261016f';
-import {closedCityBlock} from './pizza-city-perimeter.js?v=20261016f';
-import {cityGround} from './pizza-city-ground.js?v=20261016f';
-import {landmarkGarden} from './pizza-city-landscape.js?v=20261016f';
-import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261016f';
-import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261016f';
-import {openProperty} from './pizza-properties-ui.js?v=20261016f';
-import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Texture,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261016f';
-import {BUILDING_ART} from './pizza-city-building-art.js?v=20261016f';
-import {buildingProjection} from './pizza-city-building-rules.js?v=20261016f';
-import {citySprite} from './pizza-city-art.js?v=20261016f';
-import {personSprite} from './pizza-sprites.js?v=20261016f';
-import {carSprite} from './pizza-city-traffic.js?v=20261016f';
-import {TAXI_DRIVERS} from './pizza-taxis.js?v=20261016f';
-import {openTaxi} from './pizza-taxis-ui.js?v=20261016f';
+import {drawFruitTraders,tickFruitTraders} from './pizza-fruit-city.js?v=20261016g';
+import {cityContactPlan} from './pizza-city-contacts.js?v=20261016g';
+import {drawCityContact,drawSkatepark,tickCityLife} from './pizza-city-life.js?v=20261016g';
+import {openCityContact} from './pizza-underworld-ui.js?v=20261016g';
+import {WAREHOUSES} from './pizza-procurement.js?v=20261016g';
+import {COMPETITORS} from './pizza-competitors.js?v=20261016g';
+import {openCommerce} from './pizza-commerce-ui.js?v=20261016g';
+import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261016g';
+import {closedCityBlock} from './pizza-city-perimeter.js?v=20261016g';
+import {cityGround} from './pizza-city-ground.js?v=20261016g';
+import {landmarkGarden} from './pizza-city-landscape.js?v=20261016g';
+import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261016g';
+import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261016g';
+import {openProperty} from './pizza-properties-ui.js?v=20261016g';
+import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Texture,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261016g';
+import {BUILDING_ART} from './pizza-city-building-art.js?v=20261016g';
+import {buildingProjection} from './pizza-city-building-rules.js?v=20261016g';
+import {citySprite} from './pizza-city-art.js?v=20261016g';
+import {personSprite} from './pizza-sprites.js?v=20261016g';
+import {carSprite} from './pizza-city-traffic.js?v=20261016g';
+import {TAXI_DRIVERS} from './pizza-taxis.js?v=20261016g';
+import {openTaxi} from './pizza-taxis-ui.js?v=20261016g';
 
 const foundation=(kind,index)=>{const art=BUILDING_ART[kind]?.[index];return art?buildingProjection(art.corners,art.worldWidth,art.storeys,art.facadePixels).groundSize:{width:1.65,depth:1.65};};
 let districts=districtOrder();
@@ -267,6 +268,8 @@ export function showCity(){
   bridges(objects);waterfront(objects);
   for(const b of layout.blocks)block(objects,labels,b);
   for(const site of state.cityContactPlan.sites)drawCityContact(objects,labels,site,openCityContact);
+  drawFruitTraders(objects,labels,state.cityLandmarkGardens);
+  state.onFruitFocus=id=>{const site=state.cityFruitSites.find(s=>s.id===id);if(!site)return;const center=viewCenter(),p=iso(site.x,site.y),zoom=1.6;state.camera.scale.set(zoom);state.camera.position.set(center.x-p.x*zoom,center.y+20-p.y*zoom);captureView();notify(site.name+'s Obstwagen kommt nur zu bestimmten Zeiten.');};
   state.onContactFocus=id=>{const site=state.cityContactPlan.sites.find(s=>s.id===id);if(!site)return;const center=viewCenter(),p=iso(site.x,site.y);const zoom=site.type==='skate'?1.05:1.6;state.camera.scale.set(zoom);state.camera.position.set(center.x-p.x*zoom,center.y+20-p.y*zoom);captureView();notify(site.name+' · antippen, um zu sprechen.');};
   for(let i=0;i<40;i++){
     const kind=i<16?'car':'person',link=layout.links[Math.floor(cityHash(i,8)*layout.links.length)];
@@ -293,7 +296,7 @@ export function randomizeCity(){
 }
 
 export function tickCity(dt){
-  refreshRivalryMarkers();tickCityLife();
+  refreshRivalryMarkers();tickCityLife();tickFruitTraders();
   for(const mover of state.movers){
     const taxiDialog=document.getElementById('taxiDialog');if(mover.taxiId&&taxiDialog?.open&&taxiDialog.dataset.driver===mover.taxiId)continue;
     const previous=mover.axis+':'+mover.dir;

@@ -1,9 +1,10 @@
-import {COMPETITORS,competitor} from './pizza-competitors.js?v=20261016f';
-export const PHONE_BOOK=[{name:'Ordnungsamt',number:'326500'},{name:'Pronto Pizza',number:'445566'},{name:'Wetteransage',number:'118144'},{name:'Stadtinformation',number:'220011'}];
+import {COMPETITORS,competitor} from './pizza-competitors.js?v=20261016g';
+export const PHONE_BOOK=[{name:'Obstgroßhandel',number:'551204'},{name:'Ordnungsamt',number:'326500'},{name:'Pronto Pizza',number:'445566'},{name:'Wetteransage',number:'118144'},{name:'Stadtinformation',number:'220011'}];
 const say=(call,who,text)=>call.transcript.push({who,text});
 export function startPhoneCall(number){
  const entry=PHONE_BOOK.find(p=>p.number===number),call={number,service:entry?.name||null,stage:'ended',credibility:3,target:null,transcript:[]};
  if(!entry){say(call,'Leitung','Kein Anschluss unter dieser Nummer. Bitte prüfen Sie Ihre Wahl.');return call;}
+ if(entry.name==='Obstgroßhandel'){call.stage='fruitIntro';call.discount=0;say(call,'Obstgroßhandel','Bellafrutta. Frische Ware, kurze Gespräche. Was darf auf Ihrer Karte stehen?');}
  if(entry.name==='Ordnungsamt'){call.stage='intro';say(call,'Ordnungsamt','Ordnungsamt, Abteilung besondere Vorkommnisse. Bellini am Apparat. Was kann ich für Sie tun?');}
  if(entry.name==='Pronto Pizza'){call.stage='pizza';say(call,'Pronto Pizza','Pronto! Extra Käse oder extra Ärger? Für Beschwerden drücken Sie bitte gedanklich die Eins.');}
  if(entry.name==='Wetteransage')say(call,'Wetteransage','Sonne über der Stadt. Leichter Gegenwind auf der Halfpipe. Beste Aussichten für alle, die lieber draußen Geschäfte machen.');
@@ -11,6 +12,9 @@ export function startPhoneCall(number){
  return call;
 }
 export function phoneChoices(call){
+ if(call.stage==='fruitIntro')return [{id:'fruit-catalog',text:'Ich interessiere mich für Ihre besondere Obstkarte.'},{id:'drugs',text:'Ich möchte Drogen kaufen.'},{id:'fruit-loud',text:'Ein Freund hat erzählt, was Sie hier wirklich verkaufen.'}];
+ if(call.stage==='fruitTerms')return [{id:'fruit-regular',text:'Eine kleine Bestellung für den Anfang.'},{id:'fruit-discount',text:'Wenn die Qualität stimmt, bleibe ich Stammkunde. Gibt es Konditionen?'},{id:'drugs',text:'Sprechen wir doch direkt über Drogen.'}];
+ if(call.stage==='fruitShop')return [{id:'fruit-done',text:'Das war alles. Einen guten Tag noch.'}];
  if(call.stage==='intro')return [{id:'polite',text:'Ich möchte einen diskreten Hinweis geben.'},{id:'boss',text:'Ich verlange sofort Ihren Vorgesetzten!'},{id:'hours',text:'Eigentlich wollte ich nur nach den Öffnungszeiten fragen.'}];
  if(call.stage==='target')return COMPETITORS.map(r=>({id:'target:'+r.id,text:r.name}));
  if(call.stage==='story')return [{id:'calm',text:'Ich bleibe ruhig und komme direkt zum Punkt.'},{id:'dramatic',text:'Ich mache daraus eine ausgesprochen dramatische Geschichte.'},{id:'ramble',text:'Ein Freund von einem Freund hat da so etwas gehört ...'}];
@@ -20,6 +24,7 @@ export function phoneChoices(call){
 }
 export function choosePhoneReply(call,id){
  const choice=phoneChoices(call).find(c=>c.id===id);if(!choice)return false;say(call,'Du',choice.text);
+ if(call.service==='Obstgroßhandel'){if(id==='drugs'||id==='fruit-loud'){say(call,'Obstgroßhandel',id==='drugs'?'Keine Macht den Drogen. Wir verkaufen Obst. Wiederhören.':'Wir kennen Ihren Freund nicht. Und dieses Gespräch auch nicht.');call.stage='ended';}else if(id==='fruit-catalog'){say(call,'Obstgroßhandel','Kokosnuss, Einhorn und Grüner Waldmeister. Unsere Sorten sind Geschmackssache. Wie stellen Sie sich die Zusammenarbeit vor?');call.stage='fruitTerms';}else if(id==='fruit-done'){say(call,'Obstgroßhandel','Die Rechnung liegt den Kisten bei. Bis zur nächsten Saison.');call.stage='ended';}else{call.discount=id==='fruit-discount'?8:0;say(call,'Obstgroßhandel',call.discount?'Für ruhige Stammkunden finden wir 8 % Nachlass. Nicht mehr als zehn Kisten pro Spieltag.':'Gut. Höchstens zehn Kisten pro Spieltag. Die Tagespreise stehen unten.');call.stage='fruitShop';}return true;}
  if(call.stage==='pizza'){say(call,'Pronto Pizza',id==='cheese'?'Nur donnerstags. Und dann ausschließlich mit Vorbestellung. Ciao!':'Passiert den Besten. Die anderen rufen beim Ordnungsamt an. Ciao!');call.stage='ended';return true;}
  if(call.stage==='intro'){
   if(id==='hours'){say(call,'Ordnungsamt','Wir schließen immer genau dann, wenn man uns am dringendsten braucht. Schönen Tag noch!');call.stage='ended';return true;}
