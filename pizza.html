@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#dec9a5">
   <title>Pizza City · Mamma Mia</title>
-  <link rel="stylesheet" href="pizza.css?v=20261016c">
+  <link rel="stylesheet" href="pizza.css?v=20261016d">
 </head>
 <body>
 <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -35,14 +35,16 @@
       <button type="button" data-speed="6" aria-label="Sechsfaches Tempo" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m1 5 8 7-8 7zm7 0 8 7-8 7zm7 0 8 7-8 7z"/></svg></button>
     </div></div>
   </div>
-  <div id="cityHint" class="ui cityhint">Restaurants · Lager · Konkurrenz · Gebäude antippen</div>
+  <div id="cityHint" class="ui cityhint">Restaurants · Lager · Stadtkontakte antippen</div>
   <div id="cityControls" class="ui citycontrols">
     <button type="button" id="zoomInBtn" aria-label="Stadt vergrößern">+</button>
     <button type="button" id="zoomOutBtn" aria-label="Stadt verkleinern">−</button>
     <button type="button" id="centerBtn" aria-label="Zur Stadtmitte" title="Zur Stadtmitte"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg></button>
     <button type="button" id="randomCityBtn" aria-label="Zufällige Stadtkarte erzeugen" title="Neue zufällige Stadtkarte"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><g fill="currentColor"><circle cx="7" cy="7" r="1.6"/><circle cx="17" cy="7" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="7" cy="17" r="1.6"/><circle cx="17" cy="17" r="1.6"/></g></svg><span>Random</span></button>
     <button type="button" id="propertiesBtn" aria-label="Restaurantimmobilien und Lager anzeigen" title="Immobilien"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m2 10 10-8 10 8M5 9v12h14V9M10 21v-7h4v7" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+    <button type="button" id="contactsBtn" aria-label="Stadtkontakte und Aufträge" title="Stadtkontakte"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H9l-5 4zM8 8h8M8 12h5" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
   </div>
+  <dialog id="underworldDialog" aria-labelledby="underworldTitle"><header class="underworldHeader"><div><span id="underworldEyebrow">DIE ANDERE SEITE DER STADT</span><h2 id="underworldTitle">Stadtkontakte</h2></div><button id="underworldClose" type="button" aria-label="Stadtkontakte schließen">×</button></header><div id="underworldContent"></div><p id="underworldStatus" class="underworldStatus" role="status" aria-live="polite"></p></dialog>
   <dialog id="propertyDialog" aria-labelledby="propertyTitle">
     <header class="propertyHeader"><h2 id="propertyTitle">Immobilien</h2><button id="propertyClose" type="button" aria-label="Immobilien schließen">×</button></header>
     <p id="propertySummary"></p>
@@ -65,7 +67,7 @@
     <canvas id="commercePreview" width="180" height="160"></canvas>
     <p id="commerceInfo"></p><p id="commerceDescription"></p><strong id="commercePrice"></strong>
     <section id="competitorMarket" class="districtPanel" hidden></section>
-    <section id="sabotagePanel" class="sabotagePanel" hidden><h3>Konkurrenz sabotieren</h3><p>Kosten fallen sofort an. Bei Entdeckung scheitert die Aktion und die volle Strafe wird fällig.</p><div id="sabotageActions" class="sabotageActions"></div><p id="sabotageChoice"></p><button id="sabotageExecute" type="button" disabled>Aktion auswählen</button><p id="sabotageResult" role="status" aria-live="polite"></p><div id="sabotageHistory"></div></section>
+    <section id="sabotagePanel" class="sabotagePanel" hidden><h3>Geschäfte macht man draußen.</h3><p id="sabotageStatus"></p><button id="findCityContacts" type="button">Kontakte in der Stadt finden</button><div id="sabotageHistory"></div></section>
     <p id="commerceStatus" role="status"></p><button id="commerceBuy" type="button">Lager kaufen</button>
   </dialog>
   <dialog id="menuDialog" aria-labelledby="menuTitle">
@@ -210,7 +212,7 @@
 </div>
 <noscript>Bitte JavaScript aktivieren, um die Pizza-Demo zu starten.</noscript>
 <script type="module">
-  import('./pizza.js?v=20261016c').catch(error=>{
+  import('./pizza.js?v=20261016d').catch(error=>{
     console.error('Pizza demo could not start',error);
     const loading=document.querySelector('#loading');loading.hidden=false;loading.replaceChildren();
     const message=document.createElement('p');message.textContent='Die Demo konnte nicht starten. Bitte erneut laden.';

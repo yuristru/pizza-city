@@ -1,19 +1,22 @@
-import {WAREHOUSES} from './pizza-procurement.js?v=20261016c';
-import {COMPETITORS} from './pizza-competitors.js?v=20261016c';
-import {openCommerce} from './pizza-commerce-ui.js?v=20261016c';
-import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261016c';
-import {closedCityBlock} from './pizza-city-perimeter.js?v=20261016c';
-import {cityGround} from './pizza-city-ground.js?v=20261016c';
-import {landmarkGarden} from './pizza-city-landscape.js?v=20261016c';
-import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261016c';
-import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261016c';
-import {openProperty} from './pizza-properties-ui.js?v=20261016c';
-import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Texture,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261016c';
-import {BUILDING_ART} from './pizza-city-building-art.js?v=20261016c';
-import {buildingProjection} from './pizza-city-building-rules.js?v=20261016c';
-import {citySprite} from './pizza-city-art.js?v=20261016c';
-import {personSprite} from './pizza-sprites.js?v=20261016c';
-import {carSprite} from './pizza-city-traffic.js?v=20261016c';
+import {cityContactPlan} from './pizza-city-contacts.js?v=20261016d';
+import {drawCityContact,drawSkatepark,tickCityLife} from './pizza-city-life.js?v=20261016d';
+import {openCityContact} from './pizza-underworld-ui.js?v=20261016d';
+import {WAREHOUSES} from './pizza-procurement.js?v=20261016d';
+import {COMPETITORS} from './pizza-competitors.js?v=20261016d';
+import {openCommerce} from './pizza-commerce-ui.js?v=20261016d';
+import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261016d';
+import {closedCityBlock} from './pizza-city-perimeter.js?v=20261016d';
+import {cityGround} from './pizza-city-ground.js?v=20261016d';
+import {landmarkGarden} from './pizza-city-landscape.js?v=20261016d';
+import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261016d';
+import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261016d';
+import {openProperty} from './pizza-properties-ui.js?v=20261016d';
+import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Texture,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261016d';
+import {BUILDING_ART} from './pizza-city-building-art.js?v=20261016d';
+import {buildingProjection} from './pizza-city-building-rules.js?v=20261016d';
+import {citySprite} from './pizza-city-art.js?v=20261016d';
+import {personSprite} from './pizza-sprites.js?v=20261016d';
+import {carSprite} from './pizza-city-traffic.js?v=20261016d';
 
 const foundation=(kind,index)=>{const art=BUILDING_ART[kind]?.[index];return art?buildingProjection(art.corners,art.worldWidth,art.storeys,art.facadePixels).groundSize:{width:1.65,depth:1.65};};
 let districts=districtOrder();
@@ -106,7 +109,7 @@ function landmarkPark(objects,labels,b,index){
   }
   place(objects,object,f.x1,f.y1);object.label=index?'city-cathedral':'city-colosseum';object.landmarkBlock=b.id;object.landmarkFoundation=f;
   for(const t of garden.trees){const g=tree(t.index,t.scale);g.landmarkBlock=b.id;place(objects,g,t.x,t.y);}
-  for(const p of garden.benches){const g=bench();g.label='city-park-bench';g.landmarkBlock=b.id;place(objects,g,p.x,p.y);}
+  for(const p of garden.benches){if(state.cityContactPlan.sites.some(s=>s.type==='bench'&&s.blockId===b.id&&Math.hypot(s.x-p.x,s.y-p.y)<.01))continue;const g=bench();g.label='city-park-bench';g.landmarkBlock=b.id;place(objects,g,p.x,p.y);}
   for(const p of garden.lamps){const g=lamp();g.label='city-park-lamp';g.landmarkBlock=b.id;place(objects,g,p.x,p.y);}
 }
 function propertyBuilding(objects,labels,x,y,site,scale=1){
@@ -142,7 +145,7 @@ function refreshRivalryMarkers(){
   if(state.scene!=='city')return;
   const objects=state.camera.children.find(c=>c.label==='city-objects'),labels=state.camera.children.at(-1);
   for(const g of objects.children.filter(c=>c.competitorId)){const e=state.rivalry.effects[g.competitorId];g.tint=e?.until>state.gameMinutes?0xb7aba2:0xffffff;}
-  for(const tag of labels.children.filter(c=>c.label==='city-competitor-sign')){const e=state.rivalry.effects[tag.competitorId];tag.children[2].text=e?.until>state.gameMinutes?'BEEINTRÄCHTIGT':'KONKURRENZ';}
+  for(const tag of labels.children.filter(c=>c.label==='city-competitor-sign')){const e=state.rivalry.effects[tag.competitorId];tag.children[2].text=e?.until>state.gameMinutes?'BEEINTRÄCHTIGT':state.rivalry.pending.some(j=>j.target===tag.competitorId)?'AUFTRAG LÄUFT':'KONKURRENZ';}
 }
 
 function block(objects,labels,b){
@@ -159,9 +162,9 @@ function block(objects,labels,b){
     return;
   }
   if(b.landUse==='park'||b.landUse==='piazza'){
-    put(fountain(),w/2,h/2);
+    const skate=state.cityContactPlan.skatepark?.blockId===b.id;if(skate)drawSkatepark(objects,state.cityContactPlan.skatepark);else put(fountain(),w/2,h/2);
     for(const [x,y]of [[.7,.8],[w-.7,.8],[.7,h-.6],[w-.7,h-.6]])put(tree(Math.floor(cityHash(x0+x,y0+y,18)*4),.8),x,y);
-    put(bench(),Math.max(.8,w/2-1.7),h/2+.9);put(bench(),Math.min(w-.8,w/2+1.7),h/2+.9);
+    if(!skate){put(bench(),Math.max(.8,w/2-1.7),h/2+.9);put(bench(),Math.min(w-.8,w/2+1.7),h/2+.9);}
     put(lamp(),w-.1,h-.1);return;
   }
   if(by===0&&(bx===0||bx===1)){landmarkPark(objects,labels,b,bx);return;}
@@ -195,8 +198,8 @@ function captureView(){
 function clampCamera(){
   const center=viewCenter(),camera=state.camera,z=camera.scale.x;
   const x=(center.x-camera.x)/z,y=(center.y-camera.y)/z;
-  const gx=Math.max(2,Math.min(CITY_N-3,(x/(TW/2)+y/(TH/2))/2));
-  const gy=Math.max(2,Math.min(CITY_N-3,(y/(TH/2)-x/(TW/2))/2)),p=iso(gx,gy);
+  const gx=Math.max(-6,Math.min(CITY_N+5,(x/(TW/2)+y/(TH/2))/2));
+  const gy=Math.max(-6,Math.min(CITY_N+5,(y/(TH/2)-x/(TW/2))/2)),p=iso(gx,gy);
   camera.position.set(center.x-p.x*z,center.y-p.y*z);captureView();
 }
 export function resizeCity(){
@@ -251,6 +254,7 @@ export function showCity(){
     const size=art.uniform?{width:(art.corners[1][0]-art.corners[0][0])*Math.min(art.worldWidth/art.crop[2],72/art.facadePixels)/32,depth:(art.corners[2][0]-art.corners[1][0])*Math.min(art.worldWidth/art.crop[2],72/art.facadePixels)/32}:foundation('landmarks',index);
     return landmarkGarden(b,index,size);
   });
+  state.cityContactPlan=cityContactPlan(layout,state.cityLandmarkGardens);state.citySkaters=[];
   const ground=cityGround({...layout,park,fountainCell,landmarkGardens:state.cityLandmarkGardens},state.citySeed),markings=new Container(),objects=new Container(),labels=new Container();
   ground.label='city-ground';objects.label='city-objects';objects.sortableChildren=true;labels.sortableChildren=true;
   state.camera.addChild(ground,markings,objects,labels);
@@ -258,6 +262,8 @@ export function showCity(){
   state.cityBlockPlans=[];
   bridges(objects);waterfront(objects);
   for(const b of layout.blocks)block(objects,labels,b);
+  for(const site of state.cityContactPlan.sites)drawCityContact(objects,labels,site,openCityContact);
+  state.onContactFocus=id=>{const site=state.cityContactPlan.sites.find(s=>s.id===id);if(!site)return;const center=viewCenter(),p=iso(site.x,site.y);const zoom=site.type==='skate'?1.05:1.6;state.camera.scale.set(zoom);state.camera.position.set(center.x-p.x*zoom,center.y+20-p.y*zoom);captureView();notify(site.name+' · antippen, um zu sprechen.');};
   for(let i=0;i<40;i++){
     const kind=i<16?'car':'person',link=layout.links[Math.floor(cityHash(i,8)*layout.links.length)];
     const from=i%2?link.a:link.b,to=i%2?link.b:link.a;
@@ -281,7 +287,7 @@ export function randomizeCity(){
 }
 
 export function tickCity(dt){
-  refreshRivalryMarkers();
+  refreshRivalryMarkers();tickCityLife();
   for(const mover of state.movers){
     const previous=mover.axis+':'+mover.dir;
     advanceStreetActor(mover,layout,mover.speed*dt*.035,()=>cityHash(mover.variant,Math.floor(state.gameMinutes*17),mover.to));

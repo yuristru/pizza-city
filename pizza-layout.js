@@ -1,5 +1,5 @@
-import {product,itemPrice} from './pizza-catalog.js?v=20261016c';
-import {DEFAULT_PLAN,roomCell,roomStep,kitchenCell,passageCell} from './pizza-floorplans.js?v=20261016c';
+import {product,itemPrice} from './pizza-catalog.js?v=20261016d';
+import {DEFAULT_PLAN,roomCell,roomStep,kitchenCell,passageCell} from './pizza-floorplans.js?v=20261016d';
 export {roomCell,kitchenCell,passageCell};
 export const ROOM={w:DEFAULT_PLAN.w,h:DEFAULT_PLAN.h};
 export const KITCHEN=DEFAULT_PLAN.kitchen;
@@ -89,7 +89,7 @@ export function copyLayout(layout=DEFAULT_LAYOUT){
 }
 
 export function upgradeLayout(value,version,plan=DEFAULT_PLAN){
-  if(!Array.isArray(value)||![1,2,3,4,5,6,7,8,9,10,11,12].includes(version))return null;
+  if(!Array.isArray(value)||![1,2,3,4,5,6,7,8,9,10,11,12,13].includes(version))return null;
   const items=version===1?value.filter(item=>item?.type!=='chair').map(item=>item?.type==='table'?{...item,seats:4}:item):value;
   return validLayout(items,plan)?copyLayout(items):null;
 }

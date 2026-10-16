@@ -39,12 +39,12 @@ Es gibt 18 kaufbare Objekte mit eigenen Spielständen, Grundrissen und Schildern
 
 | Aktion | Kosten | Entdeckungsrisiko | Strafe | Wirkung bei Erfolg |
 | --- | ---: | ---: | ---: | --- |
-| Ordnungsamt | 750 DM | 15 % | 15.000 DM | 45 % weniger Nachfrage, 6 Spielstunden |
+| Ordnungsamt | 750 DM | 8 bis 45 %, je Gespräch | 15.000 DM | 45 % weniger Nachfrage, 6 Spielstunden |
 | Kakerlaken | 2.400 DM | 42 % | 45.000 DM | 80 % weniger Nachfrage, 24 Spielstunden |
 | Stinkbombe | 1.200 DM | 28 % | 24.000 DM | 65 % weniger Nachfrage, 4 Spielstunden |
 | Fassade | 900 DM | 36 % | 18.000 DM | 25 % weniger Nachfrage, 12 Spielstunden |
 
-Kosten fallen bei Ausführung an. Entdeckte Aktionen scheitern und lösen die
+Aufträge werden bei Stadtkontakten oder in Telefonzellen erteilt, siehe `CITY-UNDERWORLD.md`. Kosten fallen einmalig beim Beauftragen an. Die Ausführung folgt nach 30 bis 90 Spielminuten. Entdeckte Aktionen scheitern und lösen die
 volle Strafe aus. Verfügbares Geld wird sofort belastet, der Rest bleibt als
 Schuld erhalten und wird aus späterem Guthaben eingezogen. Alle Aktionen und
 Strafen erscheinen als Kosten der gesamten Kette im Tagesabschluss und im
@@ -55,13 +55,15 @@ zu eigenen Kunden; erst künftige Nachfrage wird umverteilt.
 
 ## Speicherung und Prüfung
 
-Spielstandversion 11 übernimmt alle bisherigen Versionen. Poolkonten, ausstehende
+Spielstandversion 13 übernimmt alle bisherigen Versionen. Aufträge, Auftragsnummern und bereits festgelegte Zufallsergebnisse bleiben beim Laden erhalten. Poolkonten, ausstehende
 Kunden, Effekte, Sperrzeiten, Strafen und Schulden werden gespeichert. Das Neuladen
 setzt Tageskontingente nicht zurück. Bei Tageswechsel beginnt ein neuer Pool.
 Die neuen Objekte verwenden bestehende erprobte Raumformen mit eigener Identität.
 
 `tests/pizza-market-qa.mjs` prüft Erhaltung der Pools, Konkurrenz, Klassen,
 Preisgrenzen, Tageswechsel, Speicherung, Wirkungen, Strafen und Abrechnung.
-`tests/pizza-market-browser-qa.cjs` prüft Migration, Kauf, echte Gäste, Effekte,
-Schulden, Finanzen, Neuladen, Kartenwechsel und responsive Dialoge. Die bestehenden
+`tests/pizza-market-browser-qa.cjs` prüft Migration, Kauf, echte Gäste, Kontakte,
+Finanzen, Neuladen, Kartenwechsel und responsive Dialoge.
+Die beiden `pizza-underworld`-Prüfungen decken Kontakte, Telefonate, Aufträge,
+Wirkungen, Strafen und Tagesgrenzen ab. Die bestehenden
 Stadt-, Raum-, Service- und Tagesabschlussprüfungen bleiben aktiv.

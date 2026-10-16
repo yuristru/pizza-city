@@ -1,6 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const {chromium}=require('playwright');
 const root=process.cwd(),out=path.join(root,'qa/pizza');fs.mkdirSync(out,{recursive:true});
+const core=fs.readFileSync(path.join(root,'pizza-oldtown-study.js'),'utf8').match(/from ['"](.\/pizza-core\.js[^'"]*)['"]/)[1].replace('./','/');
 const server=http.createServer((req,res)=>{
   const file=path.resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));
   if(!file.startsWith(root+path.sep))return res.writeHead(403).end();
@@ -15,7 +16,7 @@ const server=http.createServer((req,res)=>{
     await page.addInitScript(()=>localStorage.setItem('pizza-city-layout-v1','{"oldtownSentinel":true}'));
     await page.goto(`http://127.0.0.1:${server.address().port}/pizza-oldtown-study.html`);
     await page.waitForFunction(()=>window.oldtownStudy);
-    await page.evaluate(async()=>{const {app}=await import('/pizza-core.js?v=20261015b');app.ticker.stop();app.render();});
+    await page.evaluate(async core=>{const {app}=await import(core);app.ticker.stop();app.render();},core);
     const snap=()=>page.evaluate(()=>window.oldtownStudy),closed=await snap();
     assert.equal(closed.mode,'closed');assert(closed.clear);assert.equal(closed.coverage.length,3);
     assert.deepEqual(closed.assets,[]);assert(closed.ratio>.97);
@@ -36,9 +37,9 @@ const server=http.createServer((req,res)=>{
     await page.mouse.move(canvas.x+canvas.width*.5,canvas.y+canvas.height*.6);await page.mouse.down();await page.mouse.move(canvas.x+canvas.width*.5+50,canvas.y+canvas.height*.6+25,{steps:5});await page.mouse.up();
     assert(Math.abs((await snap()).camera.x-before.x)>20,'Drag must pan the quarter.');
     await page.click('[data-view="all"]');
-    const point=await page.evaluate(async()=>{
-      const {app,world}=await import('/pizza-core.js?v=20261015b'),camera=world.children[0],sign=camera.children.at(-1).children.find(c=>c.label==='oldtown-restaurant-sign');app.render();const b=sign.getBounds(),r=app.canvas.getBoundingClientRect();return{x:r.left+b.x+b.width/2,y:r.top+b.y+b.height/2};
-    });
+    const point=await page.evaluate(async core=>{
+      const {app,world}=await import(core),camera=world.children[0],sign=camera.children.at(-1).children.find(c=>c.label==='oldtown-restaurant-sign');app.render();const b=sign.getBounds(),r=app.canvas.getBoundingClientRect();return{x:r.left+b.x+b.width/2,y:r.top+b.y+b.height/2};
+    },core);
     await page.mouse.click(point.x,point.y);assert.match(await page.locator('#selection').innerText(),/Forno San Luca/);assert.equal((await snap()).view,'restaurant');
     for(const [width,height]of [[393,852],[844,390],[320,740]]){
       await page.setViewportSize({width,height});await page.click('[data-view="alley"]');

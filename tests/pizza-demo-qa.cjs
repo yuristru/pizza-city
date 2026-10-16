@@ -103,7 +103,7 @@ async function loaded(page,url){await page.goto(url);try{await page.waitForSelec
         traffic:state.movers.map(m=>({sprite:m.g instanceof Sprite,scaleX:m.g.scale.x,scaleY:m.g.scale.y})),
         terraces:objects.children.filter(c=>c.label==='city-terrace').map(c=>({sprite:c instanceof Sprite,x:(c.x/32+c.y/16)/2,y:(c.y/16-c.x/32)/2}))};
     },corePath);
-    assert.deepEqual(cityArt.atlases,{buildings:32,buildingTypes:8,courtyardBuildings:4,landmarks:2,props:8});assert(cityArt.buildings>=30);
+    assert.deepEqual(cityArt.atlases,{contacts:6,buildings:32,buildingTypes:8,courtyardBuildings:4,landmarks:2,props:8});assert(cityArt.buildings>=30);
     assert(cityArt.variants.filter(i=>i>=16).length>=8,'The expanded atlas must be used in the city.');
     assert(cityArt.ground.sprite);assert.equal(cityArt.ground.pixelScale,1);assert.equal(cityArt.ground.sampling,'nearest');assert(cityArt.ground.details.asphalt>200&&cityArt.ground.details.crossings>0&&cityArt.ground.details.curbs>0&&cityArt.ground.details.manholes>0);
     assert.equal(cityArt.projected.length,cityArt.atlases.buildings-8+cityArt.atlases.buildingTypes+cityArt.atlases.courtyardBuildings+1);assert(cityArt.projected.every(a=>a.projection&&a.anchor.x>0&&a.anchor.x<1&&a.anchor.y>0&&a.anchor.y<=1));

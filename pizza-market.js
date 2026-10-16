@@ -1,7 +1,7 @@
-import {advertisingMultipliers} from './pizza-advertising.js?v=20261016c';
-import {property} from './pizza-properties.js?v=20261016c';
-import {COMPETITORS} from './pizza-competitors.js?v=20261016c';
-import {shiftAt} from './pizza-shifts.js?v=20261016c';
+import {advertisingMultipliers} from './pizza-advertising.js?v=20261016d';
+import {property} from './pizza-properties.js?v=20261016d';
+import {COMPETITORS} from './pizza-competitors.js?v=20261016d';
+import {shiftAt} from './pizza-shifts.js?v=20261016d';
 export const CUSTOMER_TIERS=[{id:'simple',name:'Einfach',budget:900},{id:'middle',name:'Mittel',budget:1500},{id:'upscale',name:'Gehoben',budget:2400}];
 export const DISTRICTS=[
  {id:'altstadt',name:'Altstadt',bx:0,by:1,customers:[480,300,120]},

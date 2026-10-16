@@ -1,24 +1,26 @@
-import {DISTRICTS,districtMarket,advanceMarket,claimCustomers} from './pizza-market.js?v=20261016c';
-import {activeCampaigns} from './pizza-advertising.js?v=20261016c';
-import {collectFine} from './pizza-rivalry.js?v=20261016c';
-import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261016c';
-import {accrueReservePayroll} from './pizza-staff.js?v=20261016c';
-import {staffSchedule,nextShiftBoundary} from './pizza-shifts.js?v=20261016c';
-import {DAY_MINUTES,SECONDS_PER_MINUTE,completeDay,dayLabel} from './pizza-daily.js?v=20261016c';
-import {profilePlan} from './pizza-kitchen.js?v=20261016c';
-import {state,saveLayout,updateMoney,ensureRestaurants,notify} from './pizza-core.js?v=20261016c';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261016c';
-import {advanceService} from './pizza-service.js?v=20261016c';
+import {DISTRICTS,districtMarket,advanceMarket,claimCustomers} from './pizza-market.js?v=20261016d';
+import {activeCampaigns} from './pizza-advertising.js?v=20261016d';
+import {collectFine,advanceRivalry} from './pizza-rivalry.js?v=20261016d';
+import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261016d';
+import {accrueReservePayroll} from './pizza-staff.js?v=20261016d';
+import {staffSchedule,nextShiftBoundary} from './pizza-shifts.js?v=20261016d';
+import {DAY_MINUTES,SECONDS_PER_MINUTE,completeDay,dayLabel} from './pizza-daily.js?v=20261016d';
+import {profilePlan} from './pizza-kitchen.js?v=20261016d';
+import {state,saveLayout,updateMoney,ensureRestaurants,notify} from './pizza-core.js?v=20261016d';
+import {money} from './pizza-catalog.js?v=20261016d';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261016d';
+import {advanceService} from './pizza-service.js?v=20261016d';
 
-import {accrueWarehouseCosts,purchasingDiscount} from './pizza-procurement.js?v=20261016c';
+import {accrueWarehouseCosts,purchasingDiscount} from './pizza-procurement.js?v=20261016d';
 let checkpoint=0;
 export function tickService(seconds){
   if(!Number.isFinite(seconds)||seconds<=0)return [];
   seconds=Math.min(seconds,3600);
   const elapsed=seconds,events=[],profiles=ensureRestaurants(),menu=serviceMenu();
+  const settle=()=>{const result=advanceRivalry(state.rivalry,Math.round(state.balance*100),state.gameMinutes);state.balance=result.balanceCents/100;events.push(...result.results.map(j=>({...j,type:'sabotage-completed'})));};settle();
   // All branches and reserve wages finish the same slice before a midnight snapshot.
   while(seconds>1e-8){
-    const midnight=(state.daily.current.day+1)*DAY_MINUTES,shiftBoundary=nextShiftBoundary(state.gameMinutes),untilMidnight=(midnight-state.gameMinutes)*SECONDS_PER_MINUTE,untilShift=(shiftBoundary-state.gameMinutes)*SECONDS_PER_MINUTE,adBoundary=Math.min(Infinity,...activeCampaigns(state.advertising,state.gameMinutes).map(c=>c.until)),untilAd=(adBoundary-state.gameMinutes)*SECONDS_PER_MINUTE,step=Math.min(seconds,untilMidnight,untilShift,untilAd,1);
+    const midnight=(state.daily.current.day+1)*DAY_MINUTES,shiftBoundary=nextShiftBoundary(state.gameMinutes),untilMidnight=(midnight-state.gameMinutes)*SECONDS_PER_MINUTE,untilShift=(shiftBoundary-state.gameMinutes)*SECONDS_PER_MINUTE,adBoundary=Math.min(Infinity,...activeCampaigns(state.advertising,state.gameMinutes).map(c=>c.until)),untilAd=(adBoundary-state.gameMinutes)*SECONDS_PER_MINUTE,jobBoundary=Math.min(Infinity,...state.rivalry.pending.map(j=>j.due)),untilJob=(jobBoundary-state.gameMinutes)*SECONDS_PER_MINUTE,step=Math.min(seconds,untilMidnight,untilShift,untilAd,untilJob,1);
     const fine=collectFine(state.rivalry,Math.round(state.balance*100));state.balance=fine.balanceCents/100;if(fine.paid)events.push({type:'fine-payment',amount:fine.paid});
     const eligible=Object.fromEntries(Object.entries(profiles).map(([id,p])=>{const schedule=staffSchedule(state.staff,id,state.gameMinutes,p.service);return [id,p.business.open!==false&&schedule.accepting&&p.items.some(t=>t.type==='table')&&!(p.service.debtCents||state.staff.reserveDebtCents||state.procurement.debtCents)&&kitchenReadiness(p.kitchenTiles,p.items,profilePlan(id,p)).ready&&!!kitchenWorkFlow(p.kitchenTiles,p.items,profilePlan(id,p))];}));
     const markets=DISTRICTS.map(d=>districtMarket(d,profiles,menu,state.rivalry,state.gameMinutes,{eligible,advertising:state.advertising}));
@@ -31,13 +33,15 @@ export function tickService(seconds){
       state.balance=result.balanceCents/100;events.push(...result.events.map(event=>({...event,restaurantId:id})));
     }
     seconds-=step;
-    state.gameMinutes=step===untilMidnight?midnight:step===untilShift?shiftBoundary:step===untilAd?adBoundary:state.gameMinutes+step/SECONDS_PER_MINUTE;
+    state.gameMinutes=step===untilMidnight?midnight:step===untilShift?shiftBoundary:step===untilAd?adBoundary:step===untilJob?jobBoundary:state.gameMinutes+step/SECONDS_PER_MINUTE;
     if(step===untilMidnight){const report=completeDay(state.daily,profiles,state.staff,state.procurement,state.rivalry);events.push({type:'day-closed',day:report.day});}
+    settle();
   }
   checkpoint+=elapsed;
   if(events.length)updateMoney();
   if(events.length||checkpoint>=5){saveLayout(true);checkpoint=0;}
   const closed=events.filter(e=>e.type==='day-closed');
   if(closed.length){notify('Tagesabschluss vom '+dayLabel(closed.at(-1).day)+' ist verfügbar.');document.dispatchEvent(new Event('day-closed'));}
+  const completed=events.filter(e=>e.type==='sabotage-completed');if(completed.length){state.onRivalryChange?.();const last=completed.at(-1);notify(last.caught?'Auftrag aufgeflogen! Strafe: '+money(last.fineCents/100):'Auftrag erledigt. Die Konkurrenz ist vorübergehend beeinträchtigt.');document.dispatchEvent(new Event('rivalry-changed'));}
   return events;
 }
