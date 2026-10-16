@@ -1,9 +1,10 @@
-import {AD_FORMATS,AD_QUALITIES,AD_DURATIONS,campaignQuote,activeCampaigns,commissionCampaign} from './pizza-advertising.js?v=20261016e';
-import {state,ensureRestaurants,restaurantName,saveLayout,updateMoney,notify} from './pizza-core.js?v=20261016e';
-import {restaurantDistrict,purchaseMarket,marketReady} from './pizza-market.js?v=20261016e';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261016e';
-import {money} from './pizza-catalog.js?v=20261016e';
-import {dayLabel,minuteLabel} from './pizza-daily.js?v=20261016e';
+import {AD_FORMATS,AD_QUALITIES,AD_DURATIONS,campaignQuote,activeCampaigns,commissionCampaign} from './pizza-advertising.js?v=20261016f';
+import {state,ensureRestaurants,restaurantName,saveLayout,updateMoney,notify} from './pizza-core.js?v=20261016f';
+import {restaurantDistrict,purchaseMarket,marketReady} from './pizza-market.js?v=20261016f';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261016f';
+import {money} from './pizza-catalog.js?v=20261016f';
+import {dayLabel,minuteLabel} from './pizza-daily.js?v=20261016f';
+import {renderCapacityCard} from './pizza-capacity-ui.js?v=20261016f';
 const el=id=>document.getElementById(id);
 const node=(tag,value,cls)=>{const n=document.createElement(tag);if(value!==undefined)n.textContent=value;if(cls)n.className=cls;return n;};
 let restaurantId='',formatId='flyer',qualityId='simple',days=3,stamp=0,optionsKey='',campaignKey='';
@@ -45,7 +46,8 @@ export function renderAdvertisingUI(force=false){
  el('advertisingDiscount').textContent=quote.discount?quote.discount+' % Laufzeitrabatt · statt '+money(quote.regularDailyCents/100)+' / Tag':'Regulärer Tagespreis';
  el('advertisingEnd').textContent=days+' Spieltag'+(days===1?'':'e')+' · bis '+when(state.gameMinutes+days*1440);
  el('advertisingEffect').textContent='+'+Math.round(quote.strength*100)+' % Sichtbarkeit bei '+quote.quality.audience+'. Kombinierte Werbung wirkt bis maximal +200 % je Zielgruppe.';
- const menu=serviceMenu(),before=purchaseMarket(restaurantId,profiles,menu,state.rivalry,state.gameMinutes,state.market,state.advertising),preview={campaigns:[...state.advertising.campaigns,{...selection(),starts:state.gameMinutes,until:state.gameMinutes+days*1440}]},after=purchaseMarket(restaurantId,profiles,menu,state.rivalry,state.gameMinutes,state.market,preview);
+ const menu=serviceMenu(),before=purchaseMarket(restaurantId,profiles,menu,state.rivalry,state.gameMinutes,state.market,state.advertising,state.taxis),preview={campaigns:[...state.advertising.campaigns,{...selection(),starts:state.gameMinutes,until:state.gameMinutes+days*1440}]},after=purchaseMarket(restaurantId,profiles,menu,state.rivalry,state.gameMinutes,state.market,preview,state.taxis);
+ renderCapacityCard(el('advertisingCapacity'),restaurantId,profiles,menu,{advertising:duplicate?state.advertising:preview});
  el('advertisingForecast').textContent='Rechnerisches Tagespotenzial bei '+quote.quality.audience+': '+before.site.expected[tier]+' → '+(duplicate?before.site.expected[tier]:after.site.expected[tier])+' Gäste.';
  el('advertisingReadiness').textContent=marketReady(profiles[restaurantId])?'Deine aktuelle Einrichtung und Speisekarte sind berücksichtigt.':'Prognose für einen geöffneten Standort mit Holzstühlen und Renovierungsstufe 1. Für Gäste brauchst du Küche, Tische, Personal und eine passende Speisekarte.';
  const submit=el('advertisingOrder');submit.disabled=duplicate||!affordable;submit.textContent='Für '+money(quote.totalCents/100)+' beauftragen';

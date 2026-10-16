@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import {TAXI_DRIVERS,TAXI_DURATIONS,taxiQuote,freshTaxis,commissionTaxi,restoreTaxis,activeTaxiContracts,taxiMultiplier} from '../pizza-taxis.js';
+import {restaurantCapacity,utilizationForecast} from '../pizza-capacity.js';
+import {freshRestaurant} from '../pizza-restaurant-profiles.js';
+import {freshStaff,hireEmployee} from '../pizza-staff.js';
+import {restaurantPlan} from '../pizza-floorplans.js';
+import {minimalEquipment} from '../pizza-auto-equip.js';
+import {districtMarket,restaurantDistrict,freshMarket,advanceMarket} from '../pizza-market.js';
+import {freshDaily,currentReport,reportMetrics,completeDay} from '../pizza-daily.js';
+const profiles={},staff=freshStaff(42),menu=[{active:true,price:850,recipe:{name:'Margherita',sauce:'tomato',toppings:[]}}];
+for(const id of ['mamma-mia','fontana']){const p=freshRestaurant(id),setup=minimalEquipment(restaurantPlan(id));Object.assign(p,{items:setup.items,kitchenTiles:setup.kitchenTiles});profiles[id]=p;for(const shift of ['lunch','evening'])for(const role of ['cook','waiter'])assert(hireEmployee(staff,staff.market.find(p=>p.role===role).id,id,profiles,shift).ok);}
+const minutes=690,taxis=freshTaxis(),request={driverId:'gino',restaurantId:'mamma-mia',days:7},daily=freshDaily(minutes,profiles,staff);
+assert.equal(TAXI_DRIVERS.length,3);assert.deepEqual(TAXI_DURATIONS.map(d=>taxiQuote({...request,days:d.days}).totalCents),[42000,144000,1314000]);
+for(const r of [null,{}, {...request,driverId:'fake'},{...request,days:1}])assert.equal(taxiQuote(r),null);
+let previous=Infinity;for(const duration of TAXI_DURATIONS){const q=taxiQuote({...request,days:duration.days});assert(q.dailyCents<previous);previous=q.dailyCents;assert.equal(q.totalCents,q.dailyCents*q.days);}
+const clean=structuredClone({taxis,profiles});assert(!commissionTaxi(taxis,request,profiles,10,minutes).ok);assert(!commissionTaxi(taxis,{...request,restaurantId:'enzo'},profiles,1e8,minutes).ok);assert(!commissionTaxi(taxis,null,profiles,1e8,minutes).ok);assert.deepEqual({taxis,profiles},clean);
+const d=restaurantDistrict('mamma-mia'),before=districtMarket(d,profiles,menu,{},minutes),r=commissionTaxi(taxis,request,profiles,1e8,minutes);assert(r.ok);assert.equal(r.balanceCents,1e8-42000);assert.equal(r.contract.until,minutes+7*1440);
+const snapshot=structuredClone({taxis,profiles});assert(!commissionTaxi(taxis,{...request,restaurantId:'fontana',days:365},profiles,r.balanceCents,minutes).ok);assert.deepEqual({taxis,profiles},snapshot);
+const after=districtMarket(d,profiles,menu,{},minutes,{taxis}),site=(s,id)=>s.participants.find(p=>p.id===id);assert(site(after,'mamma-mia').shares.every((n,i)=>n>site(before,'mamma-mia').shares[i]));assert(site(after,'fontana').shares.every((n,i)=>n<site(before,'fontana').shares[i]));
+const m=freshMarket(minutes);for(let i=0;i<10;i++)advanceMarket(m,[after],3300,minutes);assert(m.used[d.id].every((n,i)=>n<=d.customers[i]));
+assert.equal(taxiMultiplier(taxis,'fontana',minutes),1);assert.equal(taxiMultiplier(taxis,'mamma-mia',minutes),1.2);assert.equal(activeTaxiContracts(taxis,r.contract.until).length,0);assert.deepEqual(districtMarket(d,profiles,menu,{},r.contract.until,{taxis}),before);
+assert.deepEqual(restoreTaxis(taxis,minutes,profiles),taxis);assert.deepEqual(restoreTaxis(null,minutes,profiles),freshTaxis());
+assert.equal(restoreTaxis({...taxis,contracts:[null,{},...taxis.contracts,...taxis.contracts,{...r.contract,id:20,driverId:'fake'},{...r.contract,id:21,totalCents:1},{...r.contract,id:22,starts:minutes+1,until:minutes+1+10080}]},minutes,profiles).contracts.length,1);assert.equal(restoreTaxis(taxis,minutes,{}).contracts.length,0);
+let report=reportMetrics(currentReport(daily,minutes,profiles,staff));assert.equal(report.advertisingCents,42000);assert.equal(report.profitCents,-42000);completeDay(daily,profiles,staff);report=reportMetrics(currentReport(daily,1440,profiles,staff));assert.equal(report.advertisingCents,0);
+for(const driverId of ['ada','paolo'])assert(commissionTaxi(taxis,{...request,driverId},profiles,1e8,minutes).ok);assert.equal(taxiMultiplier(taxis,'mamma-mia',minutes),1.6);assert(commissionTaxi(taxis,request,profiles,1e8,r.contract.until).ok);
+const p=profiles['mamma-mia'],saved=JSON.stringify({profiles,staff,menu}),capacity=restaurantCapacity('mamma-mia',p,staff,menu);assert(capacity.daily>0);assert.equal(capacity.hours,11);assert(capacity.seats>0);assert.equal(JSON.stringify({profiles,staff,menu}),saved,'Forecasting must never alter real service or accounting.');
+const lunch=structuredClone(staff);lunch.employees=lunch.employees.filter(e=>e.restaurantId!=='mamma-mia'||e.shift==='lunch');const partial=restaurantCapacity('mamma-mia',p,lunch,menu);assert.equal(partial.hours,5);assert(partial.daily<capacity.daily);
+const noWaiters=structuredClone(staff);noWaiters.employees=noWaiters.employees.filter(e=>e.restaurantId!=='mamma-mia'||e.role!=='waiter');assert.equal(restaurantCapacity('mamma-mia',p,noWaiters,menu).daily,0);
+const closed=structuredClone(p);closed.business.open=false;assert.equal(restaurantCapacity('mamma-mia',closed,staff,menu).daily,0);assert.equal(restaurantCapacity('mamma-mia',p,staff,[]).daily,0);
+const broken=structuredClone(p);broken.items=broken.items.filter(i=>i.type!=='oven');assert.equal(restaurantCapacity('mamma-mia',broken,staff,menu).daily,0);
+const blocked=structuredClone(p);blocked.items=blocked.items.filter(i=>i.type!=='table');assert.equal(restaurantCapacity('mamma-mia',blocked,staff,menu).daily,0);
+let f=utilizationForecast({daily:100},70,120);assert.equal(f.additional,30);assert.equal(f.overflow,20);assert.equal(f.percent,70);assert.equal(f.nextPercent,120);f=utilizationForecast({daily:100},110,150);assert(f.full);assert.equal(f.additional,0);assert.equal(f.overflow,50);f=utilizationForecast({daily:0},90,100);assert.equal(f.additional,0);assert(Number.isFinite(f.percent));
+console.log('Taxi/capacity passed: 7/30/365-day prepaid contracts, driver exclusivity, atomic failures, persistence, finite shared demand and exact expiry, branch/day accounting, crew shifts, missing kitchen/menu/tables, non-mutating throughput estimates and capped promotion overflow.',capacity);

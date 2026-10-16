@@ -1,10 +1,10 @@
-import {Sprite,Texture} from './pizza-core.js?v=20261016e';
+import {Sprite,Texture} from './pizza-core.js?v=20261016f';
 
 const cache=new Map(),COLORS=['#bb4c37','#456c8b','#c39b3f','#5d8061','#d7cdb5'];
 
 // Four directional bitmaps keep wheels underneath the body in both traffic directions.
-export function carSprite(index,axis,dir){
-  const color=COLORS[index%COLORS.length],rotation=axis===0?(dir>0?0:2):(dir>0?1:3),key=color+rotation;
+export function carSprite(index,axis,dir,taxi=false){
+  const color=taxi?'#f0dfb0':COLORS[index%COLORS.length],rotation=axis===0?(dir>0?0:2):(dir>0?1:3),key=(taxi?'taxi:':'')+color+rotation;
   if(!cache.has(key)){
     const canvas=document.createElement('canvas');canvas.width=64;canvas.height=48;
     const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
@@ -28,6 +28,11 @@ export function carSprite(index,axis,dir){
     poly([p(.08,-.14,11),p(.19,-.14,7),p(.19,.14,7),p(.08,.14,11)],'#b2c3b9');
     poly([p(-.2,-.14,11),p(-.27,-.14,7),p(-.27,.14,7),p(-.2,.14,11)],'#405961');
     for(const y of [-.13,.13]){const [x1,y1]=p(.4,y,4);ctx.fillStyle='#ead8a2';ctx.fillRect(x1-1,y1-1,2,2);const [x2,y2]=p(-.4,y,4);ctx.fillStyle='#86332b';ctx.fillRect(x2-1,y2-1,2,2);}
+    if(taxi){
+      for(const side of [-.171,.171])for(let i=0;i<6;i++){const [x,y]=p(-.18+i*.065,side,5);ctx.fillStyle=i%2?'#eee4c9':'#292c29';ctx.fillRect(x-1,y-1,3,2);}
+      surface([[-.12,-.08],[.08,-.08],[.08,.08],[-.12,.08]],15,'#f5c64e');
+      const [tx,ty]=p(-.02,0,15);ctx.fillStyle='#282c25';ctx.font='bold 5px monospace';ctx.textAlign='center';ctx.fillText('TAXI',tx,ty-1);
+    }
     const texture=Texture.from(canvas);texture.source.scaleMode='nearest';cache.set(key,texture);
   }
   const sprite=new Sprite(cache.get(key));sprite.anchor.set(.5,34/48);sprite.label='city-car';return sprite;

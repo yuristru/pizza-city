@@ -1,7 +1,7 @@
-import {drawIngredientArt} from './pizza-ingredient-art.js?v=20261016e';
-import {app,state,clearWorld,sceneUI,notify} from './pizza-core.js?v=20261016e';
-import {ingredientPurchaseCost,purchasingDiscount} from './pizza-procurement.js?v=20261016e';
-import {INGREDIENTS,ingredient,blankRecipe,onPizza,validRecipe,copyRecipe,recipeCost,toppingAt,formOf,nextForm,formName} from './pizza-recipe.js?v=20261016e';
+import {drawIngredientArt} from './pizza-ingredient-art.js?v=20261016f';
+import {app,state,clearWorld,sceneUI,notify} from './pizza-core.js?v=20261016f';
+import {ingredientPurchaseCost,purchasingDiscount} from './pizza-procurement.js?v=20261016f';
+import {INGREDIENTS,ingredient,blankRecipe,onPizza,validRecipe,copyRecipe,recipeCost,toppingAt,formOf,nextForm,formName} from './pizza-recipe.js?v=20261016f';
 const el=id=>document.getElementById(id),board=el('pizzaBoard'),pixelBoard=document.createElement('canvas'),ctx=pixelBoard.getContext('2d'),KEY='pizza-recipes-v1';
 pixelBoard.width=160;pixelBoard.height=160;ctx.setTransform(.5,0,0,.5,0,0);ctx.imageSmoothingEnabled=false;
 let recipe=blankRecipe(),recipes=[],selected='mozzarella',erase=false,history=[],stroke=null,forms=Object.fromEntries(INGREDIENTS.map(i=>[i.id,0]));

@@ -1,7 +1,7 @@
-import {workPath,counterHandoff} from './pizza-business.js?v=20261016e';
-import {workLayoutKey,tableTargets,refreshWaiterTarget,refreshKitchenTarget} from './pizza-work-targets.js?v=20261016e';
-export {reconcileProduction} from './pizza-work-targets.js?v=20261016e';
-import {roomCell,roomStep} from './pizza-floorplans.js?v=20261016e';
+import {workPath,counterHandoff} from './pizza-business.js?v=20261016f';
+import {workLayoutKey,tableTargets,refreshWaiterTarget,refreshKitchenTarget} from './pizza-work-targets.js?v=20261016f';
+export {reconcileProduction} from './pizza-work-targets.js?v=20261016f';
+import {roomCell,roomStep} from './pizza-floorplans.js?v=20261016f';
 const key=t=>[t.x,t.y,t.r,t.seats,t.variant||'wood'].join(':');
 const personId=id=>typeof id==='string'&&/^[a-z0-9-]{1,80}$/.test(id);
 const cell=(p,plan)=>p&&Number.isInteger(p.x)&&Number.isInteger(p.y)&&roomCell(p.x,p.y,plan);

@@ -1,17 +1,18 @@
-import {DISTRICTS,districtMarket,advanceMarket,claimCustomers} from './pizza-market.js?v=20261016e';
-import {activeCampaigns} from './pizza-advertising.js?v=20261016e';
-import {collectFine,advanceRivalry} from './pizza-rivalry.js?v=20261016e';
-import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261016e';
-import {accrueReservePayroll} from './pizza-staff.js?v=20261016e';
-import {staffSchedule,nextShiftBoundary} from './pizza-shifts.js?v=20261016e';
-import {DAY_MINUTES,SECONDS_PER_MINUTE,completeDay,dayLabel} from './pizza-daily.js?v=20261016e';
-import {profilePlan} from './pizza-kitchen.js?v=20261016e';
-import {state,saveLayout,updateMoney,ensureRestaurants,notify} from './pizza-core.js?v=20261016e';
-import {money} from './pizza-catalog.js?v=20261016e';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261016e';
-import {advanceService} from './pizza-service.js?v=20261016e';
+import {DISTRICTS,districtMarket,advanceMarket,claimCustomers} from './pizza-market.js?v=20261016f';
+import {activeCampaigns} from './pizza-advertising.js?v=20261016f';
+import {activeTaxiContracts} from './pizza-taxis.js?v=20261016f';
+import {collectFine,advanceRivalry} from './pizza-rivalry.js?v=20261016f';
+import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261016f';
+import {accrueReservePayroll} from './pizza-staff.js?v=20261016f';
+import {staffSchedule,nextShiftBoundary} from './pizza-shifts.js?v=20261016f';
+import {DAY_MINUTES,SECONDS_PER_MINUTE,completeDay,dayLabel} from './pizza-daily.js?v=20261016f';
+import {profilePlan} from './pizza-kitchen.js?v=20261016f';
+import {state,saveLayout,updateMoney,ensureRestaurants,notify} from './pizza-core.js?v=20261016f';
+import {money} from './pizza-catalog.js?v=20261016f';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261016f';
+import {advanceService} from './pizza-service.js?v=20261016f';
 
-import {accrueWarehouseCosts,purchasingDiscount} from './pizza-procurement.js?v=20261016e';
+import {accrueWarehouseCosts,purchasingDiscount} from './pizza-procurement.js?v=20261016f';
 let checkpoint=0;
 export function tickService(seconds){
   if(!Number.isFinite(seconds)||seconds<=0)return [];
@@ -20,10 +21,10 @@ export function tickService(seconds){
   const settle=()=>{const result=advanceRivalry(state.rivalry,Math.round(state.balance*100),state.gameMinutes);state.balance=result.balanceCents/100;events.push(...result.results.map(j=>({...j,type:'sabotage-completed'})));};settle();
   // All branches and reserve wages finish the same slice before a midnight snapshot.
   while(seconds>1e-8){
-    const midnight=(state.daily.current.day+1)*DAY_MINUTES,shiftBoundary=nextShiftBoundary(state.gameMinutes),untilMidnight=(midnight-state.gameMinutes)*SECONDS_PER_MINUTE,untilShift=(shiftBoundary-state.gameMinutes)*SECONDS_PER_MINUTE,adBoundary=Math.min(Infinity,...activeCampaigns(state.advertising,state.gameMinutes).map(c=>c.until)),untilAd=(adBoundary-state.gameMinutes)*SECONDS_PER_MINUTE,jobBoundary=Math.min(Infinity,...state.rivalry.pending.map(j=>j.due)),untilJob=(jobBoundary-state.gameMinutes)*SECONDS_PER_MINUTE,step=Math.min(seconds,untilMidnight,untilShift,untilAd,untilJob,1);
+    const midnight=(state.daily.current.day+1)*DAY_MINUTES,shiftBoundary=nextShiftBoundary(state.gameMinutes),untilMidnight=(midnight-state.gameMinutes)*SECONDS_PER_MINUTE,untilShift=(shiftBoundary-state.gameMinutes)*SECONDS_PER_MINUTE,adBoundary=Math.min(Infinity,...activeCampaigns(state.advertising,state.gameMinutes).map(c=>c.until)),untilAd=(adBoundary-state.gameMinutes)*SECONDS_PER_MINUTE,jobBoundary=Math.min(Infinity,...state.rivalry.pending.map(j=>j.due)),untilJob=(jobBoundary-state.gameMinutes)*SECONDS_PER_MINUTE,taxiBoundary=Math.min(Infinity,...activeTaxiContracts(state.taxis,state.gameMinutes).map(c=>c.until)),untilTaxi=(taxiBoundary-state.gameMinutes)*SECONDS_PER_MINUTE,step=Math.min(seconds,untilMidnight,untilShift,untilAd,untilJob,untilTaxi,1);
     const fine=collectFine(state.rivalry,Math.round(state.balance*100));state.balance=fine.balanceCents/100;if(fine.paid)events.push({type:'fine-payment',amount:fine.paid});
     const eligible=Object.fromEntries(Object.entries(profiles).map(([id,p])=>{const schedule=staffSchedule(state.staff,id,state.gameMinutes,p.service);return [id,p.business.open!==false&&schedule.accepting&&p.items.some(t=>t.type==='table')&&!(p.service.debtCents||state.staff.reserveDebtCents||state.procurement.debtCents)&&kitchenReadiness(p.kitchenTiles,p.items,profilePlan(id,p)).ready&&!!kitchenWorkFlow(p.kitchenTiles,p.items,profilePlan(id,p))];}));
-    const markets=DISTRICTS.map(d=>districtMarket(d,profiles,menu,state.rivalry,state.gameMinutes,{eligible,advertising:state.advertising}));
+    const markets=DISTRICTS.map(d=>districtMarket(d,profiles,menu,state.rivalry,state.gameMinutes,{eligible,advertising:state.advertising,taxis:state.taxis}));
     advanceMarket(state.market,markets,step,state.gameMinutes);
     const warehouseBill=accrueWarehouseCosts(state.procurement,step,Math.round(state.balance*100));state.balance=warehouseBill.balanceCents/100;if(warehouseBill.paid)events.push({type:'warehouse-cost',amount:warehouseBill.paid});
     const reserve=accrueReservePayroll(state.staff,step,Math.round(state.balance*100));state.balance=reserve.balanceCents/100;if(reserve.paid)events.push({type:'reserve-payroll',amount:reserve.paid});
@@ -33,7 +34,8 @@ export function tickService(seconds){
       state.balance=result.balanceCents/100;events.push(...result.events.map(event=>({...event,restaurantId:id})));
     }
     seconds-=step;
-    state.gameMinutes=step===untilMidnight?midnight:step===untilShift?shiftBoundary:step===untilAd?adBoundary:step===untilJob?jobBoundary:state.gameMinutes+step/SECONDS_PER_MINUTE;
+    state.gameMinutes=step===untilMidnight?midnight:step===untilShift?shiftBoundary:step===untilAd?adBoundary:step===untilJob?jobBoundary:step===untilTaxi?taxiBoundary:state.gameMinutes+step/SECONDS_PER_MINUTE;
+    if(step===untilTaxi)events.push(...state.taxis.contracts.filter(c=>c.until===state.gameMinutes).map(c=>({type:'taxi-expired',driverId:c.driverId,restaurantId:c.restaurantId})));
     if(step===untilMidnight){const report=completeDay(state.daily,profiles,state.staff,state.procurement,state.rivalry);events.push({type:'day-closed',day:report.day});}
     settle();
   }
@@ -43,5 +45,6 @@ export function tickService(seconds){
   const closed=events.filter(e=>e.type==='day-closed');
   if(closed.length){notify('Tagesabschluss vom '+dayLabel(closed.at(-1).day)+' ist verfügbar.');document.dispatchEvent(new Event('day-closed'));}
   const completed=events.filter(e=>e.type==='sabotage-completed');if(completed.length){state.onRivalryChange?.();const last=completed.at(-1);notify(last.caught?'Auftrag aufgeflogen! Strafe: '+money(last.fineCents/100):'Auftrag erledigt. Die Konkurrenz ist vorübergehend beeinträchtigt.');document.dispatchEvent(new Event('rivalry-changed'));}
+  if(events.some(e=>e.type==='taxi-expired')){notify('Taxi-Vertrag beendet. Du kannst wieder mit dem Fahrer verhandeln.');document.dispatchEvent(new Event('advertising-changed'));}
   return events;
 }

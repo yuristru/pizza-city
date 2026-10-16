@@ -1,8 +1,8 @@
-import {CUSTOMER_TIERS,purchaseMarket,marketReady} from './pizza-market.js?v=20261016e';
-import {money} from './pizza-catalog.js?v=20261016e';
+import {CUSTOMER_TIERS,purchaseMarket,marketReady} from './pizza-market.js?v=20261016f';
+import {money} from './pizza-catalog.js?v=20261016f';
 const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
 export function renderDistrictPanel(host,id,state,profiles,menu,{preview=true}={}){
- const m=purchaseMarket(id,profiles,menu,state.rivalry,state.gameMinutes,state.market,state.advertising),d=m.district;
+ const m=purchaseMarket(id,profiles,menu,state.rivalry,state.gameMinutes,state.market,state.advertising,state.taxis),d=m.district;
  host.replaceChildren(node('h4',d.name+' · Kundenpotenzial pro Spieltag'));
  const grid=node('div',undefined,'customerTiers');
  for(const [i,t]of CUSTOMER_TIERS.entries()){

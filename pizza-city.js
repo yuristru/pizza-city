@@ -1,22 +1,24 @@
-import {cityContactPlan} from './pizza-city-contacts.js?v=20261016e';
-import {drawCityContact,drawSkatepark,tickCityLife} from './pizza-city-life.js?v=20261016e';
-import {openCityContact} from './pizza-underworld-ui.js?v=20261016e';
-import {WAREHOUSES} from './pizza-procurement.js?v=20261016e';
-import {COMPETITORS} from './pizza-competitors.js?v=20261016e';
-import {openCommerce} from './pizza-commerce-ui.js?v=20261016e';
-import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261016e';
-import {closedCityBlock} from './pizza-city-perimeter.js?v=20261016e';
-import {cityGround} from './pizza-city-ground.js?v=20261016e';
-import {landmarkGarden} from './pizza-city-landscape.js?v=20261016e';
-import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261016e';
-import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261016e';
-import {openProperty} from './pizza-properties-ui.js?v=20261016e';
-import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Texture,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261016e';
-import {BUILDING_ART} from './pizza-city-building-art.js?v=20261016e';
-import {buildingProjection} from './pizza-city-building-rules.js?v=20261016e';
-import {citySprite} from './pizza-city-art.js?v=20261016e';
-import {personSprite} from './pizza-sprites.js?v=20261016e';
-import {carSprite} from './pizza-city-traffic.js?v=20261016e';
+import {cityContactPlan} from './pizza-city-contacts.js?v=20261016f';
+import {drawCityContact,drawSkatepark,tickCityLife} from './pizza-city-life.js?v=20261016f';
+import {openCityContact} from './pizza-underworld-ui.js?v=20261016f';
+import {WAREHOUSES} from './pizza-procurement.js?v=20261016f';
+import {COMPETITORS} from './pizza-competitors.js?v=20261016f';
+import {openCommerce} from './pizza-commerce-ui.js?v=20261016f';
+import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261016f';
+import {closedCityBlock} from './pizza-city-perimeter.js?v=20261016f';
+import {cityGround} from './pizza-city-ground.js?v=20261016f';
+import {landmarkGarden} from './pizza-city-landscape.js?v=20261016f';
+import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261016f';
+import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261016f';
+import {openProperty} from './pizza-properties-ui.js?v=20261016f';
+import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Texture,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261016f';
+import {BUILDING_ART} from './pizza-city-building-art.js?v=20261016f';
+import {buildingProjection} from './pizza-city-building-rules.js?v=20261016f';
+import {citySprite} from './pizza-city-art.js?v=20261016f';
+import {personSprite} from './pizza-sprites.js?v=20261016f';
+import {carSprite} from './pizza-city-traffic.js?v=20261016f';
+import {TAXI_DRIVERS} from './pizza-taxis.js?v=20261016f';
+import {openTaxi} from './pizza-taxis-ui.js?v=20261016f';
 
 const foundation=(kind,index)=>{const art=BUILDING_ART[kind]?.[index];return art?buildingProjection(art.corners,art.worldWidth,art.storeys,art.facadePixels).groundSize:{width:1.65,depth:1.65};};
 let districts=districtOrder();
@@ -271,9 +273,11 @@ export function showCity(){
     const from=i%2?link.a:link.b,to=i%2?link.b:link.a;
     const a=layout.nodes[from],b=layout.nodes[to],length=Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
     const actor={kind,from,to,progress:cityHash(i,9)*length,offset:kind==='car'?.16:.67,variant:i,speed:kind==='car'?.43+(i%4)*.065:.095+(i%5)*.011};
+    actor.taxiId=kind==='car'?TAXI_DRIVERS.find(d=>d.variant===i)?.id:null;
     advanceStreetActor(actor,layout,0,()=>cityHash(i,10));
-    actor.g=kind==='car'?carSprite(i,actor.axis,actor.dir):personSprite(i%4,actor.axis===0?(actor.dir>0?0:2):(actor.dir>0?1:3));
-    if(kind==='person')actor.g.scale.set(.33);actor.g.label=kind==='car'?'city-car':'city-pedestrian';
+    actor.g=kind==='car'?carSprite(i,actor.axis,actor.dir,!!actor.taxiId):personSprite(i%4,actor.axis===0?(actor.dir>0?0:2):(actor.dir>0?1:3));
+    if(kind==='person')actor.g.scale.set(.33);actor.g.label=actor.taxiId?'city-taxi':kind==='car'?'city-car':'city-pedestrian';
+    if(actor.taxiId){actor.g.taxiId=actor.taxiId;actor.g.eventMode='static';actor.g.cursor='pointer';actor.g.hitArea=new Rectangle(-24,-29,48,40);actor.g.on('pointertap',()=>{if(!state.cityGesture?.moved)openTaxi(actor.taxiId);});}
     objects.addChild(actor.g);state.movers.push(actor);
   }
   state.restaurantSign=state.cityRestaurantSigns[state.activeRestaurantId]||state.cityRestaurantSigns['mamma-mia'];
@@ -291,10 +295,11 @@ export function randomizeCity(){
 export function tickCity(dt){
   refreshRivalryMarkers();tickCityLife();
   for(const mover of state.movers){
+    const taxiDialog=document.getElementById('taxiDialog');if(mover.taxiId&&taxiDialog?.open&&taxiDialog.dataset.driver===mover.taxiId)continue;
     const previous=mover.axis+':'+mover.dir;
     advanceStreetActor(mover,layout,mover.speed*dt*.035,()=>cityHash(mover.variant,Math.floor(state.gameMinutes*17),mover.to));
     if(previous!==mover.axis+':'+mover.dir){
-      const next=mover.kind==='car'?carSprite(mover.variant,mover.axis,mover.dir):personSprite(mover.variant%4,mover.axis===0?(mover.dir>0?0:2):(mover.dir>0?1:3));
+      const next=mover.kind==='car'?carSprite(mover.variant,mover.axis,mover.dir,!!mover.taxiId):personSprite(mover.variant%4,mover.axis===0?(mover.dir>0?0:2):(mover.dir>0?1:3));
       mover.g.texture=next.texture;next.destroy();
     }
     const p=iso(mover.x,mover.y);

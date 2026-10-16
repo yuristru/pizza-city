@@ -1,6 +1,6 @@
-import {Container,Graphics,Rectangle,iso,label,state} from './pizza-core.js?v=20261016e';
-import {citySprite} from './pizza-city-art.js?v=20261016e';
-import {personSprite} from './pizza-sprites.js?v=20261016e';
+import {Container,Graphics,Rectangle,iso,label,state} from './pizza-core.js?v=20261016f';
+import {citySprite} from './pizza-city-art.js?v=20261016f';
+import {personSprite} from './pizza-sprites.js?v=20261016f';
 const put=(layer,g,x,y)=>{const p=iso(x,y);g.position.set(p.x,p.y);g.zIndex=p.y;layer.addChild(g);return g;};
 function fallback(site){
  const g=new Container();
