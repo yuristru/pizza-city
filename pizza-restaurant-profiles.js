@@ -1,10 +1,10 @@
-import {restoreKitchenTiles,legacyKitchen,KITCHEN_TYPES,kitchenReadiness} from './pizza-kitchen.js?v=20261017a';
-import {restaurantPlan,DEFAULT_PLAN,withKitchen} from './pizza-floorplans.js?v=20261017a';
-import {copyLayout,validLayout,placementIssue} from './pizza-layout.js?v=20261017a';
-import {defaultFinishes,restoreFinishes} from './pizza-catalog.js?v=20261017a';
-import {freshService,restoreService,rehomeService,tableKey,serviceLayoutIssue} from './pizza-service.js?v=20261017a';
+import {restoreKitchenTiles,legacyKitchen,KITCHEN_TYPES,kitchenReadiness} from './pizza-kitchen.js?v=20261017b';
+import {restaurantPlan,DEFAULT_PLAN,withKitchen} from './pizza-floorplans.js?v=20261017b';
+import {copyLayout,validLayout,placementIssue} from './pizza-layout.js?v=20261017b';
+import {defaultFinishes,restoreFinishes} from './pizza-catalog.js?v=20261017b';
+import {freshService,restoreService,rehomeService,tableKey,serviceLayoutIssue} from './pizza-service.js?v=20261017b';
 
-import {freshBusiness,restoreBusiness} from './pizza-business.js?v=20261017a';
+import {freshBusiness,restoreBusiness} from './pizza-business.js?v=20261017b';
 export const MAIN_RESTAURANT='mamma-mia';
 export function freshRestaurant(id){return {business:freshBusiness(),items:id===MAIN_RESTAURANT?copyLayout():[],finishes:defaultFinishes(),service:freshService(),investmentCents:0,floorPlanVersion:1,kitchenVersion:1,kitchenTiles:[],history:[]};}
 export function restoreRestaurants(raw,owned,legacy){

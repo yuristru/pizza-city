@@ -29,7 +29,7 @@ const server=http.createServer((req,res)=>{
     await page.goto(`http://127.0.0.1:${server.address().port}/pizza.html`);
     try{await page.waitForSelector('#loading',{state:'hidden'});}catch(e){console.error(await page.locator('#loading').innerText());throw e;}
     const cityPath=fs.readFileSync(path.join(root,'pizza.js'),'utf8').match(/from ['"](.\/pizza-city\.js[^'"]*)['"]/)[1].replace('./','/');
-    const overviewSides=new Set();
+    const overviewSides=new Set(),cornerDirections=new Set(),cornerFamilies=new Set();
     await page.addStyleTag({content:'#app{position:fixed!important;inset:0!important;width:100%!important;max-width:none!important;height:100%!important;border-radius:0!important;transform:none!important;margin:0!important}'});
     await page.evaluate(async p=>{const {app}=await import(p);app.ticker.stop();},corePath);
     const seeds=[94117,0,1,42,81,1024,0xffffffff,993377,...Array.from({length:24},(_,i)=>Math.imul(i+1,2654435761)>>>0)];
@@ -37,9 +37,9 @@ const server=http.createServer((req,res)=>{
       const data=await page.evaluate(async({corePath,cityPath,seed})=>{
         const {state,app}=await import(corePath),{showCity}=await import(cityPath);state.citySeed=seed;state.scene=null;showCity();state.speed=0;app.render();
         const objects=state.camera.children.find(c=>c.label==='city-objects');
-        return {canal:state.cityLayout.canal.side,streets:state.cityLayout.streets.length,blocks:state.cityLayout.blocks.length,expectedPlans:state.cityLayout.blocks.filter(b=>b.landUse==='housing'&&b.source!==0&&b.source!==1).length,courts:state.cityBlockPlans.map(b=>({coverage:b.coverage,court:b.court,gate:b.gate,parts:b.parts})),houses:objects.children.filter(c=>c.groundBounds).map(c=>({label:c.label,kind:c.buildingKind,index:c.buildingVariant,row:c.frontage,key:c.blockKey,b:c.groundBounds,cells:c.occupiedGroundCells})),properties:objects.children.filter(c=>c.propertyId).map(c=>c.propertyId),warehouses:objects.children.filter(c=>c.warehouseId).map(c=>c.warehouseId),restaurants:objects.children.filter(c=>['city-competitor','player-restaurant'].includes(c.label)).length,clear:objects.children.filter(c=>c.groundBounds).every(c=>{const b=c.groundBounds;return [[b.x0,b.y0],[b.x1,b.y0],[b.x1,b.y1],[b.x0,b.y1]].every(([x,y])=>!state.cityLayout.road(x,y)&&!state.cityLayout.water(x,y));})};
+        return {canal:state.cityLayout.canal.side,streets:state.cityLayout.streets.length,blocks:state.cityLayout.blocks.length,expectedPlans:state.cityLayout.blocks.filter(b=>b.landUse==='housing'&&b.source!==0&&b.source!==1).length,courts:state.cityBlockPlans.map(b=>({coverage:b.coverage,court:b.court,gate:b.gate,parts:b.parts})),houses:objects.children.filter(c=>c.groundBounds).map(c=>({label:c.label,kind:c.buildingKind,index:c.buildingVariant,row:c.frontage,corner:c.corner,direction:c.cornerDirection,family:c.buildingFamily,key:c.blockKey,b:c.groundBounds,cells:c.occupiedGroundCells})),properties:objects.children.filter(c=>c.propertyId).map(c=>c.propertyId),warehouses:objects.children.filter(c=>c.warehouseId).map(c=>c.warehouseId),restaurants:objects.children.filter(c=>['city-competitor','player-restaurant'].includes(c.label)).length,clear:objects.children.filter(c=>c.groundBounds).every(c=>{const b=c.groundBounds;return [[b.x0,b.y0],[b.x1,b.y0],[b.x1,b.y1],[b.x0,b.y1]].every(([x,y])=>!state.cityLayout.road(x,y)&&!state.cityLayout.water(x,y));})};
       },{corePath,cityPath,seed});
-      assert.equal(data.courts.length,data.expectedPlans);
+      assert.equal(data.courts.length,data.expectedPlans);for(const house of data.houses.filter(h=>h.kind==='cornerBuildings')){assert.equal(house.row,'corner');assert.equal(house.corner,house.direction);cornerDirections.add(house.direction);cornerFamilies.add(house.family);}
       const gardens=await page.evaluate(async p=>{
         const {state}=await import(p),objects=state.camera.children.find(c=>c.label==='city-objects');
         return {details:state.camera.children.find(c=>c.label==='city-ground').groundDetails,parks:state.cityLandmarkGardens.map(g=>({id:g.id,trees:objects.children.filter(c=>c.landmarkBlock===g.id&&c.label==='city-tree').length,benches:objects.children.filter(c=>c.landmarkBlock===g.id&&c.label==='city-park-bench').length,landmark:objects.children.filter(c=>c.landmarkBlock===g.id&&c.landmarkFoundation).length}))};
@@ -73,6 +73,6 @@ const server=http.createServer((req,res)=>{
       }
     }
 
-    assert.equal(overviewSides.size,4);assert.deepEqual(errors,[]);console.log('Mixed city passed: shared foundations, parcel containment, no overlaps, closed perimeters and clear inner courtyards, eighteen properties, two warehouses and four restaurants across 32 seeds and all four canal shores.');
+    assert.equal(overviewSides.size,4);assert.equal(cornerDirections.size,4);assert.equal(cornerFamilies.size,4);assert.deepEqual(errors,[]);console.log('Mixed city passed: shared foundations, parcel containment, no overlaps, closed perimeters and clear inner courtyards, eighteen properties, two warehouses and four restaurants across 32 seeds and all four canal shores.');
   }finally{await browser.close();server.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;server.close();});

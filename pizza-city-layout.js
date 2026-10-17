@@ -139,7 +139,8 @@ export function advanceStreetActor(actor,layout,distance,random=Math.random){
       const t=actor.progress/length,dx=Math.sign(b.x-a.x),dy=Math.sign(b.y-a.y);
       // Offset right of travel; cars use two narrow opposing lanes, walkers the sidewalk.
       actor.axis=dx?0:1;actor.dir=dx||dy;
-      actor.x=a.x+(b.x-a.x)*t-dy*actor.offset;actor.y=a.y+(b.y-a.y)*t+dx*actor.offset;
+      const cx=a.x+(b.x-a.x)*t,cy=a.y+(b.y-a.y)*t,crossing=layout.crossings.find(s=>s.axis===actor.axis&&Math.abs((s.axis===0?cy:cx)-s.center)<1e-7&&(s.axis===0?cx:cy)>=s.from&&(s.axis===0?cx:cy)<=s.to),offset=crossing?Math.min(actor.offset,crossing.width/2+.18):actor.offset;
+      actor.x=cx-dy*offset;actor.y=cy+dx*offset;
       return;
     }
     actor.progress-=length;

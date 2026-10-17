@@ -1,5 +1,5 @@
-import {CUSTOMER_TIERS,purchaseMarket,marketReady} from './pizza-market.js?v=20261017a';
-import {money} from './pizza-catalog.js?v=20261017a';
+import {CUSTOMER_TIERS,purchaseMarket,marketReady} from './pizza-market.js?v=20261017b';
+import {money} from './pizza-catalog.js?v=20261017b';
 const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
 export function renderDistrictPanel(host,id,state,profiles,menu,{preview=true}={}){
  const m=purchaseMarket(id,profiles,menu,state.rivalry,state.gameMinutes,state.market,state.advertising,state.taxis),d=m.district;

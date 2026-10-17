@@ -1,27 +1,27 @@
-import {drawCourtyardGarden,drawItalianBridge} from './pizza-city-decoration.js?v=20261017a';
-import {contactAt,parkLampPoints} from './pizza-city-contacts.js?v=20261017a';
-import {drawFruitTraders,tickFruitTraders} from './pizza-fruit-city.js?v=20261017a';
-import {cityContactPlan} from './pizza-city-contacts.js?v=20261017a';
-import {drawCityContact,drawSkatepark,tickCityLife} from './pizza-city-life.js?v=20261017a';
-import {openCityContact} from './pizza-underworld-ui.js?v=20261017a';
-import {WAREHOUSES} from './pizza-procurement.js?v=20261017a';
-import {COMPETITORS} from './pizza-competitors.js?v=20261017a';
-import {openCommerce} from './pizza-commerce-ui.js?v=20261017a';
-import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261017a';
-import {closedCityBlock} from './pizza-city-perimeter.js?v=20261017a';
-import {cityGround} from './pizza-city-ground.js?v=20261017a';
-import {landmarkGarden} from './pizza-city-landscape.js?v=20261017a';
-import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261017a';
-import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261017a';
-import {openProperty} from './pizza-properties-ui.js?v=20261017a';
-import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Texture,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261017a';
-import {BUILDING_ART} from './pizza-city-building-art.js?v=20261017a';
-import {buildingProjection} from './pizza-city-building-rules.js?v=20261017a';
-import {citySprite} from './pizza-city-art.js?v=20261017a';
-import {personSprite} from './pizza-sprites.js?v=20261017a';
-import {carSprite} from './pizza-city-traffic.js?v=20261017a';
-import {TAXI_DRIVERS} from './pizza-taxis.js?v=20261017a';
-import {openTaxi} from './pizza-taxis-ui.js?v=20261017a';
+import {drawCourtyardGarden,drawItalianBridge} from './pizza-city-decoration.js?v=20261017b';
+import {contactAt,parkLampPoints} from './pizza-city-contacts.js?v=20261017b';
+import {drawFruitTraders,tickFruitTraders} from './pizza-fruit-city.js?v=20261017b';
+import {cityContactPlan} from './pizza-city-contacts.js?v=20261017b';
+import {drawCityContact,drawSkatepark,tickCityLife} from './pizza-city-life.js?v=20261017b';
+import {openCityContact} from './pizza-underworld-ui.js?v=20261017b';
+import {WAREHOUSES} from './pizza-procurement.js?v=20261017b';
+import {COMPETITORS} from './pizza-competitors.js?v=20261017b';
+import {openCommerce} from './pizza-commerce-ui.js?v=20261017b';
+import {warehouseCanvas} from './pizza-warehouse-art.js?v=20261017b';
+import {closedCityBlock} from './pizza-city-perimeter.js?v=20261017b';
+import {cityGround} from './pizza-city-ground.js?v=20261017b';
+import {landmarkGarden} from './pizza-city-landscape.js?v=20261017b';
+import {districtOrder,nextCitySeed,cityLayout,advanceStreetActor} from './pizza-city-layout.js?v=20261017b';
+import {PROPERTIES,PROPERTY_SIZES} from './pizza-properties.js?v=20261017b';
+import {openProperty} from './pizza-properties-ui.js?v=20261017b';
+import {app,world,state,TW,TH,CITY_N,Container,Graphics,Sprite,Texture,Rectangle,iso,hash,label,clearWorld,sceneUI,sceneViewport,saveLayout,notify} from './pizza-core.js?v=20261017b';
+import {BUILDING_ART} from './pizza-city-building-art.js?v=20261017b';
+import {buildingProjection} from './pizza-city-building-rules.js?v=20261017b';
+import {citySprite} from './pizza-city-art.js?v=20261017b';
+import {personSprite} from './pizza-sprites.js?v=20261017b';
+import {carSprite} from './pizza-city-traffic.js?v=20261017b';
+import {TAXI_DRIVERS} from './pizza-taxis.js?v=20261017b';
+import {openTaxi} from './pizza-taxis-ui.js?v=20261017b';
 
 const foundation=(kind,index)=>{const art=BUILDING_ART[kind]?.[index];return art?buildingProjection(art.corners,art.worldWidth,art.storeys,art.facadePixels).groundSize:{width:1.65,depth:1.65};};
 let districts=districtOrder();
@@ -174,7 +174,8 @@ function block(objects,labels,b){
   // Retire the oversized deli and repeated chapel from ordinary street fronts.
   // The perimeter planner fills their space with the remaining residential art.
   for(let index=0;index<(state.cityArt.buildings?.length||32);index++)if(index!==28)pool.push(item('buildings',index));
-  for(const index of [0,1,3,4,5,6,7])pool.push(item('buildingTypes',index));
+  for(const index of [0,1,3,5,6,7])pool.push(item('buildingTypes',index));
+  for(const [index,art]of (state.cityArt.cornerBuildings||[]).entries())pool.push(item('cornerBuildings',index,{cornerOnly:true,cornerDirection:art.cornerDirection,buildingFamily:art.buildingFamily}));
   const rival=COMPETITORS.find(r=>r.bx===bx&&r.by===by);
   const restaurant=bx===1&&by===1?item('buildings',4,{name:'Mamma Mia',player:true}):rival?item('buildings',rival.sprite,{name:rival.name,rival}):null;
   const required=[...(restaurant?[restaurant]:[]),...WAREHOUSES.filter(p=>p.bx===bx&&p.by===by).map(warehouse=>({kind:'warehouse',index:0,width:warehouse.width,depth:warehouse.depth,warehouse})),...PROPERTIES.filter(p=>p.bx===bx&&p.by===by).map(site=>item(site.art,site.sprite,{site}))];
@@ -183,7 +184,7 @@ function block(objects,labels,b){
   for(const p of plan.parts){
     const x=p.x1,y=p.y1;
     const object=p.warehouse?warehouseBuilding(objects,labels,x,y,p.warehouse,p.scale):p.site?propertyBuilding(objects,labels,x,y,p.site,p.scale):building(objects,labels,x,y,p.index,p.name,p.player,p.kind,p.rival,p.scale,plan.court);
-    object.frontage=p.edge;object.blockKey=b.id;object.groundBounds={x0:p.x0,x1:p.x1,y0:p.y0,y1:p.y1};
+    object.frontage=p.edge;object.corner=p.corner||null;object.cornerDirection=p.cornerDirection||null;object.buildingFamily=p.buildingFamily||null;object.blockKey=b.id;object.groundBounds={x0:p.x0,x1:p.x1,y0:p.y0,y1:p.y1};
   }
   drawCourtyardGarden(objects,plan,(state.citySeed+Math.floor(x0*971+y0*7919))>>>0);
   put(lamp(),.08,h-.08);

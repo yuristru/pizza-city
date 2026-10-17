@@ -78,3 +78,6 @@ console.log('Landmark gardens passed: 256 contained precincts, substantial lawns
 
 // Keep the footprint geometry checks in the existing city QA entry point.
 await import('./pizza-city-footprints-qa.mjs');
+
+for(const seed of [0,1,42,81,94117,993377,0xffffffff]){const layout=cityLayout(seed);for(const link of layout.links){const walker={from:link.a,to:link.b,progress:0,offset:.67};for(let i=0;i<100;i++){advanceStreetActor(walker,layout,1.4,()=>.37);assert(!layout.water(walker.x,walker.y)||layout.bridge(walker.x,walker.y),'Walking lanes stay within bridge parapets at fast speed.');}}}
+console.log('Fast pedestrian routes passed: seven maps, all street links, full sidewalk offsets and bridge confinement.');

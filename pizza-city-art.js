@@ -1,11 +1,12 @@
-import {BUILDING_ART} from './pizza-city-building-art.js?v=20261017a';
-import {buildingProjection} from './pizza-city-building-rules.js?v=20261017a';
-import {groundProjection} from './pizza-isometric-art.js?v=20261017a';
-import {Sprite,Texture,state} from './pizza-core.js?v=20261017a';
+import {BUILDING_ART} from './pizza-city-building-art.js?v=20261017b';
+import {buildingProjection} from './pizza-city-building-rules.js?v=20261017b';
+import {groundProjection} from './pizza-isometric-art.js?v=20261017b';
+import {Sprite,Texture,state} from './pizza-core.js?v=20261017b';
 
 export const ATLASES=[
  {key:'contacts',url:'italian-city-contacts-v1.png',frames:[[0,0,512,480,50],[512,0,512,480,50],[1024,0,512,480,40],[0,512,512,450,38],[512,512,512,450,38],[1024,512,512,450,38]]},
  {key:'buildings',url:'italian-houses-32-two-storey-v2.png',frames:BUILDING_ART.buildings},
+ {key:'cornerBuildings',url:'italian-clock-corners-v1.png',frames:BUILDING_ART.cornerBuildings},
  {key:'buildingTypes',url:'italian-building-types-two-storey-v2.png',frames:BUILDING_ART.buildingTypes},
  {key:'courtyardBuildings',url:'italian-courtyards-two-storey-v2.png',frames:BUILDING_ART.courtyardBuildings},
  {key:'landmarks',url:'italian-landmarks-two-storey-v2.png',frames:BUILDING_ART.landmarks},
@@ -51,7 +52,7 @@ function buildingFrame(image,art){
  ctx.setTransform(p.scaleX,p.skewY,0,p.scaleY,-front[0]*p.scaleX-minX,-front[1]*p.scaleY-front[0]*p.skewY-minY);
  ctx.drawImage(image,x,y,w,h,0,0,w,h);
  const anchor={x:-minX/canvas.width,y:-minY/canvas.height},pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data,texture=Texture.from(canvas);texture.source.scaleMode='nearest';
- return {texture,anchor,groundSize:p.groundSize,storeys:art.storeys,facadeHeight:p.facadeHeight,projection:{scaleX:p.scaleX,scaleY:p.scaleY,skewY:p.skewY},id:art.id,name:art.name,roof:art.roof,chimney:art.chimney,shape:art.shape,hitArea:{contains(px,py){const ix=Math.floor(px+anchor.x*canvas.width),iy=Math.floor(py+anchor.y*canvas.height);return ix>=0&&iy>=0&&ix<canvas.width&&iy<canvas.height&&pixels[(iy*canvas.width+ix)*4+3]>100;}}};
+ return {texture,anchor,groundSize:p.groundSize,storeys:art.storeys,facadeHeight:p.facadeHeight,projection:{scaleX:p.scaleX,scaleY:p.scaleY,skewY:p.skewY},id:art.id,name:art.name,roof:art.roof,chimney:art.chimney,shape:art.shape,cornerDirection:art.cornerDirection,buildingFamily:art.buildingFamily,hitArea:{contains(px,py){const ix=Math.floor(px+anchor.x*canvas.width),iy=Math.floor(py+anchor.y*canvas.height);return ix>=0&&iy>=0&&ix<canvas.width&&iy<canvas.height&&pixels[(iy*canvas.width+ix)*4+3]>100;}}};
 }
 
 export async function loadCityArt(){

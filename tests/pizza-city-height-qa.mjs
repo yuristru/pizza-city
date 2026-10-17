@@ -24,11 +24,13 @@ for(const frames of Object.values(BUILDING_ART))for(const art of frames){
   const a=sample(-2,1),b=sample(2,1),mid=a.map((n,i)=>(n+b[i])/2),pa=p.project(a),pb=p.project(b),pm=p.project(mid);close(pm[0],(pa[0]+pb[0])/2);close(pm[1],(pa[1]+pb[1])/2);
  }
 }
-assert.equal(count,46);assert.equal(BUILDING_ART.buildings.length,32);assert.equal(BUILDING_ART.courtyardBuildings.length,4);
+assert.equal(count,62);assert.equal(BUILDING_ART.buildings.length,32);assert.equal(BUILDING_ART.courtyardBuildings.length,4);
 assert(new Set(BUILDING_ART.buildings.map(a=>a.name)).size===32);
 assert(new Set(BUILDING_ART.buildings.map(a=>a.chimney.type)).size>=6);
 assert(new Set(BUILDING_ART.buildings.map(a=>a.chimney.position.join(','))).size>=6);
 assert(new Set(BUILDING_ART.buildings.map(a=>a.roof)).size>=3);
 assert(BUILDING_FOOTPRINTS.every(t=>t.floors<=2));
 for(const floors of [0,3,4,1.5,NaN])assert.throws(()=>buildingProjection([[0,20],[100,70],[200,20]],128,floors,100));
-console.log('Building art passed: 46 sprites, 32 distinct houses in one atlas, four palazzi, roof/chimney variety, two-storey limit and whole-building 2:1 parallelism across roof ridges and courtyard wings.');
+console.log('Building art passed: 62 sprites, including sixteen oriented corner houses, 32 distinct houses in one atlas, four palazzi, roof/chimney variety, two-storey limit and whole-building 2:1 parallelism across roof ridges and courtyard wings.');
+
+assert.equal(BUILDING_ART.cornerBuildings.length,16);assert(BUILDING_ART.cornerBuildings.every(a=>a.clock&&a.shape==='chamfered'&&a.roof==='chamfered-clock-pediment'));assert.equal(new Set(BUILDING_ART.cornerBuildings.map(a=>a.buildingFamily)).size,4);assert.equal(new Set(BUILDING_ART.cornerBuildings.map(a=>a.cornerDirection)).size,4);

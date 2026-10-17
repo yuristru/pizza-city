@@ -1,6 +1,6 @@
-import {state,ensureRestaurants,saveLayout,updateMoney,notify} from './pizza-core.js?v=20261017a';
-import {FRUITS,FRUIT_TRADERS,traderOpen,fruitBuyQuote,buyFruit,fruitSellQuote,sellFruit,giftIssue,giftSkaters} from './pizza-fruit.js?v=20261017a';
-import {money} from './pizza-catalog.js?v=20261017a';
+import {state,ensureRestaurants,saveLayout,updateMoney,notify} from './pizza-core.js?v=20261017b';
+import {FRUITS,FRUIT_TRADERS,traderOpen,fruitBuyQuote,buyFruit,fruitSellQuote,sellFruit,giftIssue,giftSkaters} from './pizza-fruit.js?v=20261017b';
+import {money} from './pizza-catalog.js?v=20261017b';
 const el=id=>document.getElementById(id),node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;},clock=n=>String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
 const schedule=(t,minutes)=>Math.floor(minutes/1440)%3===t.skip?'Heute nicht im Park':clock(t.start)+' bis '+clock(t.end)+' Uhr';
 function finish(result){if(!result.ok)return;state.balance=result.balanceCents/100;saveLayout();updateMoney();document.dispatchEvent(new Event('fruit-changed'));}

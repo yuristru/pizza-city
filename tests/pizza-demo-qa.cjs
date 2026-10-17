@@ -103,7 +103,7 @@ async function loaded(page,url){await page.goto(url);try{await page.waitForSelec
         traffic:state.movers.map(m=>({sprite:m.g instanceof Sprite,scaleX:m.g.scale.x,scaleY:m.g.scale.y})),
         terraces:objects.children.filter(c=>c.label==='city-terrace').map(c=>({sprite:c instanceof Sprite,x:(c.x/32+c.y/16)/2,y:(c.y/16-c.x/32)/2}))};
     },corePath);
-    assert.deepEqual(cityArt.atlases,{contacts:6,buildings:32,buildingTypes:8,courtyardBuildings:4,landmarks:2,props:8});assert(cityArt.buildings>=30);
+    assert.deepEqual(cityArt.atlases,{contacts:6,buildings:32,buildingTypes:8,courtyardBuildings:4,cornerBuildings:16,landmarks:2,props:8});assert(cityArt.buildings>=30);
     assert(cityArt.variants.filter(i=>i>=16).length>=8,'The expanded atlas must be used in the city.');
     assert(cityArt.ground.sprite);assert.equal(cityArt.ground.pixelScale,1);assert.equal(cityArt.ground.sampling,'nearest');assert(cityArt.ground.details.asphalt>200&&cityArt.ground.details.crossings>0&&cityArt.ground.details.curbs>0&&cityArt.ground.details.manholes>0);
     assert.equal(cityArt.projected.length,cityArt.atlases.buildings-8+cityArt.atlases.buildingTypes+cityArt.atlases.courtyardBuildings+1);assert(cityArt.projected.every(a=>a.projection&&a.anchor.x>0&&a.anchor.x<1&&a.anchor.y>0&&a.anchor.y<=1));
@@ -181,11 +181,12 @@ async function loaded(page,url){await page.goto(url);try{await page.waitForSelec
     await page.click('[data-speed="37.5"]');const fast=await snapshot(page);await advance();const fastDelta=(await snapshot(page)).minutes-fast.minutes;
     await page.click('[data-speed="75"]');const fastest=await snapshot(page);await advance();const fastestDelta=(await snapshot(page)).minutes-fastest.minutes;
     assert(Math.abs(normalDelta-.2)<.001);assert(Math.abs(fastDelta-7.5)<.001);assert(Math.abs(fastestDelta-15)<.001);assert(Math.abs(fastDelta/normalDelta-37.5)<.001);assert(Math.abs(fastestDelta/normalDelta-75)<.001);await page.click('[data-speed="0"]');
+    const trafficLayout=cityLayout(await page.evaluate(async modulePath=>(await import(modulePath)).state.citySeed,corePath));
     for(const mover of (await snapshot(page)).movers){
       const {x,y}=mover;
       assert(Math.abs(mover.z-(x+y)*16)<1e-8,'Traffic depth must use its ground position.');
-      const inCanal=initialLayout.water(x,y);
-      assert(!inCanal||initialLayout.bridge(x,y),'Traffic must cross the canal only on bridges.');
+      const inCanal=trafficLayout.water(x,y);
+      assert(!inCanal||trafficLayout.bridge(x,y),'Traffic must cross the canal only on bridges.');
     }
     console.log('Time and depth passed: real pause, normal/37.5x/75x speed, live clock, traffic depth and safe canal crossings.');
     await page.evaluate(async modulePath=>{const {app}=await import(modulePath);app.ticker.maxFPS=0;app.ticker.stop();},corePath);
@@ -339,7 +340,7 @@ async function loaded(page,url){await page.goto(url);try{await page.waitForSelec
     await storagePage.addInitScript(()=>Object.defineProperty(window,'localStorage',{get(){throw new DOMException('Unavailable','SecurityError');}}));
     await loaded(storagePage,url);await storagePage.click('#restaurantBtn');await selectTool(storagePage,'plant');await placeCell(storagePage,0,3);assert.equal((await snapshot(storagePage)).items.length,model.DEFAULT_LAYOUT.length+1);await storagePage.close();
     const atlases=await page.evaluate(async modulePath=>{const {ATLASES}=await import(modulePath.replace('pizza-core.js','pizza-city-art.js'));return ATLASES.map(({key,url})=>({key,url}));},corePath);
-    for(const key of ['buildings','landmarks','props','courtyardBuildings']){
+    for(const key of ['buildings','landmarks','props','courtyardBuildings','cornerBuildings']){
       const pattern='**/assets/pizza/city/'+atlases.find(a=>a.key===key).url;
       await page.route(pattern,route=>route.fulfill({status:404,body:'missing'}));
       await loaded(page,url);assert.deepEqual((await snapshot(page)).assets,[key]);

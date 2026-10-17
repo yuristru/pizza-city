@@ -1,3 +1,4 @@
+import {CORNER_BUILDING_ART} from './pizza-city-corner-art.js?v=20261017b';
 // Original Imagegen art calibrated against measured eaves and foundation contacts.
 // Every building uses one shared affine transform for roof, walls and all wings.
 export const BUILDING_ART={
@@ -56,3 +57,5 @@ export const BUILDING_ART={
   {"id":"basilica","name":"Low Italian basilica","crop":[911,286,746,611],"corners":[[919.0,772.0],[1193.0,890.0],[1651.0,736.0]],"worldWidth":194,"facadePixels":297,"storeys":2}
  ],
 };
+
+BUILDING_ART.cornerBuildings=CORNER_BUILDING_ART;

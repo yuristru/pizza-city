@@ -2,7 +2,7 @@
 // reduced, never stretched, rotated or enlarged beyond their facade-height cap.
 export const MIN_PERIMETER_SCALE=.9;
 const EPS=1e-7;
-const sameBuilding=(a,b)=>!!a&&!!b&&(a.kind||'buildings')===(b.kind||'buildings')&&a.index===b.index;
+const sameBuilding=(a,b)=>!!a&&!!b&&(a.buildingFamily&&b.buildingFamily?a.buildingFamily===b.buildingFamily:(a.kind||'buildings')===(b.kind||'buildings')&&a.index===b.index);
 const randomFrom=seed=>{let n=seed>>>0;return()=>{n=(n+0x6d2b79f5)>>>0;let t=n;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};};
 
 export function packPerimeterRow(length,pool,{seed=1,required=[],thicknessLimit=Infinity,start=null,end=null}={}){
@@ -135,14 +135,14 @@ export function oldtownQuarter(catalog,seed=61){
 export function closedCityBlock(catalog,{id,x0,x1,y0,y1,seed=1,required=[]}){
   const random=randomFrom(seed),width=x1-x0,depth=y1-y0;
   if(!id||!(width>0&&depth>0)||required.length>4)throw new Error('Invalid closed block or too many required corner buildings.');
-  const ordinary=catalog.filter(p=>p.width<2.25&&p.depth<1.7);
+  const ordinary=catalog.filter(p=>!p.cornerOnly&&p.width<2.25&&p.depth<1.7),cornerCatalog=catalog.filter(p=>p.cornerOnly);
   if(!ordinary.length)throw new Error('Closed blocks require a building catalog.');
   const positions=['se','sw','nw','ne'];
   for(let attempt=0;attempt<700;attempt++){
     const parts=[],corners={},mandatory=[...required];
     if(attempt)for(let i=mandatory.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[mandatory[i],mandatory[j]]=[mandatory[j],mandatory[i]];}
     for(let i=0;i<4;i++){
-      const name=positions[i],p=mandatory[i]||ordinary[Math.floor(random()*ordinary.length)],scale=mandatory[i]?(p.depth<1?1:.94+random()*.06):.9+random()*.1;
+      const name=positions[i],options=cornerCatalog.filter(p=>p.cornerDirection===name),pool=options.length?options:ordinary,p=mandatory[i]||pool[Math.floor(random()*pool.length)],scale=mandatory[i]?(p.depth<1?1:.94+random()*.06):.9+random()*.1;
       const w=p.width*scale,d=p.depth*scale,right=name.endsWith('e'),bottom=name.startsWith('s');
       const part={...p,scale,width:w,depth:d,id:id+'-'+name,blockId:id,edge:'corner',corner:name,x0:right?x1-w:x0,x1:right?x1:x0+w,y0:bottom?y1-d:y0,y1:bottom?y1:y0+d};
       corners[name]=part;parts.push(part);
