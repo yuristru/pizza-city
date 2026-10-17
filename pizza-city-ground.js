@@ -1,4 +1,4 @@
-import {Sprite,Texture,CITY_N,hash} from './pizza-core.js?v=20261016g';
+import {Sprite,Texture,CITY_N,hash} from './pizza-core.js?v=20261016h';
 
 // One texture pixel per world pixel matches the city sprites; bake once per map.
 export function cityGround({road,water,park,fountainCell,streets,links,nodes,canal,crossings,landmarkGardens=[]},seed){
@@ -126,11 +126,11 @@ export function cityGround({road,water,park,fountainCell,streets,links,nodes,can
     pixel(p[0]-3,p[1]-2,'#9b9c86',4);
   }
   for(const s of crossings){
-    ribbon(s,s.width+.56,'#bbae94');
+    ribbon(s,s.width+.56,'#d8c5a0');ribbon(s,s.width+.14,'#b3a07c');
     for(let t=s.from;t<s.to;t+=.18){
       const a=s.axis===0?[t,s.center-s.width/2-.28]:[s.center-s.width/2-.28,t];
       const b=s.axis===0?[t,s.center+s.width/2+.28]:[s.center+s.width/2+.28,t];
-      line(point(...a),point(...b),'#a39780');
+      line(point(...a),point(...b),'#d7c8a7');
     }
   }
   const texture=Texture.from(canvas);texture.source.scaleMode='nearest';

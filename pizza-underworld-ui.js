@@ -1,18 +1,19 @@
-import {renderFruitPhoneShop,openFruitInventory,renderSkaterGift} from './pizza-fruit-ui.js?v=20261016g';
-import {FRUIT_TRADERS,traderOpen} from './pizza-fruit.js?v=20261016g';
-import {state,ensureRestaurants,saveLayout,updateMoney,notify} from './pizza-core.js?v=20261016g';
-import {COMPETITORS,competitor} from './pizza-competitors.js?v=20261016g';
-import {SABOTAGE_ACTIONS,ORDER_CHANNELS,orderQuote,sabotageIssue,commissionSabotage} from './pizza-rivalry.js?v=20261016g';
-import {PHONE_BOOK,startPhoneCall,phoneChoices,choosePhoneReply,phoneOrder,confirmPhoneCall} from './pizza-phone.js?v=20261016g';
-import {dayLabel,minuteLabel} from './pizza-daily.js?v=20261016g';
-import {money} from './pizza-catalog.js?v=20261016g';
+import {contactAt} from './pizza-city-contacts.js?v=20261016h';
+import {renderFruitPhoneShop,openFruitInventory,renderSkaterGift} from './pizza-fruit-ui.js?v=20261016h';
+import {FRUIT_TRADERS,traderOpen} from './pizza-fruit.js?v=20261016h';
+import {state,ensureRestaurants,saveLayout,updateMoney,notify} from './pizza-core.js?v=20261016h';
+import {COMPETITORS,competitor} from './pizza-competitors.js?v=20261016h';
+import {SABOTAGE_ACTIONS,ORDER_CHANNELS,orderQuote,sabotageIssue,commissionSabotage} from './pizza-rivalry.js?v=20261016h';
+import {PHONE_BOOK,startPhoneCall,phoneChoices,choosePhoneReply,phoneOrder,confirmPhoneCall} from './pizza-phone.js?v=20261016h';
+import {dayLabel,minuteLabel} from './pizza-daily.js?v=20261016h';
+import {money} from './pizza-catalog.js?v=20261016h';
 const el=id=>document.getElementById(id),node=(tag,value,cls)=>{const n=document.createElement(tag);if(value!==undefined)n.textContent=value;if(cls)n.className=cls;return n;};
 const button=(value,action,cls)=>{const b=node('button',value,cls);b.type='button';b.onclick=action;return b;};
 const when=n=>dayLabel(Math.floor(n/1440))+' '+minuteLabel(n)+' Uhr';
 let mode='guide',site=null,phase='intro',action=null,target='',preferredTarget='',number='',call=null,connecting=false,callToken=0,sound=true,audio=null,lastOrder=null,stamp=0,journalKey='';
 function portrait(host,entry){
- const art=state.cityArt.contacts?.[entry.art],canvas=document.createElement('canvas');canvas.width=150;canvas.height=125;canvas.setAttribute('aria-label',entry.type==='phone'?'Telefonzelle':entry.type==='skate'?'Skater auf dem Board':'Kontakt auf einer Parkbank');
- if(art){const image=art.texture.source.resource,scale=Math.min(145/image.width,118/image.height),ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;ctx.drawImage(image,(150-image.width*scale)/2,123-image.height*scale,image.width*scale,image.height*scale);}
+ const art=state.cityArt.contacts?.[entry.art],canvas=document.createElement('canvas');canvas.width=150;canvas.height=125;canvas.setAttribute('aria-label',entry.activity==='night'?'Kontakt unter der Laterne':entry.type==='phone'?'Telefonzelle':entry.type==='skate'?'Skater auf dem Board':'Kontakt auf einer Parkbank');
+ if(entry.activity==='night'){const ctx=canvas.getContext('2d');ctx.fillStyle='#d4b977';ctx.fillRect(106,12,4,106);ctx.fillStyle='#fff0b0';ctx.fillRect(100,10,16,14);ctx.fillStyle='#373e3d';ctx.fillRect(58,48,30,45);ctx.fillRect(60,90,10,30);ctx.fillRect(78,90,10,30);ctx.fillStyle='#bd9470';ctx.fillRect(65,27,17,20);ctx.fillStyle='#35332e';ctx.fillRect(60,23,27,8);}else if(art){const image=art.texture.source.resource,scale=Math.min(145/image.width,118/image.height),ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;ctx.drawImage(image,(150-image.width*scale)/2,123-image.height*scale,image.width*scale,image.height*scale);}
  host.append(canvas);
 }
 function bubble(host,who,text){const p=node('div',undefined,'streetBubble');p.dataset.speaker=who==='Du'?'you':'contact';p.append(node('small',who),node('p',text));host.append(p);}
@@ -37,20 +38,20 @@ function journal(host,force=false){
 }
 export function openContactGuide(targetId=''){
  preferredTarget=competitor(targetId)?targetId:'';lastOrder=null;show('guide','Die andere Seite der Stadt','PARKBÄNKE · RAMPEN · TELEFONZELLEN');const host=el('underworldContent');host.replaceChildren(node('p','Manche Geschäfte beginnen mit einem Gespräch. Finde einen Ort auf der Karte und tippe dort die Person oder die Telefonzelle an.','streetIntro'));const grid=node('div',undefined,'streetPlaces');
- for(const entry of state.cityContactPlan?.sites||[]){const card=node('article',undefined,'streetPlace'),image=node('div',undefined,'streetPlaceArt');portrait(image,entry);card.append(image,node('h3',entry.name),node('p',entry.type==='bench'?'Kakerlaken und Stinkbomben':entry.type==='skate'?'Fassaden besprühen':'Telefonbuch, Wähltastatur und Anrufe'),node('small',entry.place));const b=button('Auf Karte zeigen',()=>{el('underworldDialog').close();state.onContactFocus?.(entry.id);},'streetFind');b.dataset.findContact=entry.id;card.append(b);grid.append(card);}
+ for(const raw of state.cityContactPlan?.sites||[]){const entry=contactAt(raw,state.gameMinutes),card=node('article',undefined,'streetPlace'),image=node('div',undefined,'streetPlaceArt');portrait(image,entry);card.append(image,node('h3',entry.name),node('p',entry.type==='bench'?'Kakerlaken und Stinkbomben':entry.type==='skate'?'Fassaden besprühen':'Telefonbuch, Wähltastatur und Anrufe'),node('small',entry.place+' · '+contactAt(entry,state.gameMinutes).hours+(contactAt(entry,state.gameMinutes).available?'':' · Gerade niemand da')));const b=button('Auf Karte zeigen',()=>{el('underworldDialog').close();state.onContactFocus?.(entry.id);},'streetFind');b.dataset.findContact=entry.id;card.append(b);grid.append(card);}
  for(const entry of state.cityFruitSites||[]){const card=node('article',undefined,'streetPlace'),t=FRUIT_TRADERS.find(t=>t.id===entry.id);card.append(node('h3',entry.name+'s Obstwagen'),node('p','Kauft besondere Obstkisten.'),node('small',(traderOpen(entry.id,state.gameMinutes)?'Gerade im Park · ':Math.floor(state.gameMinutes/1440)%3===t.skip?'Heute nicht da · ':'')+Math.floor(t.start/60)+':00 bis '+Math.floor(t.end/60)+':00 Uhr'));const find=button('Auf Karte zeigen',()=>{el('underworldDialog').close();state.onFruitFocus?.(entry.id);},'streetFind');find.dataset.findFruit=entry.id;card.append(find);grid.append(card);}
  host.append(button('Deinen Obstvorrat ansehen',()=>{el('underworldDialog').close();openFruitInventory();},'streetFind'));
  const log=node('section',undefined,'streetJournal');log.id='streetJournal';host.append(grid,log);journal(log,true);
 }
 export function openCityContact(id){
- const entry=state.cityContactPlan?.sites.find(s=>s.id===id);if(!entry||state.scene!=='city')return;site=entry;phase='intro';action=null;target=preferredTarget;lastOrder=null;call=null;number='';connecting=false;callToken++;show(entry.type==='phone'?'phone':'contact',entry.name,entry.type==='phone'?'FERNSPRECHER · NUR ORTSGESPRÄCHE':entry.type==='skate'?'ROLLEN, RAMPEN, RUFZEICHEN':'KEINE VISITENKARTEN. KEINE FRAGEN.');
+ const entry=contactAt(state.cityContactPlan?.sites.find(s=>s.id===id),state.gameMinutes);if(!entry||state.scene!=='city')return;if(!entry.available){notify('Die Rampencrew schläft noch. Ab 12:00 Uhr ist sie wieder da.');return;}site=entry;phase='intro';action=null;target=preferredTarget;lastOrder=null;call=null;number='';connecting=false;callToken++;show(entry.type==='phone'?'phone':'contact',entry.name,entry.type==='phone'?'FERNSPRECHER · NUR ORTSGESPRÄCHE':entry.type==='skate'?'ROLLEN, RAMPEN, RUFZEICHEN':'KEINE VISITENKARTEN. KEINE FRAGEN.');
  if(entry.type==='phone')renderPhone();else renderContact();
 }
 function renderContact(){
  const host=el('underworldContent');host.replaceChildren();const hero=node('div',undefined,'streetContactHero'),image=node('div',undefined,'streetPortrait');portrait(image,site);const copy=node('div');copy.append(node('span',site.place,'streetEyebrow'),node('h3',site.type==='skate'?'Guter Trick. Schlechte Ideen.':'Die Zeitung ist von gestern. Die Kontakte sind aktuell.'));hero.append(image,copy);host.append(hero);
  const chat=node('div',undefined,'streetChat');chat.id='contactChat';host.append(chat);
  if(phase==='intro'){
-  bubble(chat,site.type==='skate'?'Rampencrew':site.name.split(',')[0],site.type==='skate'?'Milo landet einen Ollie. Lea grinst: „Wenn du wegen der Farbe hier bist, sag es einfach.“':site.id==='bench-nino'?'Nino senkt die Zeitung. „Du stehst auf meiner Sonne. Oder hast du ein interessantes Anliegen?“':'Rocco klopft auf den freien Platz. „Manchmal hilft der Stadt ein bisschen Unruhe. Was führt dich her?“');
+  bubble(chat,site.type==='skate'?'Rampencrew':site.name.split(',')[0],site.type==='skate'?(site.activity==='seated'?'Milo und Lea sitzen auf der Bank. Die Boards liegen zu ihren Füßen. „Feierabend auf der Rampe. Aber für Farbe haben wir noch Zeit.“':'Milo landet einen Ollie. Lea grinst: „Wenn du wegen der Farbe hier bist, sag es einfach.“'):site.activity==='night'?'Eine Gestalt tritt aus dem Laternenschein. „Die Bänke sind leer. Die Kontakte bleiben. Was brauchst du?“':site.id==='bench-nino'?'Nino senkt die Zeitung. „Du stehst auf meiner Sonne. Oder hast du ein interessantes Anliegen?“':'Rocco klopft auf den freien Platz. „Manchmal hilft der Stadt ein bisschen Unruhe. Was führt dich her?“');
   const choices=node('div',undefined,'streetReplies');
   for(const [id,label]of [['business',site.type==='skate'?'Ich hätte einen Auftrag für eure Kunst.':'Ich suche jemanden für eine diskrete Angelegenheit.'],['smalltalk',site.type==='skate'?'Sauberer Trick. Habt ihr kurz Zeit?':'Liest sich die Zeitung heute besonders spannend?']]){const b=button(label,()=>{phase='offer';renderContact();const log=el('contactChat');log.prepend(node('p',label,'streetYourLine'));});b.dataset.contactReply=id;choices.append(b);}choices.append(button('Ich schaue mich nur um.',()=>el('underworldDialog').close()));host.append(choices);return;
  }
@@ -67,6 +68,7 @@ function updateContactQuote(){
  if(issue)host.append(node('p',issue,'streetFine'));const b=el('streetConfirm');b.disabled=!q||!target||!!issue;b.textContent=q?'Für '+money(q.costCents/100)+' beauftragen':'Auftrag auswählen';if(el('skaterGiftOffer'))renderSkaterGift(el('skaterGiftOffer'),target);
 }
 function book(request){
+ if(site&&site.type!=='phone'&&!contactAt(site,state.gameMinutes).available)return {ok:false,message:'Die Crew ist schon nach Hause gegangen.'};
  ensureRestaurants();const result=commissionSabotage(state.rivalry,request,Math.round(state.balance*100),state.gameMinutes,crypto.getRandomValues(new Uint32Array(1))[0]/4294967296);
  if(!result.ok){el('underworldStatus').textContent=result.message;return result;}state.balance=result.balanceCents/100;saveLayout();updateMoney();state.onRivalryChange?.();el('underworldStatus').textContent='Auftrag '+String(result.job.id).padStart(4,'0')+' aufgenommen. '+money(result.quote.costCents/100)+' einmalig bezahlt.';notify('Diskreter Auftrag erteilt.');return result;
 }
@@ -102,6 +104,7 @@ function renderPhoneReview(){
  const issueLine=node('p',issue||'','streetFine');issueLine.id='phoneIssue';host.append(issueLine);const confirm=button('Für '+money(q.costCents/100)+' Vorgang freigeben',()=>{const request=phoneOrder(call);if(!request)return;const result=book({...request,contactId:site.id});if(result.ok){lastOrder=result.job;confirmPhoneCall(call,result.job);renderPhoneConversation();}});confirm.id='phoneConfirm';confirm.className='streetConfirm';confirm.disabled=!!issue;host.append(confirm);
 }
 export function renderUnderworldUI(force=false){
+ if(el('underworldDialog').open&&mode==='contact'&&site&&!contactAt(site,state.gameMinutes).available){el('underworldDialog').close();notify('Die Crew macht Feierabend. Ab 12:00 Uhr wieder da.');return;}
  if(!el('underworldDialog').open||(!force&&performance.now()-stamp<750))return;stamp=performance.now();if(mode==='guide')journal(el('streetJournal'));else if(mode==='contact'&&phase==='offer')updateContactQuote();else if(mode==='contact'&&lastOrder)receipt(el('contactReceipt'),lastOrder);else if(mode==='phone'&&call?.stage==='ordered'&&lastOrder)receipt(el('phoneReview'),lastOrder);else if(mode==='phone'&&call?.stage==='review'){
   const confirm=el('phoneConfirm'),request=phoneOrder(call);if(confirm&&request){const issue=sabotageIssue(state.rivalry,request.target,'inspection',Math.round(state.balance*100),state.gameMinutes);confirm.disabled=!!issue;el('phoneIssue').textContent=issue||'';}
  }

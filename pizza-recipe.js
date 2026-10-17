@@ -1,6 +1,6 @@
 export const INGREDIENTS=[
  {id:'mozzarella',name:'Mozzarella',color:'#f5e2ad',cost:7},
- {id:'parmesan',name:'Parmesan',color:'#e5ca83',cost:6},
+ {id:'parmesan',name:'Parmesan',color:'#e5ca83',cost:12},
  {id:'basil',name:'Basilikum',color:'#568544',cost:3},
  {id:'salami',name:'Salami',color:'#b94535',cost:9},
  {id:'ham',name:'Schinken',color:'#d78770',cost:8},
@@ -8,7 +8,7 @@ export const INGREDIENTS=[
  {id:'pepper',name:'Paprika',color:'#c6a342',cost:4},
  {id:'olive',name:'Oliven',color:'#384538',cost:4},
  {id:'onion',name:'Zwiebeln',color:'#b194af',cost:3},
- {id:'tuna',name:'Thunfisch',color:'#b8866a',cost:8}
+ {id:'tuna',name:'Thunfisch',color:'#b8866a',cost:14}
 ];
 export const ingredient=id=>INGREDIENTS.find(i=>i.id===id);
 export function blankRecipe(){return {name:'Meine Pizza',sauce:'tomato',toppings:[]};}

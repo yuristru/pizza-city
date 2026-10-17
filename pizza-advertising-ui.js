@@ -1,10 +1,10 @@
-import {AD_FORMATS,AD_QUALITIES,AD_DURATIONS,campaignQuote,activeCampaigns,commissionCampaign} from './pizza-advertising.js?v=20261016g';
-import {state,ensureRestaurants,restaurantName,saveLayout,updateMoney,notify} from './pizza-core.js?v=20261016g';
-import {restaurantDistrict,purchaseMarket,marketReady} from './pizza-market.js?v=20261016g';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261016g';
-import {money} from './pizza-catalog.js?v=20261016g';
-import {dayLabel,minuteLabel} from './pizza-daily.js?v=20261016g';
-import {renderCapacityCard} from './pizza-capacity-ui.js?v=20261016g';
+import {AD_FORMATS,AD_QUALITIES,AD_DURATIONS,campaignQuote,activeCampaigns,commissionCampaign} from './pizza-advertising.js?v=20261016h';
+import {state,ensureRestaurants,restaurantName,saveLayout,updateMoney,notify} from './pizza-core.js?v=20261016h';
+import {restaurantDistrict,purchaseMarket,marketReady} from './pizza-market.js?v=20261016h';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261016h';
+import {money} from './pizza-catalog.js?v=20261016h';
+import {dayLabel,minuteLabel} from './pizza-daily.js?v=20261016h';
+import {renderCapacityCard} from './pizza-capacity-ui.js?v=20261016h';
 const el=id=>document.getElementById(id);
 const node=(tag,value,cls)=>{const n=document.createElement(tag);if(value!==undefined)n.textContent=value;if(cls)n.className=cls;return n;};
 let restaurantId='',formatId='flyer',qualityId='simple',days=3,stamp=0,optionsKey='',campaignKey='';

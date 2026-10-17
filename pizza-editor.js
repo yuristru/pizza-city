@@ -1,7 +1,7 @@
-import {drawIngredientArt} from './pizza-ingredient-art.js?v=20261016g';
-import {app,state,clearWorld,sceneUI,notify} from './pizza-core.js?v=20261016g';
-import {ingredientPurchaseCost,purchasingDiscount} from './pizza-procurement.js?v=20261016g';
-import {INGREDIENTS,ingredient,blankRecipe,onPizza,validRecipe,copyRecipe,recipeCost,toppingAt,formOf,nextForm,formName} from './pizza-recipe.js?v=20261016g';
+import {drawIngredientArt} from './pizza-ingredient-art.js?v=20261016h';
+import {app,state,clearWorld,sceneUI,notify} from './pizza-core.js?v=20261016h';
+import {ingredientPurchaseCost,purchasingDiscount} from './pizza-procurement.js?v=20261016h';
+import {INGREDIENTS,ingredient,blankRecipe,onPizza,validRecipe,copyRecipe,recipeCost,toppingAt,formOf,nextForm,formName} from './pizza-recipe.js?v=20261016h';
 const el=id=>document.getElementById(id),board=el('pizzaBoard'),pixelBoard=document.createElement('canvas'),ctx=pixelBoard.getContext('2d'),KEY='pizza-recipes-v1';
 pixelBoard.width=160;pixelBoard.height=160;ctx.setTransform(.5,0,0,.5,0,0);ctx.imageSmoothingEnabled=false;
 let recipe=blankRecipe(),recipes=[],selected='mozzarella',erase=false,history=[],stroke=null,forms=Object.fromEntries(INGREDIENTS.map(i=>[i.id,0]));
@@ -96,7 +96,7 @@ board.addEventListener('pointerup',endStroke);board.addEventListener('pointercan
 for(const i of INGREDIENTS){
  const button=document.createElement('button');button.type='button';button.className='pizzaIngredient';button.dataset.ingredient=i.id;button.setAttribute('aria-label',i.name+', '+price(i.cost)+' pro Portion');
  const icon=document.createElement('canvas');icon.width=64;icon.height=64;const paint=icon.getContext('2d');paint.translate(32,32);drawTopping({id:i.id,form:0,x:0,y:0,angle:0},paint);
- const name=document.createElement('span');name.textContent=i.name;const cost=document.createElement('small');cost.textContent=price(i.cost);button.append(icon,name,cost);
+ const name=document.createElement('span');name.textContent=i.name;const cost=document.createElement('small');cost.textContent=price(i.cost)+(['parmesan','tuna'].includes(i.id)?' · exklusiv':'');button.append(icon,name,cost);
  button.onclick=()=>{selected=i.id;erase=false;render();};
  button.addEventListener('pointerdown',e=>{if(stroke)return;selected=i.id;erase=false;render();button.setPointerCapture(e.pointerId);});
  button.addEventListener('pointerup',e=>{const p=point(e);if(onPizza(p.x,p.y)){stroke={id:e.pointerId,changed:false,last:null};apply(p);endStroke(e);}});

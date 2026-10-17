@@ -1,8 +1,8 @@
-import {profilePlan,kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261016g';
-import {workPath} from './pizza-business.js?v=20261016g';
-import {tableRoute} from './pizza-service.js?v=20261016g';
-import {SHIFTS} from './pizza-shifts.js?v=20261016g';
-import {validRecipe} from './pizza-recipe.js?v=20261016g';
+import {profilePlan,kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261016h';
+import {workPath} from './pizza-business.js?v=20261016h';
+import {tableRoute} from './pizza-service.js?v=20261016h';
+import {SHIFTS} from './pizza-shifts.js?v=20261016h';
+import {validRecipe} from './pizza-recipe.js?v=20261016h';
 
 const cache=new WeakMap(),steps=route=>Math.max(0,(route?.length||1)-1),mean=values=>values.reduce((a,b)=>a+b,0)/Math.max(1,values.length);
 const speed=p=>.85+(p.skills?.[p.role==='cook'?'organization':'pace']??50)/100*.75;
@@ -40,4 +40,11 @@ export function utilizationForecast(capacity,before,after=before){
  before=Math.max(0,before);after=Math.max(before,after);
  const current=Math.min(capacity.daily,before),additional=Math.max(0,Math.min(capacity.daily,after)-current),overflow=Math.max(0,after-capacity.daily),percent=capacity.daily?before/capacity.daily*100:0,nextPercent=capacity.daily?after/capacity.daily*100:0;
  return {capacity,before,after,current,additional,overflow,percent,nextPercent,full:capacity.daily>0&&before>=capacity.daily};
+}
+
+// Current occupancy is a count of chairs, independent of daily demand forecasts.
+export function seatUtilization(profile){
+ const tables=(profile.items||[]).filter(t=>t.type==='table'),seats=tables.reduce((n,t)=>n+t.seats,0),groups=(profile.service?.groups||[]).filter(g=>tables.some(t=>t.x===g.table?.x&&t.y===g.table?.y&&t.r===g.table?.r));
+ const occupied=Math.min(seats,groups.filter(g=>g.phase==='waiting'||g.phase==='eating').reduce((n,g)=>n+g.size,0)),reserved=Math.min(seats-occupied,groups.filter(g=>g.phase==='arriving').reduce((n,g)=>n+g.size,0));
+ return {seats,occupied,reserved,free:Math.max(0,seats-occupied-reserved),percent:seats?occupied/seats*100:0};
 }

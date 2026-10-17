@@ -1,7 +1,8 @@
-import {restaurantCapacity,utilizationForecast} from './pizza-capacity.js?v=20261016g';
-import {purchaseMarket} from './pizza-market.js?v=20261016g';
-import {state,ensureRestaurants,restaurantName} from './pizza-core.js?v=20261016g';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261016g';
+import {restaurantQuality} from './pizza-quality.js?v=20261016h';
+import {restaurantCapacity,utilizationForecast,seatUtilization} from './pizza-capacity.js?v=20261016h';
+import {purchaseMarket} from './pizza-market.js?v=20261016h';
+import {state,ensureRestaurants,restaurantName} from './pizza-core.js?v=20261016h';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261016h';
 const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
 export function restaurantForecast(id,profiles,menu,{advertising=state.advertising,taxis=state.taxis}={}){
  const demand=(ads,cabs)=>purchaseMarket(id,profiles,menu,state.rivalry,state.gameMinutes,state.market,ads,cabs).site.expected.reduce((a,b)=>a+b,0);
@@ -17,11 +18,17 @@ export function renderCapacityCard(host,id,profiles,menu,preview={}){
  const limit=node('i',undefined,'capacityLimit');limit.style.left=100/scale*100+'%';track.append(limit);
  const axis=node('div',undefined,'capacityAxis');axis.append(node('span','0 %'),node('span','100 % Kapazität'+(scale>100?' · Skala bis '+scale+' %':'')));
  const legend=node('div',undefined,'capacityLegend');for(const [cls,text]of [['capacityExisting','Bestehend'],['capacityExtra','Zusätzlich bedienbar'],['capacityOverflow','Über Kapazität']]){const label=node('span',text);label.prepend(node('i',undefined,cls));legend.append(label);}
- const p=profiles[id],occupied=p.service.groups.filter(g=>['waiting','eating'].includes(g.phase)).reduce((n,g)=>n+g.size,0),waiting=p.service.groups.filter(g=>g.phase==='waiting').length;
+ const p=profiles[id],seating=seatUtilization(p),occupied=seating.occupied,waiting=p.service.groups.filter(g=>g.phase==='waiting').length;
  const details=node('p',c.daily?'Ca. '+c.daily+' Gäste / Spieltag bedienbar · '+c.hours+' Stunden mit Koch und Service. Engpass: '+c.bottleneck+'.':c.bottleneck+'.');
- const live=node('small','Gerade: '+occupied+' / '+c.seats+' Sitzplätze belegt · '+waiting+' Bestellungen warten.');
+ const live=node('section',undefined,'seatCapacity');live.dataset.occupied=String(occupied);live.dataset.seats=String(seating.seats);live.dataset.percent=String(seating.percent);
+ const liveHead=node('div',undefined,'capacityHead');liveHead.append(node('strong','Aktuelle Platzauslastung'),node('b',Math.round(seating.percent)+' %'));
+ const liveTrack=node('div',undefined,'capacityTrack');liveTrack.setAttribute('role','img');liveTrack.setAttribute('aria-label',occupied+' von '+seating.seats+' Sitzplätzen belegt, '+seating.reserved+' Plätze für ankommende Gäste reserviert.');const filled=node('span',undefined,'capacityExisting');filled.style.width=seating.percent+'%';liveTrack.append(filled);
+ live.append(liveHead,liveTrack,node('p',occupied+' / '+seating.seats+' Plätze belegt · '+seating.reserved+' Gäste kommen gerade zum Tisch · '+waiting+' Bestellungen warten.'),node('small','Mehr Sitzplätze erhöhen die gleichzeitige Gästekapazität. Pro Schicht genügt 1 Person in der Küche und 1 Person im Service.'));
+
  const warning=node('p',!c.daily?'Erst den Betrieb vorbereiten. Zusätzliche Nachfrage kann hier noch nicht bedient werden.':f.full?'Kapazität bereits erreicht. Mehr Werbung bringt derzeit keine zusätzliche Bedienkapazität. Zuerst den Engpass verbessern.':f.overflow?'Die Maßnahme passt nur teilweise: +'+f.additional+' Gäste bedienbar; '+f.overflow+' Gäste Nachfrage liegen über der Kapazität.':f.after>f.before?'Voraussichtlich +'+f.additional+' zusätzliche Gäste pro Spieltag bedienbar.':'Noch Platz für zusätzliche Nachfrage.','capacityAdvice');
- host.replaceChildren(head,track,axis,legend,details,live,warning,node('small','Planungsprognose aus Nachfrage, Küche, Arbeitswegen, Tischwechsel und Schichtbesetzung. Keine Umsatzgarantie.'));
+ const q=restaurantQuality(p),status=node('p','Restaurantstatus: '+q.name+' · Hauptzielgruppe: '+q.name+' · Bewertung '+(p.service.rating??4).toFixed(1)+' / 5 Sterne.','restaurantQualityStatus');
+ const review=p.service.lastReview,feedback=review?node('small','Letzte Bewertung: '+review.score.toFixed(1)+' / 5'+(review.pricePenalty?' · Preis zu hoch':'')+(review.mismatch?' · Pizza passt nicht zum Restaurantausbau':'')+'. Wartezeit und Service zählen ebenfalls.'):node('small','Bewertungen entstehen beim Bezahlen. Preis, Angebot, Wartezeit und Service zählen.');
+ host.replaceChildren(status,feedback,live,head,track,axis,legend,details,warning,node('small','Planungsprognose aus Nachfrage, Küche, Arbeitswegen, Tischwechsel und Schichtbesetzung. Keine Umsatzgarantie.'));
  return f;
 }
 let stamp=0,selection='',optionsKey='';
@@ -33,6 +40,6 @@ export function mountCapacityUI(){
 export function renderCapacityUI(force=false){
  const dialog=document.getElementById('capacityDialog');if(!dialog||!dialog.open&&state.scene!=='restaurant')return;if(!force&&performance.now()-stamp<750)return;stamp=performance.now();
  const profiles=ensureRestaurants(),menu=serviceMenu(),button=document.getElementById('restaurantCapacityBtn');
- if(state.scene==='restaurant'){const f=restaurantForecast(state.activeRestaurantId,profiles,menu);button.textContent='Auslastung: '+(f.capacity.daily?Math.min(100,Math.round(f.percent))+' %':'0 %');button.title=f.capacity.daily?'Auslastung und Engpass: '+f.capacity.bottleneck:f.capacity.bottleneck;button.style.setProperty('--load',Math.min(100,f.percent)+'%');button.dataset.full=String(f.full);}
+ if(state.scene==='restaurant'){const seating=seatUtilization(profiles[state.activeRestaurantId]),f=restaurantForecast(state.activeRestaurantId,profiles,menu);button.textContent='Plätze: '+Math.round(seating.percent)+' %';button.title=seating.occupied+' / '+seating.seats+' Plätze belegt · Tagesprognose: '+(f.capacity.daily?Math.min(100,Math.round(f.percent))+' % · '+f.capacity.bottleneck:f.capacity.bottleneck);button.style.setProperty('--load',seating.percent+'%');button.dataset.full=String(seating.seats>0&&seating.occupied===seating.seats);}
  if(dialog.open){const key=Object.keys(profiles).join(',');if(key!==optionsKey){optionsKey=key;document.getElementById('capacityRestaurant').replaceChildren(...Object.keys(profiles).map(id=>new Option(restaurantName(id),id)));}if(!profiles[selection])selection=state.activeRestaurantId;document.getElementById('capacityRestaurant').value=selection;renderCapacityCard(document.getElementById('capacityDetail'),selection,profiles,menu);}
 }

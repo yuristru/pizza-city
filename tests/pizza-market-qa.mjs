@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {DISTRICTS,CUSTOMER_TIERS,restaurantDistrict,customerAppeal,districtMarket,freshMarket,advanceMarket,claimCustomers,restoreMarket,purchaseMarket} from '../pizza-market.js';
 import {SABOTAGE_ACTIONS,freshRivalry,executeSabotage,restoreRivalry,sabotageIssue,collectFine} from '../pizza-rivalry.js';
 import {freshDaily,currentReport,completeDay,reportMetrics,restoreDaily} from '../pizza-daily.js';
-const menu=[{active:true,price:850}],basic={items:[{type:'table',variant:'plastic',seats:4},{type:'oven'},{type:'bar'},{type:'fridge'}],finishes:{renovation:0},service:{rating:4},business:{cook:1,waiter:1}},premium={...basic,items:basic.items.map(i=>i.type==='table'?{...i,variant:'premium'}:i),finishes:{renovation:3}};
+const menu=[{active:true,price:850}],basic={items:[{type:'table',variant:'plastic',seats:4},{type:'oven'},{type:'bar'},{type:'fridge'}],finishes:{renovation:0},service:{rating:4},business:{cook:1,waiter:1}},premium={...basic,items:basic.items.map(i=>({...i,variant:{table:'premium',oven:'professional',fridge:'coldroom',bar:'marble'}[i.type]})),finishes:{renovation:3}};
 const center=restaurantDistrict('mamma-mia'),own={'mamma-mia':basic},single=districtMarket(center,own,menu),two=districtMarket(center,{...own,'piazza-limone':basic},menu);
 assert.equal(DISTRICTS.length,7);assert.equal(CUSTOMER_TIERS.length,3);assert(single.participants[0].expected.every((n,i)=>n>two.participants[0].expected[i]));
 assert.equal(districtMarket(center,{...own,'piazza-limone':{...basic,business:{open:false}}},menu).participants.length,1);

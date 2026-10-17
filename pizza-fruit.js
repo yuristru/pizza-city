@@ -1,4 +1,5 @@
-import {commissionSabotage,sabotageIssue} from './pizza-rivalry.js?v=20261016g';
+import {skateSchedule} from './pizza-city-contacts.js?v=20261016h';
+import {commissionSabotage,sabotageIssue} from './pizza-rivalry.js?v=20261016h';
 export const FRUITS=[{id:'coconut',name:'Kokosnuss',base:220000,color:0xb58a61},{id:'unicorn',name:'Einhorn',base:65000,color:0xd2a8dc},{id:'waldmeister',name:'Grüner Waldmeister',base:15000,color:0x76a64d}];
 export const FRUIT_TRADERS=[{id:'carlo',name:'Carlo',start:13*60,end:16*60,skip:1},{id:'marta',name:'Marta',start:18*60,end:22*60,skip:0}];
 const day=m=>Math.floor(m/1440),valid=n=>Number.isSafeInteger(n)&&n>=0&&n<=1e12,hash=(a,b,c=0)=>{let n=Math.imul(a+37,374761393)^Math.imul(b+71,668265263)^Math.imul(c+17,1274126177);return (n^(n>>>13))>>>0;};
@@ -24,7 +25,7 @@ export function sellFruit(fruit,traderId,id,quantity,minutes,balanceCents){
  const q=fruitSellQuote(fruit,traderId,id,quantity,minutes);if(!q||!valid(balanceCents))return {ok:false,message:'Bitte ein gültiges Angebot wählen.'};if(!q.open)return {ok:false,message:'Der Händler hat für heute eingepackt.'};if(quantity>q.stock)return {ok:false,message:'So viele Kisten hast du nicht dabei.'};if(quantity>q.wanted)return {ok:false,message:'Für diese Sorte ist die Nachfrage heute ausgeschöpft.'};if(q.totalCents>q.cash)return {ok:false,message:'So viel Bargeld hat der Händler heute nicht mehr.'};
  const sold=fruit.sold[traderId]?.day===day(minutes)?fruit.sold[traderId]:{day:day(minutes),counts:{coconut:0,unicorn:0,waldmeister:0},spent:0};sold.counts[id]=(sold.counts[id]||0)+quantity;sold.spent+=q.totalCents;fruit.sold[traderId]=sold;fruit.stock[id]-=quantity;fruit.revenueCents+=q.totalCents;remember(fruit,{kind:'sell',traderId,product:id,quantity,cents:q.totalCents,minute:minutes});return {ok:true,quote:q,balanceCents:balanceCents+q.totalCents};
 }
-export function giftIssue(fruit,rivalry,target,minutes,balanceCents){if(!fruit.stock.waldmeister)return 'Du brauchst eine Kiste Grünen Waldmeister.';if(fruit.giftDay===day(minutes))return 'Die Crew hat heute schon ein Geschenk bekommen.';return sabotageIssue(rivalry,target,'doodle',balanceCents,minutes);}
+export function giftIssue(fruit,rivalry,target,minutes,balanceCents){if(skateSchedule(minutes)==='absent')return 'Die Crew ist erst ab 12:00 Uhr wieder da.';if(!fruit.stock.waldmeister)return 'Du brauchst eine Kiste Grünen Waldmeister.';if(fruit.giftDay===day(minutes))return 'Die Crew hat heute schon ein Geschenk bekommen.';return sabotageIssue(rivalry,target,'doodle',balanceCents,minutes);}
 export function giftSkaters(fruit,rivalry,target,minutes,balanceCents,acceptRoll,actionRoll){
  const issue=giftIssue(fruit,rivalry,target,minutes,balanceCents);if(issue||![acceptRoll,actionRoll].every(n=>Number.isFinite(n)&&n>=0&&n<1))return {ok:false,message:issue||'Ungültiges Geschenk.'};
  const accepted=acceptRoll<.55;let order=null;if(accepted){order=commissionSabotage(rivalry,{target,action:'doodle',channel:'skate',contactId:'skate-crew',gift:true},balanceCents,minutes,actionRoll);if(!order.ok)return order;}

@@ -1,13 +1,14 @@
-import {kitchenReadiness,kitchenWorkFlow,completionWorkFlow} from './pizza-kitchen.js?v=20261016g';
-import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261016g';
-import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261016g';
-import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261016g';
+import {pizzaOffer,pizzaQuality,QUALITY_TIERS,validExpectation} from './pizza-quality.js?v=20261016h';
+import {kitchenReadiness,kitchenWorkFlow,completionWorkFlow} from './pizza-kitchen.js?v=20261016h';
+import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261016h';
+import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261016h';
+import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261016h';
 
-import {businessIssue,demandScore,operatingRates,counterLayoutIssue} from './pizza-business.js?v=20261016g';
-import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable,reconcileProduction} from './pizza-production.js?v=20261016g';
-import {workLayoutKey} from './pizza-work-targets.js?v=20261016g';
-import {restoreMachines,startMachineVisit,reconcileMachineVisits,advanceMachineVisits,machinePosition} from './pizza-machines.js?v=20261016g';
-import {ingredientPurchaseCost} from './pizza-procurement.js?v=20261016g';
+import {businessIssue,demandScore,operatingRates,counterLayoutIssue} from './pizza-business.js?v=20261016h';
+import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable,reconcileProduction} from './pizza-production.js?v=20261016h';
+import {workLayoutKey} from './pizza-work-targets.js?v=20261016h';
+import {restoreMachines,startMachineVisit,reconcileMachineVisits,advanceMachineVisits,machinePosition} from './pizza-machines.js?v=20261016h';
+import {ingredientPurchaseCost} from './pizza-procurement.js?v=20261016h';
 export const SERVICE_PHASES=['arriving','waiting','eating','leaving','paying'];
 export const tableKey=t=>[t.x,t.y,t.r,t.seats,t.variant||'wood'].join(':');
 export function freshService(){return {version:1,chainVersion:1,elapsed:0,untilArrival:2,nextId:1,groups:[],machineGuests:[],payments:[],dirtyTables:[],waiterTasks:[],staffPositions:{},plateReturns:[],cleanedTables:0,netCents:0,revenueCents:0,machineRevenueCents:0,machineUses:0,costCents:0,servedGuests:0};}
@@ -21,11 +22,12 @@ export function restoreService(raw,plan=DEFAULT_PLAN){
   for(const k of ['ingredientSavingsCents','staffCents','propertyCents','electricityCents','advertisingCents','operatingCents','debtCents','lostGuests','reviews'])if(integer(raw[k]))fresh[k]=raw[k];
   for(const k of ['occupiedSeconds','capacitySeconds','billRemainder','staffAccrued','propertyAccrued','electricityAccrued','totalWaitingSeconds'])if(Number.isFinite(raw[k])&&raw[k]>=0&&raw[k]<=1e12)fresh[k]=raw[k];
   if(Number.isFinite(raw.rating)&&raw.rating>=1&&raw.rating<=5)fresh.rating=raw.rating;
+  if(raw.lastReview&&Number.isFinite(raw.lastReview.score)&&raw.lastReview.score>=1&&raw.lastReview.score<=5)fresh.lastReview={score:raw.lastReview.score,pricePenalty:Math.max(0,Math.min(1000,Number(raw.lastReview.pricePenalty)||0)),mismatch:Math.max(0,Math.min(2,Number(raw.lastReview.mismatch)||0))};
   const ids=new Set();
   for(const g of raw.groups){
     const t=g?.table;
-    if(!g||!integer(g.id,1,raw.nextId-1)||ids.has(g.id)||!integer(g.size,1,8)||!SERVICE_PHASES.includes(g.phase)||!t||t.type!=='table'||!TABLE_SEATS.includes(t.seats)||g.size>t.seats||![t.x,t.y,t.r].every(Number.isInteger)||t.r<0||t.r>3||t.x<0||t.y<0||t.x+dimensions(t).w>plan.w||t.y+dimensions(t).h>plan.h||!Array.isArray(g.route)||!g.route.length||g.route.length>plan.area||!g.route.every(p=>pointOK(p,plan))||g.route.some((p,i)=>i&&Math.abs(p.x-g.route[i-1].x)+Math.abs(p.y-g.route[i-1].y)!==1)||!Number.isFinite(g.progress)||g.progress<0||g.progress>g.route.length+3||!Number.isFinite(g.timer)||g.timer<0||g.timer>60||!Number.isFinite(g.eatDuration)||g.eatDuration<18||g.eatDuration>30||typeof g.order?.name!=='string'||g.order.name.length>40||!integer(g.order.price,1,99999)||!integer(g.order.cost,1,2000)||typeof g.charged!=='boolean'||typeof g.ate!=='boolean'||typeof g.paid!=='boolean'||g.paid!==(g.phase==='paying')||(['waiting','eating'].includes(g.phase)&&!g.charged)||(g.ate&&!g.charged))continue;
-    ids.add(g.id);const restored=JSON.parse(JSON.stringify(g));delete restored.work;const work=raw.chainVersion===1&&g.phase==='waiting'?restoreWork(g.work,plan):null;if(work)restored.work=work;if(g.waited!==undefined)restored.waited=Number.isFinite(g.waited)&&g.waited>=0?Math.min(g.waited,120):0;fresh.groups.push(restored);
+    if(!g||!integer(g.id,1,raw.nextId-1)||ids.has(g.id)||!integer(g.size,1,8)||!SERVICE_PHASES.includes(g.phase)||!t||t.type!=='table'||!TABLE_SEATS.includes(t.seats)||g.size>t.seats||![t.x,t.y,t.r].every(Number.isInteger)||t.r<0||t.r>3||t.x<0||t.y<0||t.x+dimensions(t).w>plan.w||t.y+dimensions(t).h>plan.h||!Array.isArray(g.route)||!g.route.length||g.route.length>plan.area||!g.route.every(p=>pointOK(p,plan))||g.route.some((p,i)=>i&&Math.abs(p.x-g.route[i-1].x)+Math.abs(p.y-g.route[i-1].y)!==1)||!Number.isFinite(g.progress)||g.progress<0||g.progress>g.route.length+3||!Number.isFinite(g.timer)||g.timer<0||g.timer>60||!Number.isFinite(g.eatDuration)||g.eatDuration<18||g.eatDuration>30||typeof g.order?.name!=='string'||g.order.name.length>40||!integer(g.order.price,1,99999)||!integer(g.order.cost,1,3000)||typeof g.charged!=='boolean'||typeof g.ate!=='boolean'||typeof g.paid!=='boolean'||g.paid!==(g.phase==='paying')||(['waiting','eating'].includes(g.phase)&&!g.charged)||(g.ate&&!g.charged))continue;
+    ids.add(g.id);const restored=JSON.parse(JSON.stringify(g));delete restored.work;if(!validExpectation(restored.order.expectation))delete restored.order.expectation;const work=raw.chainVersion===1&&g.phase==='waiting'?restoreWork(g.work,plan):null;if(work)restored.work=work;if(g.waited!==undefined)restored.waited=Number.isFinite(g.waited)&&g.waited>=0?Math.min(g.waited,120):0;fresh.groups.push(restored);
   }
   if(Array.isArray(raw.payments))fresh.payments=raw.payments.filter(p=>integer(p?.id,1,raw.nextId-1)&&integer(p.amount,1,799992)&&Number.isFinite(p.time)&&p.time<=raw.elapsed&&p.time>=raw.elapsed-4&&pointOK(p.position,plan)).slice(-4).map(p=>({...p,position:{...p.position}}));
   restoreMachines(raw,fresh,plan);restoreProduction(raw,fresh,plan);return fresh;
@@ -78,10 +80,10 @@ function admit(service,layout,menu,balance,plan,business){
   let offers=menu.filter(item=>item.active&&validRecipe(item.recipe)&&integer(item.price,1,99999)&&ingredientPurchaseCost(recipeCost(item.recipe),size,business?.ingredientDiscount||0)<=balance);
   const segment=business?.market&&offers.length?business.market.claim(size,offers):null;
   if(business?.market&&!segment)return;
-  if(segment)offers=offers.filter(o=>o.price<=segment.budget);
+  if(segment){offers=offers.filter(o=>o.price<=segment.budget);const audience=QUALITY_TIERS.findIndex(t=>t.id===segment.id),distance=Math.min(...offers.map(o=>Math.abs(pizzaQuality(o.recipe).index-audience)));offers=offers.filter(o=>Math.abs(pizzaQuality(o.recipe).index-audience)===distance);}
   if(!choices.length||!offers.length){if(business&&offers.length)service.lostGuests=(service.lostGuests||0)+size;return;}
   const choice=choices[0],offer=offers[(service.nextId*7)%offers.length],id=service.nextId++;
-  service.groups.push({id,size,...(segment?{customerTier:segment.id}:{}),table:{...choice.table},phase:'arriving',route:choice.route,progress:0,timer:0,eatDuration:18+(id*7%13),order:{name:offer.recipe.name,price:offer.price,cost:recipeCost(offer.recipe)},charged:false,ate:false,paid:false});
+  service.groups.push({id,size,...(segment?{customerTier:segment.id}:{}),table:{...choice.table},phase:'arriving',route:choice.route,progress:0,timer:0,eatDuration:18+(id*7%13),order:{name:offer.recipe.name,price:offer.price,cost:recipeCost(offer.recipe),expectation:pizzaOffer({items:layout,finishes:business?.finishes},offer,segment?.id)},charged:false,ate:false,paid:false});
 }
 export function advanceService(service,seconds,layout,menu,balanceCents,plan=DEFAULT_PLAN,business=null){
   const events=[];if(!Number.isFinite(seconds)||seconds<=0)return {balanceCents,events};
@@ -124,7 +126,7 @@ export function advanceService(service,seconds,layout,menu,balanceCents,plan=DEF
           balanceCents-=cost;service.costCents+=cost;service.ingredientSavingsCents=(service.ingredientSavingsCents||0)+baseCost-cost;service.netCents-=cost;g.charged=true;g.phase='waiting';g.timer=3+g.id%3;g.waited=0;events.push({type:'cost',groupId:g.id,amount:cost});
         }else if(g.ate&&!g.paid){
           const amount=g.order.price*g.size;balanceCents+=amount;service.revenueCents+=amount;service.netCents+=amount;service.servedGuests+=g.size;g.paid=true;g.phase='paying';g.timer=1.8;
-          if(business){const score=Math.max(1,Math.min(5,5-(g.waited||0)/30-Math.max(0,g.order.price-1000)/800+Math.min(.4,layout.filter(i=>i.type==='plant').length*.08)+(Number.isFinite(g.staffQuality)?g.staffQuality:0)+(Number.isFinite(g.staffFriendliness)?g.staffFriendliness:0)));recordReview(service,score);service.totalWaitingSeconds=(service.totalWaitingSeconds||0)+(g.waited||0)*g.size;}
+          if(business){const experience=Math.max(1,Math.min(5,5-(g.waited||0)/30+Math.min(.4,layout.filter(i=>i.type==='plant').length*.08)+(Number.isFinite(g.staffQuality)?g.staffQuality:0)+(Number.isFinite(g.staffFriendliness)?g.staffFriendliness:0))),score=Math.max(1,experience-(validExpectation(g.order.expectation)?g.order.expectation.penalty:0));recordReview(service,score);service.lastReview={score,pricePenalty:g.order.expectation?.overpriced||0,mismatch:g.order.expectation?.mismatch||0};service.totalWaitingSeconds=(service.totalWaitingSeconds||0)+(g.waited||0)*g.size;}
           const payment={id:g.id,amount,time:service.elapsed,position:{...plan.entrance}};service.payments.push(payment);service.payments=service.payments.slice(-4);events.push({type:'payment',...payment});
         }else service.groups=service.groups.filter(other=>other!==g);
       }else{

@@ -1,12 +1,14 @@
-import {purchasingDiscount} from './pizza-procurement.js?v=20261016g';
-import {notify,state} from './pizza-core.js?v=20261016g';
-import {INGREDIENTS,copyRecipe} from './pizza-recipe.js?v=20261016g';
-import {savedRecipes,drawRecipePreview,showPizza} from './pizza-editor.js?v=20261016g';
-import {parseMenuPrice,menuContribution,restoreMenu,putOnMenu} from './pizza-menu.js?v=20261016g';
+import {restaurantQuality,pizzaQuality,pizzaOffer} from './pizza-quality.js?v=20261016h';
+import {purchasingDiscount} from './pizza-procurement.js?v=20261016h';
+import {notify,state,ensureRestaurants,restaurantName} from './pizza-core.js?v=20261016h';
+import {INGREDIENTS,copyRecipe} from './pizza-recipe.js?v=20261016h';
+import {savedRecipes,drawRecipePreview,showPizza} from './pizza-editor.js?v=20261016h';
+import {parseMenuPrice,menuContribution,restoreMenu,putOnMenu} from './pizza-menu.js?v=20261016h';
 
 const el=id=>document.getElementById(id),KEY='pizza-menu-v1';
 const money=cents=>(cents/100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' DM';
-let items=[];
+let items=[],qualityRestaurant='';
+function selectedProfile(){const profiles=ensureRestaurants();if(!profiles[qualityRestaurant])qualityRestaurant=state.activeRestaurantId;return profiles[qualityRestaurant];}
 try{items=restoreMenu(JSON.parse(localStorage.getItem(KEY)));}catch{}
 function save(message){
   try{localStorage.setItem(KEY,JSON.stringify({version:1,items}));el('menuStatus').textContent=message;}
@@ -21,6 +23,7 @@ function economics(card,item){
   card.querySelector('[data-menu-cost]').textContent=money(cost);
   card.querySelector('[data-menu-contribution]').textContent=money(amount);
   card.querySelector('[data-menu-margin]').textContent=percent.toLocaleString('de-DE',{maximumFractionDigits:1})+' % vom Verkaufspreis';
+  const offer=pizzaOffer(selectedProfile(),item),quality=pizzaQuality(item.recipe),indicator=card.querySelector('[data-menu-quality]');indicator.dataset.overpriced=String(offer.overpriced>0);indicator.textContent='Zutatenklasse: '+quality.name+' · Faire Preisgrenze: '+money(offer.fairPrice)+(offer.overpriced>0?' · ZU TEUER: +'+(offer.overpriced*100).toLocaleString('de-DE',{maximumFractionDigits:2})+' %':' · Preis passt')+(offer.mismatch?' · Zutatenklasse über Restaurantniveau: Bewertungsrisiko.':'');
   const warning=card.querySelector('[data-menu-warning]');warning.hidden=amount>=0;warning.textContent='Verkaufspreis liegt unter den Zutatenkosten.';
 }
 function card(item,index){
@@ -34,7 +37,7 @@ function card(item,index){
   for(const [label,key]of [['Zutatenkosten','menuCost'],['Deckungsbeitrag','menuContribution']]){
     const stat=node('div');stat.append(node('span','',label));const value=node('strong');value.dataset[key]='';stat.append(value);stats.append(stat);
   }
-  c.append(stats);const margin=node('p','menuMargin');margin.dataset.menuMargin='';c.append(margin);
+  c.append(stats);const quality=node('p','menuQuality');quality.dataset.menuQuality='';c.append(quality);const margin=node('p','menuMargin');margin.dataset.menuMargin='';c.append(margin);
   const form=node('form','menuPriceForm'),label=node('label','', 'Verkaufspreis (DM)'),input=document.createElement('input');
   input.type='text';input.inputMode='decimal';input.maxLength=6;input.required=true;input.id='menuPrice-'+index;input.value=(item.price/100).toFixed(2).replace('.',',');input.dataset.menuPrice='';label.htmlFor=input.id;
   input.setAttribute('aria-label','Verkaufspreis für '+item.recipe.name+' in DM');
@@ -52,6 +55,10 @@ function card(item,index){
   syncToggle();const remove=button('Entfernen',()=>{items=items.filter(i=>i!==item);save(item.recipe.name+' von der Karte entfernt. Dein Rezept bleibt gespeichert.');render();el('menuRecipe').focus();});remove.setAttribute('aria-label',item.recipe.name+' von der Speisekarte entfernen');remove.dataset.menuRemove='';actions.append(toggle,remove);c.append(actions);economics(c,item);return c;
 }
 function render(){
+  const profiles=ensureRestaurants();selectedProfile();let panel=el('menuQualityPanel');if(!panel){panel=node('section','menuQualityPanel');panel.id='menuQualityPanel';el('menuSummary').after(panel);}
+  const label=node('label','','Preisprüfung für Restaurant'),picker=document.createElement('select');picker.id='menuQualityRestaurant';picker.append(...Object.keys(profiles).map(id=>new Option(restaurantName(id),id)));picker.value=qualityRestaurant;picker.onchange=()=>{qualityRestaurant=picker.value;render();};label.append(picker);
+  const help=node('details'),summary=node('summary','','So funktionieren Qualität und Sterne');help.append(summary,node('small','','Der Restaurantstatus zählt Tische zu 40 %, Renovierung zu 30 % und Ofen, Kühlschrank und Tresen zu 30 %. Für Gehoben darf keiner dieser Bereiche einfach bleiben. Die Zutatenklasse bestimmt das Pizza-Angebot. Passender Ausbau rechtfertigt höhere Preise. Zu hohe Preise und zu exklusive Pizzen für den Ausbau kosten beim Bezahlen Sterne. Weniger Sterne bringen weniger Gäste. Parmesan und Thunfisch zählen als exklusive Zutaten; ein einzelner Klecks reicht nicht.'));
+  const q=restaurantQuality(selectedProfile()),score=n=>n.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});panel.replaceChildren(label,node('strong','','Restaurantstatus: '+q.name),node('p','','Tische '+score(q.furniture)+' / 2 · Renovierung '+score(q.renovation)+' / 2 · Ausstattung '+score(q.equipment)+' / 2'),help);
   const recipes=savedRecipes(),select=el('menuRecipe'),selected=select.value;
   select.replaceChildren(new Option(recipes.length?'Gespeichertes Rezept auswählen':'Noch keine Rezepte gespeichert',''),...recipes.map((r,i)=>new Option(r.name,String(i))));
   if(recipes[Number(selected)]&&selected!=='')select.value=selected;
@@ -60,7 +67,7 @@ function render(){
   el('menuEmpty').hidden=items.length>0;
   el('menuCards').replaceChildren(...items.map(card));updateSummary();
 }
-export function openMenu(){render();el('menuStatus').textContent='';const dialog=el('menuDialog');if(!dialog.open)dialog.showModal();el('menuClose').focus();}
+export function openMenu(){qualityRestaurant=state.activeRestaurantId;render();el('menuStatus').textContent='';const dialog=el('menuDialog');if(!dialog.open)dialog.showModal();el('menuClose').focus();}
 export function menuSnapshot(){return items.map(item=>({...item,recipe:copyRecipe(item.recipe)}));}
 export function serviceMenu(){return items;}
 export function mountMenu(){

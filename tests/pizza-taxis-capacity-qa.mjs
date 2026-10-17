@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {TAXI_DRIVERS,TAXI_DURATIONS,taxiQuote,freshTaxis,commissionTaxi,restoreTaxis,activeTaxiContracts,taxiMultiplier} from '../pizza-taxis.js';
-import {restaurantCapacity,utilizationForecast} from '../pizza-capacity.js';
+import {restaurantCapacity,utilizationForecast,seatUtilization} from '../pizza-capacity.js';
 import {freshRestaurant} from '../pizza-restaurant-profiles.js';
 import {freshStaff,hireEmployee} from '../pizza-staff.js';
 import {restaurantPlan} from '../pizza-floorplans.js';
@@ -31,3 +31,9 @@ const broken=structuredClone(p);broken.items=broken.items.filter(i=>i.type!=='ov
 const blocked=structuredClone(p);blocked.items=blocked.items.filter(i=>i.type!=='table');assert.equal(restaurantCapacity('mamma-mia',blocked,staff,menu).daily,0);
 let f=utilizationForecast({daily:100},70,120);assert.equal(f.additional,30);assert.equal(f.overflow,20);assert.equal(f.percent,70);assert.equal(f.nextPercent,120);f=utilizationForecast({daily:100},110,150);assert(f.full);assert.equal(f.additional,0);assert.equal(f.overflow,50);f=utilizationForecast({daily:0},90,100);assert.equal(f.additional,0);assert(Number.isFinite(f.percent));
 console.log('Taxi/capacity passed: 7/30/365-day prepaid contracts, driver exclusivity, atomic failures, persistence, finite shared demand and exact expiry, branch/day accounting, crew shifts, missing kitchen/menu/tables, non-mutating throughput estimates and capped promotion overflow.',capacity);
+
+const table={type:'table',x:1,y:1,r:0,seats:8},seated={items:[table],service:{groups:[{size:8,phase:'eating',table}]}};
+assert.deepEqual(seatUtilization(seated),{seats:8,occupied:8,reserved:0,free:0,percent:100});seated.items.push({...table,x:5});assert.equal(seatUtilization(seated).percent,50);assert.equal(seatUtilization(seated).seats,16);
+seated.service.groups[0].phase='arriving';assert.equal(seatUtilization(seated).occupied,0);assert.equal(seatUtilization(seated).reserved,8);assert.equal(seatUtilization({items:[],service:{groups:seated.service.groups}}).percent,0);
+assert(staff.employees.filter(e=>e.restaurantId==='mamma-mia'&&e.shift==='lunch'&&e.role==='cook').length===1);assert(staff.employees.filter(e=>e.restaurantId==='mamma-mia'&&e.shift==='lunch'&&e.role==='waiter').length===1);assert(partial.daily>0,'One cook and one server are sufficient for a whole shift.');
+console.log('Live seat capacity passed: 8/8 = 100%, 8/16 = 50%, arrivals separated, zero chairs safe, exactly one cook and server per shift.');

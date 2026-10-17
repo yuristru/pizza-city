@@ -13,6 +13,9 @@ on:
       - 'tests/pizza-restaurant-access-browser-qa.cjs'
       - 'tests/pizza-catalog-qa.mjs'
       - 'tests/pizza-recipe-qa.mjs'
+      - 'tests/pizza-quality-qa.mjs'
+      - 'tests/pizza-city-gardens-qa.mjs'
+      - 'tests/pizza-quality-browser-qa.cjs'
       - 'tests/pizza-menu-qa.mjs'
       - 'tests/pizza-menu-browser-qa.cjs'
       - 'tests/pizza-service-qa.mjs'
@@ -84,6 +87,9 @@ jobs:
         run: |
           node tests/pizza-catalog-qa.mjs
           node tests/pizza-recipe-qa.mjs
+          node tests/pizza-quality-qa.mjs
+          node tests/pizza-city-gardens-qa.mjs
+          node tests/pizza-quality-browser-qa.cjs
           node tests/pizza-menu-qa.mjs
           node tests/pizza-menu-browser-qa.cjs
           node tests/pizza-service-qa.mjs

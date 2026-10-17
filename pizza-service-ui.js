@@ -1,14 +1,15 @@
-import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261016g';
-import {state,Container,ensureRestaurants,activePlan,label} from './pizza-core.js?v=20261016g';
-import {project,dimensions} from './pizza-layout.js?v=20261016g';
-import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261016g';
-import {routePosition,guestSeat} from './pizza-service.js?v=20261016g';
-import {machinePosition,MACHINE_RULES} from './pizza-machines.js?v=20261016g';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261016g';
+import {restaurantQuality} from './pizza-quality.js?v=20261016h';
+import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261016h';
+import {state,Container,ensureRestaurants,activePlan,label} from './pizza-core.js?v=20261016h';
+import {project,dimensions} from './pizza-layout.js?v=20261016h';
+import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261016h';
+import {routePosition,guestSeat} from './pizza-service.js?v=20261016h';
+import {machinePosition,MACHINE_RULES} from './pizza-machines.js?v=20261016h';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261016h';
 
-import {businessIssue,workPath,counterLayoutIssue,counterHandoff} from './pizza-business.js?v=20261016g';
-import {staffSchedule,shiftLabel} from './pizza-shifts.js?v=20261016g';
-import {personSprite,staffPersonSprite} from './pizza-sprites.js?v=20261016g';
+import {businessIssue,workPath,counterLayoutIssue,counterHandoff} from './pizza-business.js?v=20261016h';
+import {staffSchedule,shiftLabel} from './pizza-shifts.js?v=20261016h';
+import {personSprite,staffPersonSprite} from './pizza-sprites.js?v=20261016h';
 const maps=new WeakMap(),banners=new Map();
 export function syncServiceGuests(objects){
   let nodes=maps.get(objects);if(!nodes){nodes=new Map();maps.set(objects,nodes);}
@@ -77,7 +78,7 @@ export function renderServiceUI(){
   const issue=(profile.service.debtCents||0)>0||state.staff.reserveDebtCents>0||state.procurement.debtCents>0?'Offene Betriebskosten':profile.business.open===false?'Restaurant geschlossen':!schedule.active?(schedule.closing?'Schichtende, Bestellungen abschließen':'Außerhalb der Schichten'):readiness.issue||counterLayoutIssue(state.restaurantState,plan)||teamIssue||businessIssue(staff,readiness.ready?kitchenWorkFlow(state.kitchenTiles,state.restaurantState,plan):null);
   const open=profile.business.open!==false,button=document.getElementById('restaurantOpenBtn');
   if(button.dataset.open!==String(open)){button.dataset.open=String(open);button.setAttribute('aria-pressed',String(open));button.setAttribute('aria-label',open?'Restaurant schließen':'Restaurant öffnen');button.title=open?'Geöffnet: keine neuen Gäste mehr zulassen':'Geschlossen: Restaurant öffnen';document.getElementById('restaurantOpenIcon').setAttribute('d',open?'M6 4h4v16H6zM14 4h4v16h-4z':'M7 4l14 8-14 8z');}
-  const stars=document.querySelector('.stars'),rating=state.service.rating||4;stars.textContent='★'.repeat(Math.round(rating))+'☆'.repeat(5-Math.round(rating));stars.setAttribute('aria-label',rating.toFixed(1)+' von 5 Sternen');
+  const stars=document.querySelector('.stars'),rating=state.service.rating||4;stars.textContent='★'.repeat(Math.round(rating))+'☆'.repeat(5-Math.round(rating));stars.setAttribute('aria-label',rating.toFixed(1)+' von 5 Sternen');const q=restaurantQuality(profile);stars.dataset.restaurantTier=q.id;stars.title='Restaurantstatus: '+q.name+' · '+rating.toFixed(1)+' / 5 Sterne';let badge=document.getElementById('restaurantQualityBadge');if(!badge){badge=document.createElement('span');badge.id='restaurantQualityBadge';stars.after(badge);}badge.textContent=q.name;badge.title='Aus Tischen, Renovierung und Ausstattung. Details unter Auslastung.';
   const dirty=state.service.dirtyTables?.length||0,waitingReturn=state.service.waiterTasks.some(t=>t.plates&&t.blocked),missingCounter=(dirty||waitingReturn)&&!counterHandoff(state.restaurantState,plan),text=(total?(!open?'Geschlossen · ':'')+total+(total===1?' Gast · ':' Gäste · ')+seated+(seated===1?' Tisch belegt':' Tische belegt'):!open?'Geschlossen':issue?'Geschlossen · '+issue:active?'Geöffnet · Gäste kommen':'Speisekarte noch leer')+(missingCounter?' · Abräumen wartet auf Tresen':dirty?' · '+dirty+(dirty===1?' Tisch abräumen':' Tische abräumen'):'');if(status.textContent!==text)status.textContent=text;
   const host=document.getElementById('incomeBanners'),wanted=new Set();
   for(const [restaurantId,profile]of Object.entries(ensureRestaurants()))for(const [index,payment]of profile.service.payments.entries()){

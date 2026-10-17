@@ -1,6 +1,7 @@
-import {MONTH_HOURS} from './pizza-staff.js?v=20261016g';
-import {roomCell,roomStep} from './pizza-floorplans.js?v=20261016g';
-import {occupiedCells} from './pizza-layout.js?v=20261016g';
+import {ratingDemand} from './pizza-quality.js?v=20261016h';
+import {MONTH_HOURS} from './pizza-staff.js?v=20261016h';
+import {roomCell,roomStep} from './pizza-floorplans.js?v=20261016h';
+import {occupiedCells} from './pizza-layout.js?v=20261016h';
 export const STAFF={cook:{name:'Koch',hourly:12},waiter:{name:'Service',hourly:8}};
 export function freshBusiness(){return {cook:0,waiter:0};}
 export function restoreBusiness(raw,legacy=false){return {...Object.fromEntries(Object.keys(STAFF).map(k=>[k,Number.isInteger(raw?.[k])&&raw[k]>=0&&raw[k]<=4?raw[k]:legacy?1:0])),open:raw?.open!==false};}
@@ -98,6 +99,6 @@ export function businessIssue(business,workflow){return !business.cook?'Koch ein
 export function demandScore(service,menu,items,finishes,location=1){
  const offers=menu.filter(i=>i.active),price=offers.length?offers.reduce((s,i)=>s+i.price,0)/offers.length:850;
  const decor=Math.min(.25,items.filter(i=>['plant','jukebox'].includes(i.type)).length*.04+(finishes?.renovation||0)*.04);
- return Math.max(.2,Math.min(2,location*(.65+(service.rating||4)/8+decor)*Math.max(.25,Math.min(1.4,850/price))*(1+Math.min(.2,offers.length*.025))));
+ return Math.max(.2,Math.min(2,location*(1.15+decor)*ratingDemand(service.rating??4)*Math.max(.25,Math.min(1.4,850/price))*(1+Math.min(.2,offers.length*.025))));
 }
 export function businessMetrics(profile,plan){const s=profile.service,b=profile.business;return {revenue:s.revenueCents,machines:s.machineRevenueCents||0,ingredients:s.costCents,staff:s.staffCents||0,property:s.propertyCents||0,electricity:s.electricityCents||0,advertising:s.advertisingCents||0,profit:s.netCents-(s.operatingCents||0),debt:s.debtCents||0,rating:s.rating||4,averageWait:s.servedGuests?(s.totalWaitingSeconds||0)/s.servedGuests/5:0,served:s.servedGuests,lost:s.lostGuests||0,utilization:s.capacitySeconds?Math.min(100,100*(s.occupiedSeconds||0)/s.capacitySeconds):0,rates:operatingRates(b,profile.items,plan.area)};}
