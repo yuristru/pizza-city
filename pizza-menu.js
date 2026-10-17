@@ -1,6 +1,6 @@
-import {validRecipe,copyRecipe,recipeCost} from './pizza-recipe.js?v=20261016h';
+import {validRecipe,copyRecipe,recipeCost} from './pizza-recipe.js?v=20261017a';
 
-import {ingredientPurchaseCost} from './pizza-procurement.js?v=20261016h';
+import {ingredientPurchaseCost} from './pizza-procurement.js?v=20261017a';
 // All prices and contributions are integer Pfennig amounts.
 export function parseMenuPrice(value){
   if(typeof value!=='string')return null;

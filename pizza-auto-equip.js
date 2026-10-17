@@ -1,9 +1,9 @@
-import {withKitchen,roomCell} from './pizza-floorplans.js?v=20261016h';
-import {occupiedCells,validLayout,placementIssue} from './pizza-layout.js?v=20261016h';
-import {itemPrice} from './pizza-catalog.js?v=20261016h';
-import {KITCHEN_TILE_PRICE,kitchenWorkFlow} from './pizza-kitchen.js?v=20261016h';
-import {counterLayoutIssue} from './pizza-business.js?v=20261016h';
-import {serviceLayoutIssue} from './pizza-service.js?v=20261016h';
+import {withKitchen,roomCell} from './pizza-floorplans.js?v=20261017a';
+import {occupiedCells,validLayout,placementIssue} from './pizza-layout.js?v=20261017a';
+import {itemPrice} from './pizza-catalog.js?v=20261017a';
+import {KITCHEN_TILE_PRICE,kitchenWorkFlow} from './pizza-kitchen.js?v=20261017a';
+import {counterLayoutIssue} from './pizza-business.js?v=20261017a';
+import {serviceLayoutIssue} from './pizza-service.js?v=20261017a';
 
 const cache=new WeakMap();
 const BASE=[{type:'bar',variant:'rustic',x:0,y:0,r:0},{type:'oven',variant:'electric',x:0,y:2,r:0},{type:'fridge',variant:'compact',x:2,y:2,r:0}];

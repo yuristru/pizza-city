@@ -1,7 +1,7 @@
-import {app,world,state,Container,Graphics,Sprite,Texture,iso,label} from './pizza-core.js?v=20261016h';
-import {loadCityArt,citySprite} from './pizza-city-art.js?v=20261016h';
-import {personSprite} from './pizza-sprites.js?v=20261016h';
-import {oldtownQuarter,perimeterCoverage,foundationsOverlap} from './pizza-city-perimeter.js?v=20261016h';
+import {app,world,state,Container,Graphics,Sprite,Texture,iso,label} from './pizza-core.js?v=20261017a';
+import {loadCityArt,citySprite} from './pizza-city-art.js?v=20261017a';
+import {personSprite} from './pizza-sprites.js?v=20261017a';
+import {oldtownQuarter,perimeterCoverage,foundationsOverlap} from './pizza-city-perimeter.js?v=20261017a';
 
 // This page renders a separate study. It never starts the game or writes saves.
 app.renderer.background.color=0xe1dec9;

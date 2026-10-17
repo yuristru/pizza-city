@@ -178,16 +178,16 @@ async function loaded(page,url){await page.goto(url);try{await page.waitForSelec
     const advance=()=>page.evaluate(async modulePath=>{const {app}=await import(modulePath);for(let i=0;i<60;i++)app.ticker.update(app.ticker.lastTime+1000/60);},corePath);
     const paused=await snapshot(page);await advance();assert.equal((await snapshot(page)).minutes,paused.minutes);assert.deepEqual((await snapshot(page)).movers,paused.movers);
     await page.click('[data-speed="1"]');const normal=await snapshot(page);await advance();const normalDelta=(await snapshot(page)).minutes-normal.minutes;
-    await page.click('[data-speed="3"]');const fast=await snapshot(page);await advance();const fastDelta=(await snapshot(page)).minutes-fast.minutes;
-    await page.click('[data-speed="6"]');const fastest=await snapshot(page);await advance();const fastestDelta=(await snapshot(page)).minutes-fastest.minutes;
-    assert(normalDelta>0);assert(Math.abs(fastDelta/normalDelta-3)<.001);assert(Math.abs(fastestDelta/normalDelta-6)<.001);await page.click('[data-speed="0"]');
+    await page.click('[data-speed="37.5"]');const fast=await snapshot(page);await advance();const fastDelta=(await snapshot(page)).minutes-fast.minutes;
+    await page.click('[data-speed="75"]');const fastest=await snapshot(page);await advance();const fastestDelta=(await snapshot(page)).minutes-fastest.minutes;
+    assert(Math.abs(normalDelta-.2)<.001);assert(Math.abs(fastDelta-7.5)<.001);assert(Math.abs(fastestDelta-15)<.001);assert(Math.abs(fastDelta/normalDelta-37.5)<.001);assert(Math.abs(fastestDelta/normalDelta-75)<.001);await page.click('[data-speed="0"]');
     for(const mover of (await snapshot(page)).movers){
       const {x,y}=mover;
       assert(Math.abs(mover.z-(x+y)*16)<1e-8,'Traffic depth must use its ground position.');
       const inCanal=initialLayout.water(x,y);
       assert(!inCanal||initialLayout.bridge(x,y),'Traffic must cross the canal only on bridges.');
     }
-    console.log('Time and depth passed: real pause, normal/3x/6x speed, live clock, traffic depth and safe canal crossings.');
+    console.log('Time and depth passed: real pause, normal/37.5x/75x speed, live clock, traffic depth and safe canal crossings.');
     await page.evaluate(async modulePath=>{const {app}=await import(modulePath);app.ticker.maxFPS=0;app.ticker.stop();},corePath);
 
     await page.click('#restaurantBtn');assert.equal(await page.locator('[data-tool="chair"]').count(),0);

@@ -1,22 +1,22 @@
-import {restoreFruit} from './pizza-fruit.js?v=20261016h';
-import {restoreAdvertising} from './pizza-advertising.js?v=20261016h';
-import {restoreTaxis} from './pizza-taxis.js?v=20261016h';
-import {restoreMarket} from './pizza-market.js?v=20261016h';
-import {restoreRivalry} from './pizza-rivalry.js?v=20261016h';
-import {restoreProcurement} from './pizza-procurement.js?v=20261016h';
-import {restoreStaff,syncStaffCounts} from './pizza-staff.js?v=20261016h';
-import {shiftAt} from './pizza-shifts.js?v=20261016h';
-import {restoreDaily,ensureDaily} from './pizza-daily.js?v=20261016h';
-import {profilePlan} from './pizza-kitchen.js?v=20261016h';
-import {restaurantPlan,DEFAULT_PLAN,withKitchen} from './pizza-floorplans.js?v=20261016h';
-import {DEFAULT_CITY_SEED} from './pizza-city-layout.js?v=20261016h';
-import {restoreProperties,propertySpend} from './pizza-properties.js?v=20261016h';
+import {restoreFruit} from './pizza-fruit.js?v=20261017a';
+import {restoreAdvertising} from './pizza-advertising.js?v=20261017a';
+import {restoreTaxis} from './pizza-taxis.js?v=20261017a';
+import {restoreMarket} from './pizza-market.js?v=20261017a';
+import {restoreRivalry} from './pizza-rivalry.js?v=20261017a';
+import {restoreProcurement} from './pizza-procurement.js?v=20261017a';
+import {restoreStaff,syncStaffCounts} from './pizza-staff.js?v=20261017a';
+import {shiftAt} from './pizza-shifts.js?v=20261017a';
+import {restoreDaily,ensureDaily} from './pizza-daily.js?v=20261017a';
+import {profilePlan} from './pizza-kitchen.js?v=20261017a';
+import {restaurantPlan,DEFAULT_PLAN,withKitchen} from './pizza-floorplans.js?v=20261017a';
+import {DEFAULT_CITY_SEED} from './pizza-city-layout.js?v=20261017a';
+import {restoreProperties,propertySpend} from './pizza-properties.js?v=20261017a';
 import {Application,Container,Graphics,Sprite,Texture,Text,Rectangle} from './assets/pizza/vendor/pixi-8.22.0.mjs';
-import {copyLayout,upgradeLayout} from './pizza-layout.js?v=20261016h';
-import {START_MONEY,money,defaultFinishes,restoreFinishes} from './pizza-catalog.js?v=20261016h';
-import {freshService,restoreService} from './pizza-service.js?v=20261016h';
-import {MAIN_RESTAURANT,freshRestaurant,restoreRestaurants} from './pizza-restaurant-profiles.js?v=20261016h';
-import {property} from './pizza-properties.js?v=20261016h';
+import {copyLayout,upgradeLayout} from './pizza-layout.js?v=20261017a';
+import {START_MONEY,money,defaultFinishes,restoreFinishes} from './pizza-catalog.js?v=20261017a';
+import {freshService,restoreService} from './pizza-service.js?v=20261017a';
+import {MAIN_RESTAURANT,freshRestaurant,restoreRestaurants} from './pizza-restaurant-profiles.js?v=20261017a';
+import {property} from './pizza-properties.js?v=20261017a';
 export {Container,Graphics,Sprite,Texture,Text,Rectangle};
 
 export const root=document.querySelector('#app');
@@ -169,9 +169,9 @@ function fallback(){
 async function loadCityAtlas(){for(const type of ['small','medium','big'])state.cityTex[type]=[fallback()];}
 
 export async function loadAssets(){
-  const {loadCityArt}=await import('./pizza-city-art.js?v=20261016h');
-  const {loadRestaurantArt}=await import('./pizza-restaurant-art.js?v=20261016h');
-  const {loadIngredientArt}=await import('./pizza-ingredient-art.js?v=20261016h');
+  const {loadCityArt}=await import('./pizza-city-art.js?v=20261017a');
+  const {loadRestaurantArt}=await import('./pizza-restaurant-art.js?v=20261017a');
+  const {loadIngredientArt}=await import('./pizza-ingredient-art.js?v=20261017a');
   await Promise.all([loadCityArt(),loadRestaurantArt(),loadIngredientArt()]);
   if(!state.cityArt.buildings) await loadCityAtlas();
   loading.hidden=true;

@@ -56,7 +56,7 @@ Bewertungen liegen zwischen einem und fünf Sternen. Wartezeit und hohe Preise s
 
 ## Wirtschaft und Filialvergleich
 
-Eine Spielstunde dauert bei Tempo 1 fünf reale Minuten. Der Betrieb aller gekauften Filialen läuft auch in der Stadt und im Pizzaeditor weiter. Pause hält Simulation und Kosten an. Es gibt keine Offline-Abrechnung.
+Eine Spielstunde dauert bei Tempo 1 fünf reale Minuten. Die Mittelstufe läuft mit 37,5-fachem Tempo (7,5 Spielminuten je realer Sekunde), die höchste Stufe mit 75-fachem Tempo (15 Spielminuten je realer Sekunde). Der Betrieb aller gekauften Filialen läuft auch in der Stadt und im Pizzaeditor weiter. Pause hält Simulation und Kosten an. Es gibt keine Offline-Abrechnung.
 
 Kosten pro Spielstunde:
 

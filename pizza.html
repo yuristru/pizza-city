@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#dec9a5">
   <title>Pizza City · Mamma Mia</title>
-  <link rel="stylesheet" href="pizza.css?v=20261016h">
+  <link rel="stylesheet" href="pizza.css?v=20261017a">
 </head>
 <body>
 <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -31,8 +31,8 @@
     <div class="topcell"><div class="speed" aria-label="Spieltempo">
       <button type="button" data-speed="0" aria-label="Pause" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg></button>
       <button type="button" data-speed="1" class="active" aria-label="Normales Tempo" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 5 12 7-12 7z"/></svg></button>
-      <button type="button" data-speed="3" aria-label="Dreifaches Tempo" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m2 5 10 7-10 7zm10 0 10 7-10 7z"/></svg></button>
-      <button type="button" data-speed="6" aria-label="Sechsfaches Tempo" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m1 5 8 7-8 7zm7 0 8 7-8 7zm7 0 8 7-8 7z"/></svg></button>
+      <button type="button" data-speed="37.5" aria-label="Schnelles Tempo: 7,5 Spielminuten pro Sekunde" title="1 Sekunde = 7,5 Spielminuten" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m2 5 10 7-10 7zm10 0 10 7-10 7z"/></svg></button>
+      <button type="button" data-speed="75" aria-label="Höchstes Tempo: 15 Spielminuten pro Sekunde" title="1 Sekunde = 15 Spielminuten" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m1 5 8 7-8 7zm7 0 8 7-8 7zm7 0 8 7-8 7z"/></svg></button>
     </div></div>
   </div>
   <div id="cityHint" class="ui cityhint">Restaurants · Taxis · Stadtkontakte antippen</div>
@@ -213,7 +213,7 @@
 </div>
 <noscript>Bitte JavaScript aktivieren, um die Pizza-Demo zu starten.</noscript>
 <script type="module">
-  import('./pizza.js?v=20261016h').catch(error=>{
+  import('./pizza.js?v=20261017a').catch(error=>{
     console.error('Pizza demo could not start',error);
     const loading=document.querySelector('#loading');loading.hidden=false;loading.replaceChildren();
     const message=document.createElement('p');message.textContent='Die Demo konnte nicht starten. Bitte erneut laden.';

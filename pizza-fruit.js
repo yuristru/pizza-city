@@ -1,5 +1,5 @@
-import {skateSchedule} from './pizza-city-contacts.js?v=20261016h';
-import {commissionSabotage,sabotageIssue} from './pizza-rivalry.js?v=20261016h';
+import {skateSchedule} from './pizza-city-contacts.js?v=20261017a';
+import {commissionSabotage,sabotageIssue} from './pizza-rivalry.js?v=20261017a';
 export const FRUITS=[{id:'coconut',name:'Kokosnuss',base:220000,color:0xb58a61},{id:'unicorn',name:'Einhorn',base:65000,color:0xd2a8dc},{id:'waldmeister',name:'Grüner Waldmeister',base:15000,color:0x76a64d}];
 export const FRUIT_TRADERS=[{id:'carlo',name:'Carlo',start:13*60,end:16*60,skip:1},{id:'marta',name:'Marta',start:18*60,end:22*60,skip:0}];
 const day=m=>Math.floor(m/1440),valid=n=>Number.isSafeInteger(n)&&n>=0&&n<=1e12,hash=(a,b,c=0)=>{let n=Math.imul(a+37,374761393)^Math.imul(b+71,668265263)^Math.imul(c+17,1274126177);return (n^(n>>>13))>>>0;};
