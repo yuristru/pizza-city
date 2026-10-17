@@ -1,0 +1,67 @@
+{
+  "canvas": [
+    2048,
+    2048
+  ],
+  "cellSize": 512,
+  "camera": {
+    "projection": "orthographic",
+    "elevationDegrees": 30,
+    "groundAxisSlope": 0.5
+  },
+  "footprint": [
+    [
+      -1,
+      -1
+    ],
+    [
+      1,
+      -1
+    ],
+    [
+      1,
+      0.45
+    ],
+    [
+      0.45,
+      1
+    ],
+    [
+      -1,
+      1
+    ]
+  ],
+  "wallHeight": 1.65,
+  "roofPeak": 2.3,
+  "facadePixels": 171.47302994931883,
+  "foundationCorners": [
+    [
+      86.29437251522862,
+      400.0
+    ],
+    [
+      256.0,
+      484.8528137423857
+    ],
+    [
+      425.7056274847714,
+      400.0
+    ]
+  ],
+  "directions": [
+    "se",
+    "sw",
+    "nw",
+    "ne"
+  ],
+  "yawDegrees": [
+    0,
+    90,
+    180,
+    270
+  ],
+  "chimneyWorldPosition": [
+    0.63,
+    -0.63
+  ]
+}

@@ -1,13 +1,12 @@
-import {BUILDING_ART} from './pizza-city-building-art.js?v=20261017b';
-import {buildingProjection} from './pizza-city-building-rules.js?v=20261017b';
-import {groundProjection} from './pizza-isometric-art.js?v=20261017b';
-import {Sprite,Texture,state} from './pizza-core.js?v=20261017b';
+import {BUILDING_ART} from './pizza-city-building-art.js?v=20261017-house3d';
+import {buildingProjection} from './pizza-city-building-rules.js?v=20261017-house3d';
+import {groundProjection} from './pizza-isometric-art.js?v=20261017-house3d';
+import {Sprite,Texture,state} from './pizza-core.js?v=20261017-house3d';
 
 export const ATLASES=[
  {key:'contacts',url:'italian-city-contacts-v1.png',frames:[[0,0,512,480,50],[512,0,512,480,50],[1024,0,512,480,40],[0,512,512,450,38],[512,512,512,450,38],[1024,512,512,450,38]]},
  {key:'buildings',url:'italian-houses-32-two-storey-v2.png',frames:BUILDING_ART.buildings},
- {key:'cornerBuildings',url:'italian-clock-corners-v1.png',frames:BUILDING_ART.cornerBuildings},
- {key:'buildingTypes',url:'italian-building-types-two-storey-v2.png',frames:BUILDING_ART.buildingTypes},
+ {key:'cornerBuildings',url:'italian-chamfered-corners-3d-v1.png',frames:BUILDING_ART.cornerBuildings},
  {key:'courtyardBuildings',url:'italian-courtyards-two-storey-v2.png',frames:BUILDING_ART.courtyardBuildings},
  {key:'landmarks',url:'italian-landmarks-two-storey-v2.png',frames:BUILDING_ART.landmarks},
   {key:'props',url:'italian-props-v2.png',frames:[

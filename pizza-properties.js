@@ -1,4 +1,4 @@
-import {restaurantPlan} from './pizza-floorplans.js?v=20261017b';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261017-house3d';
 export const PROPERTY_SIZES={
   small:{name:'Klein',badge:'S',area:80,color:0x66834b},
   medium:{name:'Mittel',badge:'M',area:160,color:0xc09242},
@@ -6,12 +6,12 @@ export const PROPERTY_SIZES={
 };
 export const PROPERTIES=[
   {id:'san-marco',name:'San Marco',district:'Altstadt',size:'small',price:28000,bx:0,by:1,slot:0,art:'buildings',sprite:9},
-  {id:'via-roma',name:'Via Roma',district:'Altstadt',size:'medium',price:64000,bx:0,by:1,slot:1,art:'buildingTypes',sprite:5},
+  {id:'via-roma',name:'Via Roma',district:'Altstadt',size:'medium',price:64000,bx:0,by:1,slot:1,art:'buildings',sprite:20},
   {id:'piazza-limone',name:'Piazza Limone',district:'Zentrum',size:'small',price:32000,bx:1,by:1,slot:1,art:'buildings',sprite:13},
-  {id:'belvedere',name:'Belvedere',district:'Domviertel',size:'medium',price:72000,bx:2,by:0,slot:0,art:'buildingTypes',sprite:7},
-  {id:'palazzo-sole',name:'Palazzo del Sole',district:'Domviertel',size:'large',price:118000,bx:2,by:0,slot:1,art:'buildingTypes',sprite:0},
-  {id:'mercato',name:'Il Mercato',district:'Südviertel',size:'large',price:138000,bx:0,by:2,slot:0,art:'buildingTypes',sprite:1},
-  {id:'bottega',name:'La Bottega',district:'Südviertel',size:'small',price:38000,bx:0,by:2,slot:1,art:'buildingTypes',sprite:3},
+  {id:'belvedere',name:'Belvedere',district:'Domviertel',size:'medium',price:72000,bx:2,by:0,slot:0,art:'buildings',sprite:13},
+  {id:'palazzo-sole',name:'Palazzo del Sole',district:'Domviertel',size:'large',price:118000,bx:2,by:0,slot:1,art:'buildings',sprite:7},
+  {id:'mercato',name:'Il Mercato',district:'Südviertel',size:'large',price:138000,bx:0,by:2,slot:0,art:'buildings',sprite:11},
+  {id:'bottega',name:'La Bottega',district:'Südviertel',size:'small',price:38000,bx:0,by:2,slot:1,art:'buildings',sprite:16},
   {id:'lungofiume',name:'Lungofiume',district:'Am Fluss',size:'medium',price:84000,bx:1,by:2,slot:0,art:'buildings',sprite:12},
   {id:'vicolo',name:'Il Vicolo',district:'Altstadt',size:'small',price:34000,bx:0,by:1,slot:2,art:'buildings',sprite:26},
   {id:'fontana',name:'La Fontana',district:'Zentrum',size:'small',price:46000,bx:1,by:1,slot:2,art:'buildings',sprite:19},
@@ -22,7 +22,7 @@ export const PROPERTIES=[
   {id:'darsena',name:'La Darsena',district:'Am Fluss',size:'medium',price:89000,bx:1,by:2,slot:1,art:'buildings',sprite:18},
   {id:'ponte',name:'Al Ponte',district:'Am Fluss',size:'medium',price:76000,bx:1,by:2,slot:2,art:'buildings',sprite:22},
   {id:'giardino',name:'Il Giardino',district:'Parkviertel',size:'small',price:44000,bx:2,by:2,slot:0,art:'buildings',sprite:21},
-  {id:'teatro',name:'Il Teatro',district:'Ostviertel',size:'large',price:156000,bx:2,by:1,slot:0,art:'buildingTypes',sprite:6}
+  {id:'teatro',name:'Il Teatro',district:'Ostviertel',size:'large',price:156000,bx:2,by:1,slot:0,art:'buildings',sprite:14}
 ].map(p=>({...p,area:restaurantPlan(p.id).area}));
 export function property(id){return PROPERTIES.find(p=>p.id===id)||null;}
 export function restoreProperties(value){

@@ -1,11 +1,12 @@
 # Isometric building atlas, revision 2
 
-Four production PNGs generated with the built-in Imagegen edit tool. Returned PNG bytes are copied unchanged into `assets/pizza/city/`. Native SVG construction guides supply exact 2:1 geometry; no image-edit script changes the production bitmaps.
+Current house-generation instructions: [HOUSE-ASSET-WORKFLOW.md](../../../docs/HOUSE-ASSET-WORKFLOW.md). The separate eight-building civic/commercial atlas has been retired, including older PNG revisions. Its six properties now use the shared 32-house atlas without changes to IDs, prices or functions. The remaining prompt recipes below document the earlier generation.
+
+Three original production PNGs generated with the built-in Imagegen edit tool. Returned PNG bytes are copied unchanged into `assets/pizza/city/`. Native SVG construction guides supply exact 2:1 geometry; no image-edit script changes the production bitmaps.
 
 | Asset | Content |
 | --- | --- |
 | `italian-houses-32-two-storey-v2.png` | 32 different houses in one 8 × 4 atlas |
-| `italian-building-types-two-storey-v2.png` | 8 civic and commercial buildings |
 | `italian-courtyards-two-storey-v2.png` | 4 palazzi: two L-shaped and two U-shaped |
 | `italian-landmarks-two-storey-v2.png` | 2 low landmarks |
 
@@ -59,24 +60,6 @@ Cell specifications:
 30. Sea-green home with open rooftop pergola. Roof terrace. 2 storeys. Chimney paired short brick stacks, at roof fraction 0.65,0.6.
 31. Ivory courtyard gatehouse, central archway. Roof hip. 2 storeys. Chimney small plaster stack with black hood, at roof fraction 0.3,0.5.
 32. Weathered coral fisher house, plain blue door. Roof gable. 2 storeys. Chimney wide terracotta capped chimney, at roof fraction 0.68,0.2.
-```
-
-### types
-
-Geometry reference: `qa/isometric-guides/building-types-8.png`; material/style reference: `italian-building-types-two-storey-v1.png`.
-
-```text
-Use case: precise-object-edit. Production replacement flat 2D pixel-art sprite sheet for PizzaCity. Image 1 is the EXACT GEOMETRY edit target, a mathematically drawn 2:1 isometric construction sheet. Image 2 is ONLY a surface/material/style reference, NOT a geometry reference. Dress the plain volumes in Image 1 with finished warm Italian illustrated pixel art, matching Image 2's terracotta, shutters, stucco, stone and delicate pixel detail. Geometry is the highest priority: TRACE the exact wall corners, roof eaves, roof ridges, wing positions, silhouette footprint and vertical walls of Image 1. Do NOT reinterpret their perspective. Every horizontal ground-level or eave edge and every horizontal ridge uses screen slope +1/2 or -1/2 (two pixels across to one pixel up). Vertical lines stay vertical. Roof pitch/hip diagonals may slope differently, but all parallel architectural edges stay parallel, no vanishing points. No front-facing or sideways perspective, no 30-degree true-isometric camera. Exactly TWO STOREYS MAXIMUM TOTAL: ground floor doors/shops plus ONE upper window row, or a single storey where indicated. No third window row, no occupied attic, no third rooftop room. Preserve input 1 canvas aspect ratio, EXACT sprite count, row/column layout, cell positions, relative building sizes, foundation contacts and empty gutters. Keep each complete building inside its cell. Genuine transparent background and transparent gaps, no ground slabs/streets/shadows/backdrop/grid/labels/text/watermark. Common light from upper left. Add convincing doors, windows and details instead of the guide's placeholder rectangles. Vary chimney shape and exact roof location, do NOT put the same square chimney on every ridge. Make all assets finished game artwork, not blank diagram blocks.
-Canvas 1536 x 1024, EXACTLY EIGHT civic/commercial buildings in FOUR columns and TWO rows. Same order as the style sheet: hotel, one-storey market, one-storey small chapel with short bellcote, artisan warehouse, town hall, terrace palazzo, theatre, terrace cafe. Preserve special uses and recognizable facades while following the construction guide's corrected roof angles. Terraces are open; bellcote is tiny, no tall tower.
-Cell specifications:
-1. Palazzo hotel, pale stone, blue shutters, shallow hipped roof. Roof hip. 2 storeys. Chimney short square stone stack, at roof fraction 0.75,0.72.
-2. Open market arcade, low single floor, wide red tiled hip roof. Roof hip. 1 storeys. Chimney slender dark metal flue, at roof fraction 0.4,0.35.
-3. Small stone chapel, gabled roof, tiny low bellcote. Roof gable. 1 storeys. Chimney paired short brick stacks, at roof fraction 0.65,0.6.
-4. Yellow artisan storehouse, arched delivery door, hipped roof. Roof hip. 2 storeys. Chimney small plaster stack with black hood, at roof fraction 0.3,0.5.
-5. Italian town hall, clock in a low decorative pediment, hipped roof. Roof hip. 2 storeys. Chimney wide terracotta capped chimney, at roof fraction 0.68,0.2.
-6. Arcaded palazzo, open planted roof terrace, no extra enclosed level. Roof terrace. 2 storeys. Chimney brick shaft with plain slab cap, at roof fraction 0.2,0.28.
-7. Salmon theatre, ornate front pediment, long gabled red roof. Roof gable. 2 storeys. Chimney two terracotta pots on a low masonry base, at roof fraction 0.75,0.3.
-8. Corner cafe, yellow awning, open terrace and shallow roof. Roof terrace. 2 storeys. Chimney round pale plaster flue with clay cap, at roof fraction 0.22,0.72.
 ```
 
 ### courts

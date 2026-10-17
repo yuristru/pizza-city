@@ -1,7 +1,7 @@
-import {Container,Graphics,Rectangle,iso,label,state} from './pizza-core.js?v=20261017b';
-import {personSprite} from './pizza-sprites.js?v=20261017b';
-import {fruitTraderSites,traderOpen} from './pizza-fruit.js?v=20261017b';
-import {openFruitTrader} from './pizza-fruit-ui.js?v=20261017b';
+import {Container,Graphics,Rectangle,iso,label,state} from './pizza-core.js?v=20261017-house3d';
+import {personSprite} from './pizza-sprites.js?v=20261017-house3d';
+import {fruitTraderSites,traderOpen} from './pizza-fruit.js?v=20261017-house3d';
+import {openFruitTrader} from './pizza-fruit-ui.js?v=20261017-house3d';
 
 export function drawFruitTraders(objects,labels,gardens){
  state.cityFruitSites=fruitTraderSites(gardens);state.cityFruitStalls=[];

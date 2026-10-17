@@ -1,5 +1,7 @@
 # Italian city artwork
 
+Historical art notes. Current house-generation workflow: [HOUSE-ASSET-WORKFLOW.md](../../../docs/HOUSE-ASSET-WORKFLOW.md). The separate large civic/commercial atlas and its PNG revisions have been removed; all six affected properties use the shared 32-house atlas.
+
 Generated on 2026-10-10 with the built-in ImageGen tool. The user-provided Italian city reference informed the art direction; its interface and lettering are not baked into the game artwork.
 
 ## Runtime assets
@@ -33,20 +35,6 @@ ONE production-ready transparent PNG sprite atlas for an Italian city in a retro
 Asset: `italian-buildings-extra-v1.png`, 1536 x 1024 RGBA, four columns and two rows. Generated with the original building atlas as a style reference. Eight extra 2D variants: sage apartment, bakery, blue townhouse, grocery, pink palazzo, lemon terrace house, workshop, cream residential palazzo. Ordinary buildings use a seeded random selection; named restaurants retain their original sprites.
 
 Prompt: Create a new expansion sprite atlas matching the attached Italian city building atlas. Eight different ordinary city buildings in four columns and two rows, generous transparent gutters. Detailed crisp hand-pixelled 1990s Italian city simulation art, warm Mediterranean stucco, terracotta roofs, green or blue shutters, flower boxes. Fixed 2:1 isometric orthographic projection, same camera and upper-left sunlight, vertical walls, no convergence. Two visible facades, roof visible, front ground corner at bottom center. Compact square footprints and coherent scale. Row 1: pale sage three-story apartment with iron balconies; ivory two-story bakery with burgundy awnings; dusty blue three-story townhouse; ochre corner grocery with green awning and produce crates. Row 2: pink three-story palazzo; yellow house with roof terrace and lemon trees; terracotta workshop with arched wooden doors; cream four-story narrow residential palazzo with blue shutters. Distinct silhouettes and facades. No named restaurants, words, people, streets, ground tiles or UI. Isolated complete buildings, transparent alpha.
-
-
-## Building types v1
-
-Asset: `italian-building-types-v1.png`, 1536 x 1024 RGBA. Eight distinct types in four columns by two rows: hotel, market hall, chapel, workshop, school, arcaded palazzo, theater, corner cafe. Generated from the original city building atlas as a style reference. Each frame becomes a flat sprite at the city's native pixel scale. Nine map locations use these and existing sprites for purchasable restaurant properties.
-
-Prompt: Create a new eight-building Italian city game sprite atlas, four columns by two rows, landscape 1536 x 1024, transparent alpha. Match detailed crisp 16-bit reference texture and fixed 2:1 orthographic isometric camera, upper-left sunlight, terracotta roofs, vertical walls, two facades, bottom-center front ground corner, compact footprints. Strongly different types and silhouettes. Row 1: ornate compact hotel with balconies and blue doorway canopy; low covered market hall with stone arcades and produce stalls; stone chapel with attached bell tower; asymmetric two-story workshop with double wooden doors and crates. Row 2: primary school with red shutters, entry courtyard and clock; cream palazzo with open arcaded loggia and central roof terrace; theater with stepped decorative pediment and red entrance canopy; terracotta corner cafe with ochre striped awning, terrace and round green turret. Complete isolated buildings, generous transparent margins. No lettering, labels, UI, people, roads or terrain.
-
-
-## Perspective correction v2
-
-Active asset: `italian-building-types-v2.png`, 1536 x 1024 RGBA. Redrawn with an exact 2:1 geometric guide, the first type atlas and the original Italian buildings as references. Prompt: preserve all eight identities and pixel texture; rebuild facade courses and foundations with plus/minus 0.5 slopes, vertical walls, parallel edges without convergence; keep pitched roof surfaces, ornate theater, striped cafe, transparent background and four-by-two layout; remove all guide marks.
-
-Image generation alone still left uneven ground-edge slopes. The loader now applies a calibrated 2D affine transform to all sixteen new buildings. Given measured left/front/right foundation corners, `scaleX = leftSlope + rightSlope`, `skewY = (rightSlope - leftSlope) / 2`; this maps both ground axes exactly to plus/minus 0.5 while retaining vertical line direction and height. Each sprite is anchored to its own transformed front foundation corner. Textures are rasterized once with nearest sampling. The original eight buildings, landmarks and props retain their existing drawings.
 
 
 ## Landmark perspective correction v3

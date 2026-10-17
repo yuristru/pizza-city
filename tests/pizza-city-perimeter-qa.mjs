@@ -39,7 +39,7 @@ const {cityLayout}=await import('../pizza-city-layout.js');
 const {PROPERTIES}=await import('../pizza-properties.js');
 const {WAREHOUSES}=await import('../pizza-procurement.js');
 const {COMPETITORS}=await import('../pizza-competitors.js');
-const productionCatalog=Object.entries(BUILDING_ART).filter(([kind])=>['buildings','buildingTypes'].includes(kind)).flatMap(([kind,art])=>art.map((a,index)=>({kind,index,...buildingProjection(a.corners,a.worldWidth,a.storeys,a.facadePixels).groundSize}))).filter(p=>!(p.kind==='buildings'&&p.index===28)&&!(p.kind==='buildingTypes'&&p.index===2));
+const productionCatalog=Object.entries(BUILDING_ART).filter(([kind])=>kind==='buildings').flatMap(([kind,art])=>art.map((a,index)=>({kind,index,...buildingProjection(a.corners,a.worldWidth,a.storeys,a.facadePixels).groundSize}))).filter(p=>!(p.kind==='buildings'&&p.index===28));
 const item=(kind,index,extra={})=>({...productionCatalog.find(p=>p.kind===kind&&p.index===index),...extra});
 let count=0,cityCount=0;
 for(const seed of [94117,0,1,42,...Array.from({length:124},(_,i)=>Math.imul(i+1,2654435761)>>>0)]){

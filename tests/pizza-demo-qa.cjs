@@ -98,17 +98,17 @@ async function loaded(page,url){await page.goto(url);try{await page.waitForSelec
     await loaded(page,url);assert.equal((await snapshot(page)).assets.length,0);assert.equal((await snapshot(page)).worldChildren,1);
     const cityArt=await page.evaluate(async modulePath=>{
       const {state,Sprite}=await import(modulePath),objects=state.camera.children.find(c=>c.label==='city-objects'),ground=state.camera.children.find(c=>c.label==='city-ground');
-      return {ground:{sprite:ground instanceof Sprite,pixelScale:ground.pixelScale,details:ground.groundDetails,sampling:ground.texture.source.scaleMode},projected:[...state.cityArt.buildings.slice(8),...state.cityArt.buildingTypes,state.cityArt.landmarks[1],...state.cityArt.courtyardBuildings].map(a=>({projection:a.projection,anchor:a.anchor})),atlases:Object.fromEntries(Object.entries(state.cityArt).map(([key,frames])=>[key,frames.length])),properties:objects.children.filter(c=>c.label==='city-property').map(c=>c.propertyId),types:[...new Set(objects.children.filter(c=>c.label==='city-building'&&c.buildingKind==='buildingTypes').map(c=>c.buildingVariant))],variants:[...new Set(objects.children.filter(c=>c.label==='city-building'&&c.buildingKind==='buildings').map(c=>c.buildingVariant))],buildings:objects.children.filter(c=>c.label==='city-building').length,
+      return {ground:{sprite:ground instanceof Sprite,pixelScale:ground.pixelScale,details:ground.groundDetails,sampling:ground.texture.source.scaleMode},projected:[...state.cityArt.buildings.slice(8),...state.cityArt.cornerBuildings,state.cityArt.landmarks[1],...state.cityArt.courtyardBuildings].map(a=>({projection:a.projection,anchor:a.anchor})),atlases:Object.fromEntries(Object.entries(state.cityArt).map(([key,frames])=>[key,frames.length])),properties:objects.children.filter(c=>c.label==='city-property').map(c=>c.propertyId),types:[...new Set(objects.children.filter(c=>c.label==='city-building'&&c.buildingKind==='buildingTypes').map(c=>c.buildingVariant))],variants:[...new Set(objects.children.filter(c=>c.label==='city-building'&&c.buildingKind==='buildings').map(c=>c.buildingVariant))],buildings:objects.children.filter(c=>c.label==='city-building').length,
         landmarks:objects.children.filter(c=>['city-colosseum','city-cathedral'].includes(c.label)).map(c=>({label:c.label,sprite:c instanceof Sprite})),
         traffic:state.movers.map(m=>({sprite:m.g instanceof Sprite,scaleX:m.g.scale.x,scaleY:m.g.scale.y})),
         terraces:objects.children.filter(c=>c.label==='city-terrace').map(c=>({sprite:c instanceof Sprite,x:(c.x/32+c.y/16)/2,y:(c.y/16-c.x/32)/2}))};
     },corePath);
-    assert.deepEqual(cityArt.atlases,{contacts:6,buildings:32,buildingTypes:8,courtyardBuildings:4,cornerBuildings:16,landmarks:2,props:8});assert(cityArt.buildings>=30);
+    assert.deepEqual(cityArt.atlases,{contacts:6,buildings:32,courtyardBuildings:4,cornerBuildings:16,landmarks:2,props:8});assert(cityArt.buildings>=30);
     assert(cityArt.variants.filter(i=>i>=16).length>=8,'The expanded atlas must be used in the city.');
     assert(cityArt.ground.sprite);assert.equal(cityArt.ground.pixelScale,1);assert.equal(cityArt.ground.sampling,'nearest');assert(cityArt.ground.details.asphalt>200&&cityArt.ground.details.crossings>0&&cityArt.ground.details.curbs>0&&cityArt.ground.details.manholes>0);
-    assert.equal(cityArt.projected.length,cityArt.atlases.buildings-8+cityArt.atlases.buildingTypes+cityArt.atlases.courtyardBuildings+1);assert(cityArt.projected.every(a=>a.projection&&a.anchor.x>0&&a.anchor.x<1&&a.anchor.y>0&&a.anchor.y<=1));
+    assert.equal(cityArt.projected.length,cityArt.atlases.buildings-8+cityArt.atlases.cornerBuildings+cityArt.atlases.courtyardBuildings+1);assert(cityArt.projected.every(a=>a.projection&&a.anchor.x>0&&a.anchor.x<1&&a.anchor.y>0&&a.anchor.y<=1));
     assert.equal(cityArt.properties.length,18);assert.equal(new Set(cityArt.properties).size,18);
-    assert(cityArt.types.length>=4);
+    assert(!('buildingTypes' in cityArt.atlases));
     assert.equal(cityArt.landmarks.length,2);assert(cityArt.landmarks.every(item=>item.sprite));
     assert(cityArt.traffic.every(item=>item.sprite&&item.scaleX>0&&item.scaleY>0),'Directional traffic must remain upright flat sprites.');
     const {COMPETITORS}=await import(pathToFileURL(path.join(root,'pizza-competitors.js')));
@@ -116,7 +116,7 @@ async function loaded(page,url){await page.goto(url);try{await page.waitForSelec
     const {cityLayout}=await import(pathToFileURL(path.join(root,'pizza-city-layout.js')));
     const initialLayout=cityLayout();
     assert(cityArt.terraces.every(item=>item.sprite&&!initialLayout.road(item.x,item.y)),'Terraces must stay off the carriageway.');
-    console.log('City art passed: thirty-two house variants, eight building types, eighteen properties, two landmarks, eight props, upright 2D traffic and restaurant terrace sprites off the roads.');
+    console.log('City art passed: thirty-two house variants, sixteen model-based corner-house views, eighteen properties, two landmarks, eight props, upright 2D traffic and restaurant terrace sprites off the roads.');
     await page.click('#propertiesBtn');
     assert.equal(await page.locator('[data-property]').count(),8);
     await page.click('[data-property="san-marco"]');

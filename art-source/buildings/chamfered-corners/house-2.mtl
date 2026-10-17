@@ -1,0 +1,59 @@
+newmtl material194
+Kd 0.913725 0.854902 0.717647
+d 1
+illum 1
+
+newmtl material181
+Kd 0.960784 0.913725 0.811765
+d 1
+illum 1
+
+newmtl material183
+Kd 0.149020 0.239216 0.270588
+d 1
+illum 1
+
+newmtl material187
+Kd 0.137255 0.411765 0.305882
+d 1
+illum 1
+
+newmtl material189
+Kd 0.901961 0.827451 0.678431
+d 1
+illum 1
+
+newmtl material191
+Kd 0.945098 0.874510 0.733333
+d 1
+illum 1
+
+newmtl material91
+Kd 0.933333 0.862745 0.752941
+d 1
+illum 1
+
+newmtl material93
+Kd 0.462745 0.313725 0.168627
+d 1
+illum 1
+
+newmtl material95
+Kd 0.933333 0.886275 0.776471
+d 1
+illum 1
+
+newmtl material199
+Kd 0.737255 0.352941 0.215686
+d 1
+illum 1
+
+newmtl material211
+Kd 0.929412 0.811765 0.592157
+d 1
+illum 1
+
+newmtl material235
+Kd 0.650980 0.298039 0.188235
+d 1
+illum 1

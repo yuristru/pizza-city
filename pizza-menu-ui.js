@@ -1,9 +1,9 @@
-import {restaurantQuality,pizzaQuality,pizzaOffer} from './pizza-quality.js?v=20261017b';
-import {purchasingDiscount} from './pizza-procurement.js?v=20261017b';
-import {notify,state,ensureRestaurants,restaurantName} from './pizza-core.js?v=20261017b';
-import {INGREDIENTS,copyRecipe} from './pizza-recipe.js?v=20261017b';
-import {savedRecipes,drawRecipePreview,showPizza} from './pizza-editor.js?v=20261017b';
-import {parseMenuPrice,menuContribution,restoreMenu,putOnMenu} from './pizza-menu.js?v=20261017b';
+import {restaurantQuality,pizzaQuality,pizzaOffer} from './pizza-quality.js?v=20261017-house3d';
+import {purchasingDiscount} from './pizza-procurement.js?v=20261017-house3d';
+import {notify,state,ensureRestaurants,restaurantName} from './pizza-core.js?v=20261017-house3d';
+import {INGREDIENTS,copyRecipe} from './pizza-recipe.js?v=20261017-house3d';
+import {savedRecipes,drawRecipePreview,showPizza} from './pizza-editor.js?v=20261017-house3d';
+import {parseMenuPrice,menuContribution,restoreMenu,putOnMenu} from './pizza-menu.js?v=20261017-house3d';
 
 const el=id=>document.getElementById(id),KEY='pizza-menu-v1';
 const money=cents=>(cents/100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' DM';

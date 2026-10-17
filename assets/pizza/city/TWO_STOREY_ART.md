@@ -1,5 +1,7 @@
 # Two-storey city art
 
+Historical generation notes. Current workflow: [HOUSE-ASSET-WORKFLOW.md](../../../docs/HOUSE-ASSET-WORKFLOW.md). The separate civic/commercial atlas has been retired; properties now use the same 32-house atlas as ordinary buildings.
+
 Production replacement, 2026-10-15. All 28 active building variants have at most two storeys total (ground floor and one upper floor). Warehouses and other one-storey buildings remain lower. Extra floors were removed in the illustrations; the existing taller sheets are retained only as earlier assets.
 
 ## Assets and edit mode
@@ -10,7 +12,6 @@ Created with the built-in Imagegen image-edit tool, using each existing project 
 | --- | --- | --- |
 | `italian-buildings-two-storey-v1.png` | `italian-buildings-v2.png` | 8 |
 | `italian-buildings-extra-two-storey-v1.png` | `italian-buildings-extra-v1.png` | 7 (plus the separate narrow house) |
-| `italian-building-types-two-storey-v1.png` | `italian-building-types-v2.png` | 8 |
 | `italian-courtyards-two-storey-v1.png` | `italian-courtyards-v1.png` | 2 |
 | `italian-landmarks-two-storey-v1.png` | `italian-landmarks-v3.png` | 2 |
 | `italian-townhouse-narrow-two-storey-v1.png` | `italian-buildings-extra-v1.png`, bottom-right house | 1 |
@@ -39,14 +40,6 @@ Reference: `italian-buildings-extra-v1.png`.
 
 ```text
 Eight houses in exactly FOUR columns and TWO rows, same order. Top row: the tall cream house and blue house become ground floor + ONE upper window row; shop houses already two storeys stay two. Bottom row: red house becomes two storeys, roof-terrace yellow house becomes ground floor + ONE upper floor with a small open roof terrace (no third enclosed level), winery remains two, cream/blue-shutter townhouse becomes two. Preserve different colors, roofs, shopfronts and individual character.
-```
-
-### types
-
-Reference: `italian-building-types-v2.png`.
-
-```text
-Eight buildings in exactly FOUR columns and TWO rows, same order. Tall hotel top-left must become ground floor + ONE upper floor, without habitable dormer storey. Market hall stays one storey. Small chapel is low with a SHORT bell turret no taller than the nearby two-storey houses. Warehouse stays one/two storeys. Town hall stays two. Bottom-row rooftop-terrace palazzo must become ground floor + ONE upper floor with an OPEN roof terrace, no third enclosed storey and no extra roof-house level. Theatre stays two. Cafe with terrace stays ground floor + ONE upper floor, open terrace at roof, no third enclosed turret room. No tower taller than two house storeys plus a modest roof.
 ```
 
 ### courtyards

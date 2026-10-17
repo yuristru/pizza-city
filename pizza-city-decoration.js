@@ -1,5 +1,5 @@
-import {Graphics,iso} from './pizza-core.js?v=20261017b';
-import {courtyardGarden} from './pizza-city-gardens.js?v=20261017b';
+import {Graphics,iso} from './pizza-core.js?v=20261017-house3d';
+import {courtyardGarden} from './pizza-city-gardens.js?v=20261017-house3d';
 const point=(x,y,z=0)=>{const p=iso(x,y);return [p.x,p.y-z];};
 const quad=(g,r,color)=>g.poly([point(r.x0,r.y0),point(r.x1,r.y0),point(r.x1,r.y1),point(r.x0,r.y1)].flat()).fill(color);
 export function drawCourtyardGarden(objects,block,seed){

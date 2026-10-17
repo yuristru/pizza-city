@@ -1,6 +1,6 @@
-import {kitchenWorkflow,kitchenCompletionWorkflow} from './pizza-business.js?v=20261017b';
-import {roomCell,roomStep,withKitchen,restaurantPlan} from './pizza-floorplans.js?v=20261017b';
-import {occupiedCells,decorCell,placementIssue} from './pizza-layout.js?v=20261017b';
+import {kitchenWorkflow,kitchenCompletionWorkflow} from './pizza-business.js?v=20261017-house3d';
+import {roomCell,roomStep,withKitchen,restaurantPlan} from './pizza-floorplans.js?v=20261017-house3d';
+import {occupiedCells,decorCell,placementIssue} from './pizza-layout.js?v=20261017-house3d';
 export const KITCHEN_TYPES=['oven','bar','fridge'];
 export const KITCHEN_TILE_PRICE=50;
 export function restoreKitchenTiles(raw,p){
