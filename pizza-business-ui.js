@@ -1,10 +1,10 @@
-import {renderDistrictPanel} from './pizza-market-ui.js?v=20261017-house3d';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261017-house3d';
-import {state,ensureRestaurants,restaurantName,setRestaurantOpen} from './pizza-core.js?v=20261017-house3d';
-import {restaurantPlan} from './pizza-floorplans.js?v=20261017-house3d';
-import {STAFF,businessMetrics} from './pizza-business.js?v=20261017-house3d';
-import {money} from './pizza-catalog.js?v=20261017-house3d';
-import {mountDailyUI,renderDailyUI,openDailyReport} from './pizza-daily-ui.js?v=20261017-house3d';
+import {renderDistrictPanel} from './pizza-market-ui.js?v=20261018-demo1';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261018-demo1';
+import {state,ensureRestaurants,restaurantName,setRestaurantOpen} from './pizza-core.js?v=20261018-demo1';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261018-demo1';
+import {STAFF,businessMetrics} from './pizza-business.js?v=20261018-demo1';
+import {money} from './pizza-catalog.js?v=20261018-demo1';
+import {mountDailyUI,renderDailyUI,openDailyReport} from './pizza-daily-ui.js?v=20261018-demo1';
 const el=id=>document.getElementById(id);let stamp=0,view='daily';
 function text(tag,value){const e=document.createElement(tag);e.textContent=value;return e;}
 export function renderBusinessUI(force=false){

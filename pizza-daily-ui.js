@@ -1,7 +1,7 @@
-import {state,ensureRestaurants,restaurantName,saveLayout} from './pizza-core.js?v=20261017-house3d';
-import {DAY_MINUTES,currentReport,reportMetrics,dayLabel,minuteLabel} from './pizza-daily.js?v=20261017-house3d';
-import {money} from './pizza-catalog.js?v=20261017-house3d';
-import {purchasingDiscount,warehouseDailyCost} from './pizza-procurement.js?v=20261017-house3d';
+import {state,ensureRestaurants,restaurantName,saveLayout} from './pizza-core.js?v=20261018-demo1';
+import {DAY_MINUTES,currentReport,reportMetrics,dayLabel,minuteLabel} from './pizza-daily.js?v=20261018-demo1';
+import {money} from './pizza-catalog.js?v=20261018-demo1';
+import {purchasingDiscount,warehouseDailyCost} from './pizza-procurement.js?v=20261018-demo1';
 const el=id=>document.getElementById(id),number=new Intl.NumberFormat('de-DE',{maximumFractionDigits:1,minimumFractionDigits:1});
 let selectedDay='current',selectedRestaurant='all',dayOptions='',branchOptions='',trendStamp='',branchStamp='';
 function node(tag,value,className){const e=document.createElement(tag);if(value!==undefined)e.textContent=value;if(className)e.className=className;return e;}

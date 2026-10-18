@@ -46,3 +46,11 @@ for(let family=0;family<4;family++){
 }
 
 assert(!Object.hasOwn(BUILDING_ART,'buildingTypes'));
+
+// The wall-height cap alone missed oversized gabled drawings. Check the entire
+// projected sprite, including roof and foundation depth, against its neighbors.
+for(const art of BUILDING_ART.buildings){
+ const p=buildingProjection(art.corners,art.worldWidth,art.storeys,art.facadePixels),[x,y,w,h]=art.crop;
+ const ys=[[x,y],[x+w,y],[x+w,y+h],[x,y+h]].map(q=>p.project(q)[1]);
+ assert(Math.max(...ys)-Math.min(...ys)<=140,art.id+' must fit the ordinary house scale');
+}

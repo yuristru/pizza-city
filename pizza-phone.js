@@ -1,4 +1,4 @@
-import {COMPETITORS,competitor} from './pizza-competitors.js?v=20261017-house3d';
+import {COMPETITORS,competitor} from './pizza-competitors.js?v=20261018-demo1';
 export const PHONE_BOOK=[{name:'Obstgroßhandel',number:'551204'},{name:'Ordnungsamt',number:'326500'},{name:'Pronto Pizza',number:'445566'},{name:'Wetteransage',number:'118144'},{name:'Stadtinformation',number:'220011'}];
 const say=(call,who,text)=>call.transcript.push({who,text});
 export function startPhoneCall(number){

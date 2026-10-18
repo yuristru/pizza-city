@@ -1,25 +1,36 @@
-import {mountFruitUI,renderFruitUI} from './pizza-fruit-ui.js?v=20261017-house3d';
-import {mountUnderworldUI,renderUnderworldUI} from './pizza-underworld-ui.js?v=20261017-house3d';
-import {mountTaxiUI,renderTaxiUI} from './pizza-taxis-ui.js?v=20261017-house3d';
-import {mountCapacityUI,renderCapacityUI} from './pizza-capacity-ui.js?v=20261017-house3d';
-import {mountAdvertisingUI,renderAdvertisingUI} from './pizza-advertising-ui.js?v=20261017-house3d';
-import {mountStaffUI,renderStaffUI} from './pizza-staff-ui.js?v=20261017-house3d';
-import {mountBusinessUI,renderBusinessUI} from './pizza-business-ui.js?v=20261017-house3d';
-import {mountKitchenUI,renderKitchenUI} from './pizza-kitchen-ui.js?v=20261017-house3d';
-import {restaurantPlan} from './pizza-floorplans.js?v=20261017-house3d';
-import {mountCommerceUI,renderCommerceUI} from './pizza-commerce-ui.js?v=20261017-house3d';
-import {mountProperties} from './pizza-properties-ui.js?v=20261017-house3d';
-import {mountMenu} from './pizza-menu-ui.js?v=20261017-house3d';
-import {tickService} from './pizza-service-runtime.js?v=20261017-house3d';
-import {renderServiceUI} from './pizza-service-ui.js?v=20261017-house3d';
-import {mountNightUI,renderNightUI} from './pizza-night-ui.js?v=20261017-house3d';
-import {showPizza} from './pizza-editor.js?v=20261017-house3d';
-import {app,root,state,loadAssets,updateMoney,restaurantName,ensureRestaurants,setRestaurantOpen,notify} from './pizza-core.js?v=20261017-house3d';
-import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261017-house3d';
-import {showRestaurant,tickRestaurant,resizeRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView,toggleMove,clearSelection,rotateSelection,sellSelection,autoEquipRestaurant} from './pizza-restaurant.js?v=20261017-house3d';
+import {mountFruitUI,renderFruitUI} from './pizza-fruit-ui.js?v=20261018-demo1';
+import {mountUnderworldUI,renderUnderworldUI} from './pizza-underworld-ui.js?v=20261018-demo1';
+import {mountTaxiUI,renderTaxiUI} from './pizza-taxis-ui.js?v=20261018-demo1';
+import {mountCapacityUI,renderCapacityUI} from './pizza-capacity-ui.js?v=20261018-demo1';
+import {mountAdvertisingUI,renderAdvertisingUI} from './pizza-advertising-ui.js?v=20261018-demo1';
+import {mountStaffUI,renderStaffUI} from './pizza-staff-ui.js?v=20261018-demo1';
+import {mountBusinessUI,renderBusinessUI} from './pizza-business-ui.js?v=20261018-demo1';
+import {mountKitchenUI,renderKitchenUI} from './pizza-kitchen-ui.js?v=20261018-demo1';
+import {restaurantPlan} from './pizza-floorplans.js?v=20261018-demo1';
+import {mountCommerceUI,renderCommerceUI} from './pizza-commerce-ui.js?v=20261018-demo1';
+import {mountProperties} from './pizza-properties-ui.js?v=20261018-demo1';
+import {mountMenu} from './pizza-menu-ui.js?v=20261018-demo1';
+import {tickService} from './pizza-service-runtime.js?v=20261018-demo1';
+import {renderServiceUI} from './pizza-service-ui.js?v=20261018-demo1';
+import {mountNightUI,renderNightUI} from './pizza-night-ui.js?v=20261018-demo1';
+import {showPizza} from './pizza-editor.js?v=20261018-demo1';
+import {app,root,state,loadAssets,updateMoney,saveLayout,restaurantName,ensureRestaurants,setRestaurantOpen,notify} from './pizza-core.js?v=20261018-demo1';
+import {showCity,tickCity,resizeCity,zoomCity,centerCity,randomizeCity} from './pizza-city.js?v=20261018-demo1';
+import {showRestaurant,tickRestaurant,resizeRestaurant,undoRestaurant,updatePlacementPreview,confirmPlacement,cancelPlacement,zoomRestaurant,centerRestaurant,toggleRestaurantPan,restaurantView,toggleMove,clearSelection,rotateSelection,sellSelection,autoEquipRestaurant} from './pizza-restaurant.js?v=20261018-demo1';
 
 const rotateBtn=document.querySelector('#rotateBtn'),deleteBtn=document.querySelector('#deleteBtn');
-import {mountCatalog,renderCatalog} from './pizza-catalog-ui.js?v=20261017-house3d';
+// Hidden demo shortcut: count clicks once (including touch-generated clicks).
+let moneyTapCount=0,moneyTapStarted=0;
+document.querySelector('#moneyCheat').addEventListener('click',()=>{
+  if(!state.ready)return;
+  const now=performance.now();
+  if(!moneyTapCount||now-moneyTapStarted>1200){moneyTapCount=0;moneyTapStarted=now;}
+  if(++moneyTapCount<3)return;
+  moneyTapCount=0;
+  state.balance=(Math.round(state.balance*100)+10000000)/100;
+  updateMoney();saveLayout();renderBusinessUI(true);notify('Demo-Cheat: +100.000 DM');
+});
+import {mountCatalog,renderCatalog} from './pizza-catalog-ui.js?v=20261018-demo1';
 mountCommerceUI();mountProperties();mountKitchenUI();mountBusinessUI();mountStaffUI();mountAdvertisingUI();mountUnderworldUI();
 mountTaxiUI();mountCapacityUI();mountFruitUI();
 mountMenu();

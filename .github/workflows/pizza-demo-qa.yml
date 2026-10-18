@@ -7,6 +7,7 @@ on:
       - 'pizza*.css'
       - 'assets/pizza/**'
       - 'tests/pizza-demo-qa.cjs'
+      - 'tests/pizza-demo-cheat-browser-qa.cjs'
       - 'tests/pizza-editor-browser-qa.cjs'
       - 'tests/pizza-editor-helpers.cjs'
       - 'tests/pizza-counter-qa.mjs'
@@ -86,6 +87,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Check the city, restaurant controls and responsive views
         run: |
+          node tests/pizza-demo-cheat-browser-qa.cjs
           node tests/pizza-catalog-qa.mjs
           node tests/pizza-recipe-qa.mjs
           node tests/pizza-quality-qa.mjs

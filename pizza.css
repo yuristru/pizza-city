@@ -231,3 +231,6 @@ noscript{position:fixed;inset:0;z-index:99;display:grid;place-items:center;backg
 
 .menuQualityPanel{display:grid;gap:8px;padding:14px;background:#e8d7ad;border:2px solid #9c8056;border-radius:8px;margin:12px 0}.menuQualityPanel label{display:grid;gap:6px}.menuQualityPanel select{max-width:100%;min-width:0;padding:8px}.menuQualityPanel p{margin:0}.menuQuality{font-size:13px;line-height:1.5;padding:9px;background:#eee3c7;border-radius:5px;color:#365134}.menuQuality[data-overpriced="true"]{background:#f0d0b5;color:#812b22;font-weight:700}.restaurantQualityStatus{font-weight:700}#restaurantQualityBadge{font-size:10px;display:inline-block;margin-left:5px;color:#684a29}
 .seatCapacity{padding:12px;margin:10px 0 16px;border:2px solid #8c9b62;background:#eee4c9;border-radius:7px}.seatCapacity p{margin:8px 0}.seatCapacity .capacityTrack{margin-top:8px}
+
+/* Keep the hidden demo shortcut visually identical to the cash display. */
+button.moneycell{border:0;border-right:1px solid #ac8e69;border-radius:0;background:none;color:inherit;font:inherit;text-transform:none;box-shadow:1px 0 #f0ddba}

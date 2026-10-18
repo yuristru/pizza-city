@@ -1,4 +1,4 @@
-import {competitor} from './pizza-competitors.js?v=20261017-house3d';
+import {competitor} from './pizza-competitors.js?v=20261018-demo1';
 export const SABOTAGE_ACTIONS=[
  {id:'doodle',name:'Kleine Schmiererei',costCents:0,risk:.12,fineCents:500000,duration:120,factor:.94,giftOnly:true,description:'Kleiner Schriftzug: 6 % weniger Nachfrage für 2 Spielstunden.'},
  {id:'inspection',name:'Beim Ordnungsamt melden',costCents:75000,risk:.15,fineCents:1500000,duration:360,factor:.55,description:'Kontrolle: 45 % weniger Nachfrage für 6 Spielstunden.'},

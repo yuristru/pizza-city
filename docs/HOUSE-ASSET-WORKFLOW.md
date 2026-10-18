@@ -86,4 +86,6 @@ background for deterministic preparation after approval.
 
 ## Aktiver Stadtkatalog
 
+Bei der Kalibrierung bestehender Häuser die vollständige Wandhöhe beider Geschosse verwenden. Nur die kurze Seitenwand unter einer Dachschräge zu messen vergrößert das ganze Haus, obwohl der formale Geschoss-Test besteht. Zusätzlich die gesamte projizierte Bildhöhe einschließlich Dach und Grundriss prüfen: gewöhnliche Häuser des 32er-Atlas bleiben innerhalb von 140 Spielpixeln. Die Giebelhäuser 16, 25, 28 und 31 wurden deshalb neu kalibriert; die Originalgrafiken bleiben erhalten und werden gemeinsam gleichmäßig skaliert.
+
 Normale Häuser und Kaufobjekte nutzen `italian-houses-32-two-storey-v2.png`. Der separate Sondergebäude-Atlas mit acht größeren Motiven wurde entfernt; sechs Kaufobjekte verwenden passende Bilder aus dem 32er-Atlas. IDs, Preise, Flächen, Größenklassen und Funktionen bleiben unverändert. Eckhäuser nutzen den neuen 3D-basierten Atlas. Innenhofhäuser und Wahrzeichen bleiben eigene Motive.

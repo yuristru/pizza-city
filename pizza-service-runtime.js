@@ -1,18 +1,18 @@
-import {DISTRICTS,districtMarket,advanceMarket,claimCustomers} from './pizza-market.js?v=20261017-house3d';
-import {activeCampaigns} from './pizza-advertising.js?v=20261017-house3d';
-import {activeTaxiContracts} from './pizza-taxis.js?v=20261017-house3d';
-import {collectFine,advanceRivalry} from './pizza-rivalry.js?v=20261017-house3d';
-import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261017-house3d';
-import {accrueReservePayroll} from './pizza-staff.js?v=20261017-house3d';
-import {staffSchedule,nextShiftBoundary} from './pizza-shifts.js?v=20261017-house3d';
-import {DAY_MINUTES,SECONDS_PER_MINUTE,completeDay,dayLabel} from './pizza-daily.js?v=20261017-house3d';
-import {profilePlan} from './pizza-kitchen.js?v=20261017-house3d';
-import {state,saveLayout,updateMoney,ensureRestaurants,notify} from './pizza-core.js?v=20261017-house3d';
-import {money} from './pizza-catalog.js?v=20261017-house3d';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261017-house3d';
-import {advanceService} from './pizza-service.js?v=20261017-house3d';
+import {DISTRICTS,districtMarket,advanceMarket,claimCustomers} from './pizza-market.js?v=20261018-demo1';
+import {activeCampaigns} from './pizza-advertising.js?v=20261018-demo1';
+import {activeTaxiContracts} from './pizza-taxis.js?v=20261018-demo1';
+import {collectFine,advanceRivalry} from './pizza-rivalry.js?v=20261018-demo1';
+import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261018-demo1';
+import {accrueReservePayroll} from './pizza-staff.js?v=20261018-demo1';
+import {staffSchedule,nextShiftBoundary} from './pizza-shifts.js?v=20261018-demo1';
+import {DAY_MINUTES,SECONDS_PER_MINUTE,completeDay,dayLabel} from './pizza-daily.js?v=20261018-demo1';
+import {profilePlan} from './pizza-kitchen.js?v=20261018-demo1';
+import {state,saveLayout,updateMoney,ensureRestaurants,notify} from './pizza-core.js?v=20261018-demo1';
+import {money} from './pizza-catalog.js?v=20261018-demo1';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261018-demo1';
+import {advanceService} from './pizza-service.js?v=20261018-demo1';
 
-import {accrueWarehouseCosts,purchasingDiscount} from './pizza-procurement.js?v=20261017-house3d';
+import {accrueWarehouseCosts,purchasingDiscount} from './pizza-procurement.js?v=20261018-demo1';
 let checkpoint=0;
 export function tickService(seconds){
   if(!Number.isFinite(seconds)||seconds<=0)return [];

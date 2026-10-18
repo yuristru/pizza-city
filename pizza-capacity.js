@@ -1,8 +1,8 @@
-import {profilePlan,kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261017-house3d';
-import {workPath} from './pizza-business.js?v=20261017-house3d';
-import {tableRoute} from './pizza-service.js?v=20261017-house3d';
-import {SHIFTS} from './pizza-shifts.js?v=20261017-house3d';
-import {validRecipe} from './pizza-recipe.js?v=20261017-house3d';
+import {profilePlan,kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261018-demo1';
+import {workPath} from './pizza-business.js?v=20261018-demo1';
+import {tableRoute} from './pizza-service.js?v=20261018-demo1';
+import {SHIFTS} from './pizza-shifts.js?v=20261018-demo1';
+import {validRecipe} from './pizza-recipe.js?v=20261018-demo1';
 
 const cache=new WeakMap(),steps=route=>Math.max(0,(route?.length||1)-1),mean=values=>values.reduce((a,b)=>a+b,0)/Math.max(1,values.length);
 const speed=p=>.85+(p.skills?.[p.role==='cook'?'organization':'pace']??50)/100*.75;
