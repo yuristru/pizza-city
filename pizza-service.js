@@ -1,14 +1,14 @@
-import {pizzaOffer,pizzaQuality,QUALITY_TIERS,validExpectation} from './pizza-quality.js?v=20261018-demo1';
-import {kitchenReadiness,kitchenWorkFlow,completionWorkFlow} from './pizza-kitchen.js?v=20261018-demo1';
-import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261018-demo1';
-import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261018-demo1';
-import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261018-demo1';
+import {pizzaOffer,pizzaQuality,QUALITY_TIERS,validExpectation} from './pizza-quality.js?v=20261018-public2';
+import {kitchenReadiness,kitchenWorkFlow,completionWorkFlow} from './pizza-kitchen.js?v=20261018-public2';
+import {DEFAULT_PLAN,roomStep} from './pizza-floorplans.js?v=20261018-public2';
+import {guestCell,occupiedCells,dimensions,TABLE_SEATS,tableSeatPositions} from './pizza-layout.js?v=20261018-public2';
+import {recipeCost,validRecipe} from './pizza-recipe.js?v=20261018-public2';
 
-import {businessIssue,demandScore,operatingRates,counterLayoutIssue} from './pizza-business.js?v=20261018-demo1';
-import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable,reconcileProduction} from './pizza-production.js?v=20261018-demo1';
-import {workLayoutKey} from './pizza-work-targets.js?v=20261018-demo1';
-import {restoreMachines,startMachineVisit,reconcileMachineVisits,advanceMachineVisits,machinePosition} from './pizza-machines.js?v=20261018-demo1';
-import {ingredientPurchaseCost} from './pizza-procurement.js?v=20261018-demo1';
+import {businessIssue,demandScore,operatingRates,counterLayoutIssue} from './pizza-business.js?v=20261018-public2';
+import {restoreWork,restoreProduction,advanceWaiters,advanceKitchenOrder,addDirtyTable,dirtyTable,reconcileProduction} from './pizza-production.js?v=20261018-public2';
+import {workLayoutKey} from './pizza-work-targets.js?v=20261018-public2';
+import {restoreMachines,startMachineVisit,reconcileMachineVisits,advanceMachineVisits,machinePosition} from './pizza-machines.js?v=20261018-public2';
+import {ingredientPurchaseCost} from './pizza-procurement.js?v=20261018-public2';
 export const SERVICE_PHASES=['arriving','waiting','eating','leaving','paying'];
 export const tableKey=t=>[t.x,t.y,t.r,t.seats,t.variant||'wood'].join(':');
 export function freshService(){return {version:1,chainVersion:1,elapsed:0,untilArrival:2,nextId:1,groups:[],machineGuests:[],payments:[],dirtyTables:[],waiterTasks:[],staffPositions:{},plateReturns:[],cleanedTables:0,netCents:0,revenueCents:0,machineRevenueCents:0,machineUses:0,costCents:0,servedGuests:0};}

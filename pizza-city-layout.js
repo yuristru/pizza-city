@@ -65,7 +65,8 @@ export function cityLayout(seed=DEFAULT_CITY_SEED){
     from:random()<.5?min-.5:snap(1+random()*8),to:max+.5};
   const water=(x,y)=>{
     const along=canal.axis===0?x:y,across=canal.axis===0?y:x;
-    return along>=canal.from&&along<=canal.to&&Math.abs(across-canal.center)<=canal.width/2;
+    const r=canal.width/2,cap=canal.from+r;
+    return along>=canal.from&&along<=canal.to&&Math.abs(across-canal.center)<=r&&(along>=cap||((along-cap)/r)**2+((across-canal.center)/r)**2<=1);
   };
   for(const p of parcels){
     const across0=axis===0?p.y0:p.x0,across1=axis===0?p.y1:p.x1;

@@ -1,5 +1,5 @@
-import {Graphics,iso} from './pizza-core.js?v=20261018-demo1';
-import {courtyardGarden} from './pizza-city-gardens.js?v=20261018-demo1';
+import {Graphics,iso} from './pizza-core.js?v=20261018-public2';
+import {courtyardGarden} from './pizza-city-gardens.js?v=20261018-public2';
 const point=(x,y,z=0)=>{const p=iso(x,y);return [p.x,p.y-z];};
 const quad=(g,r,color)=>g.poly([point(r.x0,r.y0),point(r.x1,r.y0),point(r.x1,r.y1),point(r.x0,r.y1)].flat()).fill(color);
 export function drawCourtyardGarden(objects,block,seed){
@@ -26,18 +26,38 @@ export function drawCourtyardGarden(objects,block,seed){
 }
 
 export function drawItalianBridge(objects,s){
- const length=s.to-s.from,spans=Math.max(1,Math.round(length/1.15));
- for(const [side,edge]of [s.center-s.width/2-.27,s.center+s.width/2+.27].entries()){
-  const a=s.axis===0?iso(s.from,edge):iso(edge,s.from),b=s.axis===0?iso(s.to,edge):iso(edge,s.to),dx=b.x-a.x,dy=b.y-a.y,g=new Graphics(),p=(t,z=0)=>[dx*t,dy*t+z];
-  g.poly([p(0,-3),p(1,-3),p(1,15),p(0,15)].flat()).fill(side?0xa98b61:0xbfa37a).stroke({color:0x806b4e,width:1});
+ const length=s.to-s.from,spans=Math.max(1,Math.round(length/1.5)),edgeWidth=s.width/2+.25;
+ const p=(t,v,z=0)=>s.axis===0?point(t,v,z):point(v,t,z);
+ const add=(g,role,depth)=>{g.label='city-bridge';g.bridgePart=role;g.bridgeStyle='travertine-arches';g.archCount=spans;g.bridgeBounds={...s};g.zIndex=depth;objects.addChild(g);};
+ // A continuous stone deck and landward abutments bind both sides together.
+ const deck=new Graphics();deck.poly([p(s.from-.18,s.center-edgeWidth),p(s.to+.18,s.center-edgeWidth),p(s.to+.18,s.center+edgeWidth),p(s.from-.18,s.center+edgeWidth)].flat()).fill(0xc5b28e);
+ for(let t=s.from-.15;t<s.to+.18;t+=.2)for(let v=s.center-edgeWidth+.04;v<s.center+edgeWidth-.05;v+=.22){const end=Math.min(t+.18,s.to+.18),ev=Math.min(v+.2,s.center+edgeWidth-.03);deck.poly([p(t,v),p(end,v),p(end,ev),p(t,ev)].flat()).fill((Math.round(t*10)+Math.round(v*10))%3?0xd3c3a2:0xb8a784);}
+ add(deck,'deck',-90000);
+ for(const side of [-1,1]){
+  const edge=s.center+side*edgeWidth,body=new Graphics(),shade=side>0?0xad936c:0xc2ac84;
+  // The underside is a real open silhouette: water remains visible through arches.
   for(let i=0;i<spans;i++){
-   const start=(i+.13)/spans,end=(i+.87)/spans,arch=[];for(let n=0;n<=12;n++){const t=n/12;arch.push(p(start+(end-start)*t,14-12*Math.sin(Math.PI*t)));}
-   g.poly([...arch,p(end,16),p(start,16)].flat()).fill(0x356a73);
-   for(let n=0;n<9;n++){const t=(n+.5)/9,x=start+(end-start)*t,z=14-12*Math.sin(Math.PI*t);g.moveTo(...p(x,z)).lineTo(...p(x,z-3)).stroke({color:0xe2cba2,width:2});}
+   const start=s.from+i*length/spans,end=s.from+(i+1)*length/spans,archStart=start+length/spans*.15,archEnd=end-length/spans*.15;
+   body.poly([p(start,edge),p(archStart,edge),p(archStart,edge,-12),p(start,edge,-12)].flat()).fill(shade);
+   body.poly([p(archEnd,edge),p(end,edge),p(end,edge,-12),p(archEnd,edge,-12)].flat()).fill(shade);
+   for(let n=0;n<14;n++){
+    const u=n/14,v=(n+1)/14,a=archStart+(archEnd-archStart)*u,b=archStart+(archEnd-archStart)*v,za=-12+9*Math.sin(Math.PI*u),zb=-12+9*Math.sin(Math.PI*v);
+    body.poly([p(a,edge),p(b,edge),p(b,edge,zb),p(a,edge,za)].flat()).fill(shade);
+    body.poly([p(a,edge,za),p(b,edge,zb),p(b,edge,zb+2),p(a,edge,za+2)].flat()).fill(n%2?0xdfcba5:0xd1b98e);
+   }
   }
-  g.poly([p(0,-8),p(1,-8),p(1,-3),p(0,-3)].flat()).fill(side?0xd7c29d:0xe6d4b0).stroke({color:0xab9068,width:1});
-  const posts=Math.max(2,Math.ceil(length/.45));for(let i=0;i<=posts;i++){const t=i/posts,q=p(t);g.rect(Math.round(q[0])-2,Math.round(q[1])-13,4,7).fill(0xc8ad7f);g.rect(Math.round(q[0])-3,Math.round(q[1])-14,6,2).fill(0xead8b0);}
-  g.moveTo(...p(0,-13)).lineTo(...p(1,-13)).stroke({color:0xe1cca4,width:2});
-  g.position.set(a.x,a.y);g.zIndex=(a.y+b.y)/2;g.label='city-bridge';g.bridgeStyle='travertine-arches';g.archCount=spans;g.bridgeBounds={...s,edge};objects.addChild(g);
+  // Masonry joints use the same isometric direction as the deck.
+  for(let row=0;row<3;row++)for(let t=s.from+(row%2)*.13;t<s.to;t+=.3){const a=p(t,edge,-row*3),b=p(Math.min(s.to,t+.27),edge,-row*3);if(row===0)body.moveTo(...a).lineTo(...b).stroke({color:0x9b825e,width:.6});}
+  add(body,'arches',-89999+(side>0?1:0));
+  // Short segments let traffic sort against the parapet locally, including both axes.
+  const count=Math.ceil(length/.32);
+  for(let i=0;i<count;i++){
+   const a=s.from+length*i/count,b=s.from+length*(i+1)/count,g=new Graphics();
+   g.poly([p(a,edge,1),p(b,edge,1),p(b,edge,5),p(a,edge,5)].flat()).fill(side>0?0xc6af86:0xd9c7a3).stroke({color:0x9c845d,width:.5});
+   g.moveTo(...p(a,edge,5)).lineTo(...p(b,edge,5)).stroke({color:0xeee0bb,width:1.5});
+   const q=p(a,edge,5);g.rect(Math.round(q[0])-1,Math.round(q[1])-1,2,2).fill(0xe6d4ad);
+   add(g,'parapet',((a+b)/2+edge)*16);
+  }
+  for(const t of [s.from,s.to]){const g=new Graphics(),q=p(t,edge);g.poly([p(t-.12,edge,0),p(t+.12,edge,0),p(t+.12,edge,6),p(t-.12,edge,6)].flat()).fill(0xcbb58c);g.moveTo(...p(t-.14,edge,6)).lineTo(...p(t+.14,edge,6)).stroke({color:0xefdfb7,width:2});add(g,'abutment',(t+edge)*16);}
  }
 }

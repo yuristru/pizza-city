@@ -1,9 +1,9 @@
-import {restaurantQuality,pizzaQuality,pizzaOffer,ratingDemand} from './pizza-quality.js?v=20261018-demo1';
-import {advertisingMultipliers} from './pizza-advertising.js?v=20261018-demo1';
-import {taxiMultiplier} from './pizza-taxis.js?v=20261018-demo1';
-import {property} from './pizza-properties.js?v=20261018-demo1';
-import {COMPETITORS} from './pizza-competitors.js?v=20261018-demo1';
-import {shiftAt} from './pizza-shifts.js?v=20261018-demo1';
+import {restaurantQuality,pizzaQuality,pizzaOffer,ratingDemand} from './pizza-quality.js?v=20261018-public2';
+import {advertisingMultipliers} from './pizza-advertising.js?v=20261018-public2';
+import {taxiMultiplier} from './pizza-taxis.js?v=20261018-public2';
+import {property} from './pizza-properties.js?v=20261018-public2';
+import {COMPETITORS} from './pizza-competitors.js?v=20261018-public2';
+import {shiftAt} from './pizza-shifts.js?v=20261018-public2';
 export const CUSTOMER_TIERS=[{id:'simple',name:'Einfach',budget:900},{id:'middle',name:'Mittel',budget:1500},{id:'upscale',name:'Gehoben',budget:2400}];
 export const DISTRICTS=[
  {id:'altstadt',name:'Altstadt',bx:0,by:1,customers:[480,300,120]},

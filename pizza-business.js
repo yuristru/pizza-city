@@ -1,7 +1,7 @@
-import {ratingDemand} from './pizza-quality.js?v=20261018-demo1';
-import {MONTH_HOURS} from './pizza-staff.js?v=20261018-demo1';
-import {roomCell,roomStep} from './pizza-floorplans.js?v=20261018-demo1';
-import {occupiedCells} from './pizza-layout.js?v=20261018-demo1';
+import {ratingDemand} from './pizza-quality.js?v=20261018-public2';
+import {MONTH_HOURS} from './pizza-staff.js?v=20261018-public2';
+import {roomCell,roomStep} from './pizza-floorplans.js?v=20261018-public2';
+import {occupiedCells} from './pizza-layout.js?v=20261018-public2';
 export const STAFF={cook:{name:'Koch',hourly:12},waiter:{name:'Service',hourly:8}};
 export function freshBusiness(){return {cook:0,waiter:0};}
 export function restoreBusiness(raw,legacy=false){return {...Object.fromEntries(Object.keys(STAFF).map(k=>[k,Number.isInteger(raw?.[k])&&raw[k]>=0&&raw[k]<=4?raw[k]:legacy?1:0])),open:raw?.open!==false};}

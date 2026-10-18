@@ -1,4 +1,4 @@
-import {staffHash} from './pizza-staff.js?v=20261018-demo1';
+import {staffHash} from './pizza-staff.js?v=20261018-public2';
 const SKIN=[['#f1c39a','#c8906b','#e2ab7c'],['#e6b087','#b77c54','#d49b6e'],['#ca9165','#9b653f','#ba8056'],['#ab7650','#704a34','#996744'],['#8d6248','#593d30','#7c553e']];
 const HAIR=['#402d23','#66432d','#a46b38','#c39850','#292c32','#8d4e36','#aaa49a'];
 export function avatarTraits(seed,role){const skin=SKIN[staffHash(seed,1)%SKIN.length];return {seed,skin:{top:skin[0],x:skin[1],y:skin[2]},hair:HAIR[staffHash(seed,2)%HAIR.length],shirt:role==='cook'?{top:'#eee8d6',x:'#b2b7aa',y:'#d8d8c5'}:{top:'#f0eee8',x:'#bfc4c2',y:'#e0e3dd'},style:staffHash(seed,4)%4,glasses:staffHash(seed,5)%4===0,beard:staffHash(seed,6)%4===0,width:12+staffHash(seed,7)%3,eyes:staffHash(seed,8)%3};}

@@ -1,8 +1,8 @@
-import {Sprite,Texture,CITY_N,hash} from './pizza-core.js?v=20261018-demo1';
+import {Sprite,Texture,CITY_N,hash} from './pizza-core.js?v=20261018-public2';
 
 // One texture pixel per world pixel matches the city sprites; bake once per map.
-export function cityGround({road,water,park,fountainCell,streets,links,nodes,canal,crossings,landmarkGardens=[]},seed){
-  const min=-8,max=CITY_N+7,left=(min-max)*32-32,top=min*32-16;
+export function cityGround({road,water,park,fountainCell,streets,links,nodes,canal,crossings,landmarkGardens=[],blocks=[],skatepark=null},seed){
+  const min=-23,max=CITY_N+22,left=(min-max)*32-32,top=min*32-16;
   const canvas=document.createElement('canvas');
   canvas.width=(max-min)*64+64;canvas.height=(max-min)*32+32;
   const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
@@ -57,9 +57,9 @@ export function cityGround({road,water,park,fountainCell,streets,links,nodes,can
     }
   }
   for(let y=min;y<=max;y++)for(let x=min;x<=max;x++){
-    if(park(x,y)&&!fountainCell(x,y)&&!road(x,y,.5)){
+    if((x< -8||y< -8||x>CITY_N+7||y>CITY_N+7)||(park(x,y)&&!fountainCell(x,y)&&!road(x,y,.5))){
       quad(x-.5,y-.5,1,1,'#788851');
-      for(let n=0;n<60;n++){const p=point(x-.45+random(x,y,n+170)*.9,y-.45+random(y,x,n+190)*.9);pixel(p[0],p[1],n%2?'#87995c':'#677a49');}
+      for(let n=0;n<(x< -8||y< -8||x>CITY_N+7||y>CITY_N+7?14:60);n++){const p=point(x-.45+random(x,y,n+170)*.9,y-.45+random(y,x,n+190)*.9);pixel(p[0],p[1],n%2?'#87995c':'#677a49');}
     }else stone(x,y);
   }
   // Fractional, contained garden surfaces replace the empty paved landmark
@@ -88,12 +88,34 @@ export function cityGround({road,water,park,fountainCell,streets,links,nodes,can
       stats.gardenBeds++;
     }
   }
+  // Public parks have connected walking loops, entrances and planted corners.
+  for(const b of blocks.filter(b=>b.landUse==='park'||b.landUse==='piazza')){
+    const cx=(b.x0+b.x1)/2,cy=(b.y0+b.y1)/2,margin=.3,half=.13;
+    const path=(x0,y0,x1,y1)=>{if(x1>x0&&y1>y0)surface({x0,y0,x1,y1},'#c9bb99');};
+    path(b.x0+margin-half,b.y0+margin-half,b.x1-margin+half,b.y0+margin+half);
+    path(b.x0+margin-half,b.y1-margin-half,b.x1-margin+half,b.y1-margin+half);
+    path(b.x0+margin-half,b.y0+margin,b.x0+margin+half,b.y1-margin);
+    path(b.x1-margin-half,b.y0+margin,b.x1-margin+half,b.y1-margin);
+    path(cx-.3,b.y1-margin,cx+.3,b.y1+.1);
+    if(skatepark?.blockId!==b.id){path(cx-.24,b.y0,cx+.24,b.y1);path(b.x0,cy-.2,b.x1,cy+.2);}
+    for(const [x,y]of [[b.x0+.75,b.y0+.75],[b.x1-.75,b.y0+.75]]){
+      surface({x0:x-.25,y0:y-.24,x1:x+.25,y1:y+.24},'#9a7954');
+      surface({x0:x-.2,y0:y-.19,x1:x+.2,y1:y+.19},'#526e40');
+      for(let i=0;i<9;i++){const p=point(x-.17+random(x,y,i+410)*.34,y-.16+random(y,x,i+430)*.32);pixel(...p,i%2?'#d8b460':'#b87a79',2);}
+    }
+  }
   function ribbon(s,width,color){
     if(s.axis===0)quad(s.from,s.center-width/2,s.to-s.from,width,color);
     else quad(s.center-width/2,s.from,width,s.to-s.from,color);
   }
   // Paint the exact canal banks instead of rounding the water to whole tiles.
-  ribbon(canal,canal.width+.24,'#a2967c');ribbon(canal,canal.width,'#397b8d');
+  const canalShape=(width,color)=>{
+    const r=canal.width/2,rr=width/2,center=canal.from+r,points=[],p=(t,v)=>canal.axis===0?point(t,v):point(v,t);
+    points.push(p(max+.5,canal.center-rr),p(center,canal.center-rr));
+    for(let i=0;i<=20;i++){const a=-Math.PI/2-Math.PI*i/20;points.push(p(center+rr*Math.cos(a),canal.center+rr*Math.sin(a)));}
+    points.push(p(max+.5,canal.center+rr));polygon(points,color);
+  };
+  canalShape(canal.width+1.16,'#bbaa87');canalShape(canal.width+.78,'#d0c2a0');canalShape(canal.width+.18,'#8e8972');canalShape(canal.width,'#397b8d');
   for(let y=min;y<=max;y++)for(let x=min;x<=max;x++)if(water(x,y)||water(x+.5,y+.5)||water(x-.5,y-.5))waterTile(x,y);
   // Streets are continuous fractional-width ribbons, independent of tile size.
   for(const s of streets){ribbon(s,s.width+.56,'#b9ab91');ribbon(s,s.width+.08,'#e0d0ae');stats.curbs++;}
