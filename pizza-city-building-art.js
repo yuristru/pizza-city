@@ -1,4 +1,4 @@
-import {CORNER_BUILDING_ART} from './pizza-city-corner-art.js?v=20261018-public2';
+import {CORNER_BUILDING_ART} from './pizza-city-corner-art.js?v=20261018-bridge3';
 // Original Imagegen art calibrated against measured eaves and foundation contacts.
 // Every building uses one shared affine transform for roof, walls and all wings.
 // Gabled homes 16/25/28/31 use the complete two-floor wall height, not only

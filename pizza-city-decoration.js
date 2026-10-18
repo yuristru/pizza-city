@@ -1,5 +1,5 @@
-import {Graphics,iso} from './pizza-core.js?v=20261018-public2';
-import {courtyardGarden} from './pizza-city-gardens.js?v=20261018-public2';
+import {Graphics,iso} from './pizza-core.js?v=20261018-bridge3';
+import {courtyardGarden} from './pizza-city-gardens.js?v=20261018-bridge3';
 const point=(x,y,z=0)=>{const p=iso(x,y);return [p.x,p.y-z];};
 const quad=(g,r,color)=>g.poly([point(r.x0,r.y0),point(r.x1,r.y0),point(r.x1,r.y1),point(r.x0,r.y1)].flat()).fill(color);
 export function drawCourtyardGarden(objects,block,seed){
@@ -48,7 +48,8 @@ export function drawItalianBridge(objects,s){
   }
   // Masonry joints use the same isometric direction as the deck.
   for(let row=0;row<3;row++)for(let t=s.from+(row%2)*.13;t<s.to;t+=.3){const a=p(t,edge,-row*3),b=p(Math.min(s.to,t+.27),edge,-row*3);if(row===0)body.moveTo(...a).lineTo(...b).stroke({color:0x9b825e,width:.6});}
-  add(body,'arches',-89999+(side>0?1:0));
+  // The rear underside projects into the deck in screen space and must sit behind it.
+  body.bridgeSide=side;add(body,'arches',side<0?-90001:-89999);
   // Short segments let traffic sort against the parapet locally, including both axes.
   const count=Math.ceil(length/.32);
   for(let i=0;i<count;i++){

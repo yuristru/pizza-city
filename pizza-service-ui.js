@@ -1,15 +1,15 @@
-import {restaurantQuality} from './pizza-quality.js?v=20261018-public2';
-import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261018-public2';
-import {state,Container,ensureRestaurants,activePlan,label} from './pizza-core.js?v=20261018-public2';
-import {project,dimensions} from './pizza-layout.js?v=20261018-public2';
-import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261018-public2';
-import {routePosition,guestSeat} from './pizza-service.js?v=20261018-public2';
-import {machinePosition,MACHINE_RULES} from './pizza-machines.js?v=20261018-public2';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261018-public2';
+import {restaurantQuality} from './pizza-quality.js?v=20261018-bridge3';
+import {kitchenReadiness,kitchenWorkFlow} from './pizza-kitchen.js?v=20261018-bridge3';
+import {state,Container,ensureRestaurants,activePlan,label} from './pizza-core.js?v=20261018-bridge3';
+import {project,dimensions} from './pizza-layout.js?v=20261018-bridge3';
+import {guestSprite,mealSprite} from './pizza-sprites.js?v=20261018-bridge3';
+import {routePosition,guestSeat} from './pizza-service.js?v=20261018-bridge3';
+import {machinePosition,MACHINE_RULES} from './pizza-machines.js?v=20261018-bridge3';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261018-bridge3';
 
-import {businessIssue,workPath,counterLayoutIssue,counterHandoff} from './pizza-business.js?v=20261018-public2';
-import {staffSchedule,shiftLabel} from './pizza-shifts.js?v=20261018-public2';
-import {personSprite,staffPersonSprite} from './pizza-sprites.js?v=20261018-public2';
+import {businessIssue,workPath,counterLayoutIssue,counterHandoff} from './pizza-business.js?v=20261018-bridge3';
+import {staffSchedule,shiftLabel} from './pizza-shifts.js?v=20261018-bridge3';
+import {personSprite,staffPersonSprite} from './pizza-sprites.js?v=20261018-bridge3';
 const maps=new WeakMap(),banners=new Map();
 export function syncServiceGuests(objects){
   let nodes=maps.get(objects);if(!nodes){nodes=new Map();maps.set(objects,nodes);}

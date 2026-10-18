@@ -1,8 +1,8 @@
-import {contactAt,cityNight,skateSchedule} from './pizza-city-contacts.js?v=20261018-public2';
-import {Container,Graphics,Rectangle,iso,label,state} from './pizza-core.js?v=20261018-public2';
-import {citySprite} from './pizza-city-art.js?v=20261018-public2';
-import {guestSprite,personSprite} from './pizza-sprites.js?v=20261018-public2';
-import {skateRamps,rampHeight,skaterPose} from './pizza-city-skate.js?v=20261018-public2';
+import {contactAt,cityNight,skateSchedule} from './pizza-city-contacts.js?v=20261018-bridge3';
+import {Container,Graphics,Rectangle,iso,label,state} from './pizza-core.js?v=20261018-bridge3';
+import {citySprite} from './pizza-city-art.js?v=20261018-bridge3';
+import {guestSprite,personSprite} from './pizza-sprites.js?v=20261018-bridge3';
+import {skateRamps,rampHeight,skaterPose} from './pizza-city-skate.js?v=20261018-bridge3';
 const put=(layer,g,x,y)=>{const p=iso(x,y);g.position.set(p.x,p.y);g.zIndex=p.y;layer.addChild(g);return g;};
 function fallback(site){
  const g=new Container();
