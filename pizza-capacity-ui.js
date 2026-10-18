@@ -1,8 +1,8 @@
-import {restaurantQuality} from './pizza-quality.js?v=20261018-bridge3';
-import {restaurantCapacity,utilizationForecast,seatUtilization} from './pizza-capacity.js?v=20261018-bridge3';
-import {purchaseMarket} from './pizza-market.js?v=20261018-bridge3';
-import {state,ensureRestaurants,restaurantName} from './pizza-core.js?v=20261018-bridge3';
-import {serviceMenu} from './pizza-menu-ui.js?v=20261018-bridge3';
+import {restaurantQuality} from './pizza-quality.js?v=20261018-brick4';
+import {restaurantCapacity,utilizationForecast,seatUtilization} from './pizza-capacity.js?v=20261018-brick4';
+import {purchaseMarket} from './pizza-market.js?v=20261018-brick4';
+import {state,ensureRestaurants,restaurantName} from './pizza-core.js?v=20261018-brick4';
+import {serviceMenu} from './pizza-menu-ui.js?v=20261018-brick4';
 const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
 export function restaurantForecast(id,profiles,menu,{advertising=state.advertising,taxis=state.taxis}={}){
  const demand=(ads,cabs)=>purchaseMarket(id,profiles,menu,state.rivalry,state.gameMinutes,state.market,ads,cabs).site.expected.reduce((a,b)=>a+b,0);

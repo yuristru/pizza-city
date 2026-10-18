@@ -1,9 +1,9 @@
-import {restaurantQuality,pizzaQuality,pizzaOffer} from './pizza-quality.js?v=20261018-bridge3';
-import {purchasingDiscount} from './pizza-procurement.js?v=20261018-bridge3';
-import {notify,state,ensureRestaurants,restaurantName} from './pizza-core.js?v=20261018-bridge3';
-import {INGREDIENTS,copyRecipe} from './pizza-recipe.js?v=20261018-bridge3';
-import {savedRecipes,drawRecipePreview,showPizza} from './pizza-editor.js?v=20261018-bridge3';
-import {parseMenuPrice,menuContribution,restoreMenu,putOnMenu} from './pizza-menu.js?v=20261018-bridge3';
+import {restaurantQuality,pizzaQuality,pizzaOffer} from './pizza-quality.js?v=20261018-brick4';
+import {purchasingDiscount} from './pizza-procurement.js?v=20261018-brick4';
+import {notify,state,ensureRestaurants,restaurantName} from './pizza-core.js?v=20261018-brick4';
+import {INGREDIENTS,copyRecipe} from './pizza-recipe.js?v=20261018-brick4';
+import {savedRecipes,drawRecipePreview,showPizza} from './pizza-editor.js?v=20261018-brick4';
+import {parseMenuPrice,menuContribution,restoreMenu,putOnMenu} from './pizza-menu.js?v=20261018-brick4';
 
 const el=id=>document.getElementById(id),KEY='pizza-menu-v1';
 const money=cents=>(cents/100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' DM';

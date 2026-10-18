@@ -1,4 +1,4 @@
-import {groundProjection} from './pizza-isometric-art.js?v=20261018-bridge3';
+import {groundProjection} from './pizza-isometric-art.js?v=20261018-brick4';
 export const MAX_STOREYS=2,STOREY_HEIGHT=36;
 
 // One affine projection covers the whole drawing, including all roofs and wings.

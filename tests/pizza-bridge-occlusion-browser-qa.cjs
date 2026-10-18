@@ -16,13 +16,13 @@ const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+deco
    const s={axis,from:0,to:3,center:0,width:1.2};drawItalianBridge(probe,s);probe.sortChildren();
    const deck=probe.children.find(c=>c.bridgePart==='deck'),rear=probe.children.find(c=>c.bridgePart==='arches'&&c.bridgeSide===-1),front=probe.children.find(c=>c.bridgePart==='arches'&&c.bridgeSide===1);
    const mid=axis===0?iso(1.5,0):iso(0,1.5);probe.scale.set(3);probe.position.set(app.screen.width/2-mid.x*3,app.screen.height/2-mid.y*3);app.render();
-   const data=app.renderer.extract.pixels({target:app.stage,frame:new Rectangle(0,0,app.screen.width,app.screen.height),resolution:1}),bad=[],palette=new Set([0xc5b28e,0xd3c3a2,0xb8a784]);
+   const data=app.renderer.extract.pixels({target:app.stage,frame:new Rectangle(0,0,app.screen.width,app.screen.height),resolution:1}),bad=[],palette=new Set([0xab9370,0xd6c29b,0xcab58d,0xc3ad85,0xdbc8a3,0xd0ba92]);
    for(let t=.2;t<2.9;t+=.13)for(let v=-.51;v<.15;v+=.09){
     const p=axis===0?iso(t,v):iso(v,t),x=Math.round(probe.x+p.x*3),y=Math.round(probe.y+p.y*3),i=(y*data.width+x)*4,c=(data.pixels[i]<<16)|(data.pixels[i+1]<<8)|data.pixels[i+2];if(!palette.has(c))bad.push({t,v,c});
    }
-   state.bridgeProbe=probe;return {bad:bad.slice(0,8),order:rear.zIndex<deck.zIndex&&deck.zIndex<front.zIndex};
+   state.bridgeProbe=probe;return {bad:bad.slice(0,8),style:deck.bridgeStyle,order:rear.zIndex<deck.zIndex&&deck.zIndex<front.zIndex};
   },{core,query,axis});
-  assert(result.order,'Rear arches must render behind the deck, front arches in front.');assert.deepEqual(result.bad,[],'The riding surface contains only paving, without projected underside wedges.');
+  assert.equal(result.style,'terracotta-brick-travertine');assert(result.order,'Rear arches must render behind the deck, front arches in front.');assert.deepEqual(result.bad,[],'The riding surface contains only paving, without projected underside wedges.');
   await page.screenshot({path:path.join(out,'bridge-clear-deck-axis-'+axis+'.png')});
   await page.evaluate(async core=>{const {state}=await import(core);state.bridgeProbe.destroy({children:true});state.camera.visible=true;},core);
  }

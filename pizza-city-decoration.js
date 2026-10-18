@@ -1,5 +1,5 @@
-import {Graphics,iso} from './pizza-core.js?v=20261018-bridge3';
-import {courtyardGarden} from './pizza-city-gardens.js?v=20261018-bridge3';
+import {Graphics,iso} from './pizza-core.js?v=20261018-brick4';
+import {courtyardGarden} from './pizza-city-gardens.js?v=20261018-brick4';
 const point=(x,y,z=0)=>{const p=iso(x,y);return [p.x,p.y-z];};
 const quad=(g,r,color)=>g.poly([point(r.x0,r.y0),point(r.x1,r.y0),point(r.x1,r.y1),point(r.x0,r.y1)].flat()).fill(color);
 export function drawCourtyardGarden(objects,block,seed){
@@ -25,40 +25,80 @@ export function drawCourtyardGarden(objects,block,seed){
  return plan;
 }
 
+// Brick courses follow the bridge faces, with stone dressings around every opening.
 export function drawItalianBridge(objects,s){
  const length=s.to-s.from,spans=Math.max(1,Math.round(length/1.5)),edgeWidth=s.width/2+.25;
  const p=(t,v,z=0)=>s.axis===0?point(t,v,z):point(v,t,z);
- const add=(g,role,depth)=>{g.label='city-bridge';g.bridgePart=role;g.bridgeStyle='travertine-arches';g.archCount=spans;g.bridgeBounds={...s};g.zIndex=depth;objects.addChild(g);};
- // A continuous stone deck and landward abutments bind both sides together.
- const deck=new Graphics();deck.poly([p(s.from-.18,s.center-edgeWidth),p(s.to+.18,s.center-edgeWidth),p(s.to+.18,s.center+edgeWidth),p(s.from-.18,s.center+edgeWidth)].flat()).fill(0xc5b28e);
- for(let t=s.from-.15;t<s.to+.18;t+=.2)for(let v=s.center-edgeWidth+.04;v<s.center+edgeWidth-.05;v+=.22){const end=Math.min(t+.18,s.to+.18),ev=Math.min(v+.2,s.center+edgeWidth-.03);deck.poly([p(t,v),p(end,v),p(end,ev),p(t,ev)].flat()).fill((Math.round(t*10)+Math.round(v*10))%3?0xd3c3a2:0xb8a784);}
+ const add=(g,role,depth)=>{g.label='city-bridge';g.bridgePart=role;g.bridgeStyle='terracotta-brick-travertine';g.archCount=spans;g.bridgeBounds={...s};g.zIndex=depth;objects.addChild(g);};
+ const noise=(a,b)=>{const n=Math.sin(a*127.1+b*311.7)*43758.5453;return n-Math.floor(n);};
+ const brickPalette=[0xb36643,0xc57a50,0xad593b,0xcc8659,0xb96c47,0xd08b5e];
+ const darken=c=>{const r=(c>>16)&255,g=(c>>8)&255,b=c&255;return (Math.round(r*.82)<<16)|(Math.round(g*.8)<<8)|Math.round(b*.78);};
+ const face=(g,a,b,v,low,high,color)=>g.poly([p(a,v,low),p(b,v,low),p(b,v,high),p(a,v,high)].flat()).fill(color);
+ // Clip each individual brick to the arch silhouette in the wall plane.
+ function masonry(g,a,b,v,low,high,side,bottom=()=>low,backing=true){
+  if(backing)face(g,a,b,v,low,high,side>0?0x704531:0x8c573b);
+  const step=.135,rise=1.65;let row=0;
+  for(let z=high;z>low;z-=rise,row++)for(let t=a-step+(row%2)*step/2;t<b;t+=step){
+   const left=Math.max(a,t+.009),right=Math.min(b,t+step-.009),top=z-.16,base=Math.max(low,z-rise+.16);if(right<=left||base>=top)continue;
+   const ba=bottom(left),bb=bottom(right),signed=q=>q[1]-(ba+(bb-ba)*(q[0]-left)/(right-left));
+   const polygon=[[left,base],[right,base],[right,top],[left,top]],clipped=[];
+   for(let i=0;i<polygon.length;i++){
+    const u=polygon[i],vtx=polygon[(i+1)%polygon.length],fu=signed(u),fv=signed(vtx);
+    if(fu>=0)clipped.push(u);if((fu>=0)!==(fv>=0)){const f=fu/(fu-fv);clipped.push([u[0]+(vtx[0]-u[0])*f,u[1]+(vtx[1]-u[1])*f]);}
+   }
+   if(clipped.length<3)continue;
+   const variation=noise(Math.floor(t/step),row+side*19),color=brickPalette[Math.floor(variation*brickPalette.length)];
+   g.poly(clipped.map(([t,z])=>p(t,v,z)).flat()).fill(side>0?darken(color):color);
+   // Fine wear and a sunlit upper edge give the same granular finish as the houses.
+   if(base>Math.max(ba,bb)){const aa=p(left,v,top),zz=p(right,v,top);g.moveTo(...aa).lineTo(...zz).stroke({color:side>0?0xb77c52:0xe0a476,width:.35});}
+  }
+ }
+ const deck=new Graphics();deck.poly([p(s.from-.18,s.center-edgeWidth),p(s.to+.18,s.center-edgeWidth),p(s.to+.18,s.center+edgeWidth),p(s.from-.18,s.center+edgeWidth)].flat()).fill(0xab9370);
+ // Small staggered sandstone pavers replace the oversized checkerboard.
+ const paving=[0xd6c29b,0xcab58d,0xc3ad85,0xdbc8a3,0xd0ba92];let row=0;
+ for(let v=s.center-edgeWidth+.02;v<s.center+edgeWidth-.02;v+=.115,row++)for(let t=s.from-.32+(row%2)*.11;t<s.to+.18;t+=.22){
+  const a=Math.max(s.from-.18,t+.008),b=Math.min(s.to+.18,t+.21),vb=Math.min(v+.105,s.center+edgeWidth-.02);if(b<=a)continue;
+  deck.poly([p(a,v),p(b,v),p(b,vb),p(a,vb)].flat()).fill(paving[Math.floor(noise(row,Math.floor(t*9))*paving.length)]);
+ }
  add(deck,'deck',-90000);
  for(const side of [-1,1]){
-  const edge=s.center+side*edgeWidth,body=new Graphics(),shade=side>0?0xad936c:0xc2ac84;
-  // The underside is a real open silhouette: water remains visible through arches.
+  const edge=s.center+side*edgeWidth,body=new Graphics();
   for(let i=0;i<spans;i++){
    const start=s.from+i*length/spans,end=s.from+(i+1)*length/spans,archStart=start+length/spans*.15,archEnd=end-length/spans*.15;
-   body.poly([p(start,edge),p(archStart,edge),p(archStart,edge,-12),p(start,edge,-12)].flat()).fill(shade);
-   body.poly([p(archEnd,edge),p(end,edge),p(end,edge,-12),p(archEnd,edge,-12)].flat()).fill(shade);
-   for(let n=0;n<14;n++){
-    const u=n/14,v=(n+1)/14,a=archStart+(archEnd-archStart)*u,b=archStart+(archEnd-archStart)*v,za=-12+9*Math.sin(Math.PI*u),zb=-12+9*Math.sin(Math.PI*v);
-    body.poly([p(a,edge),p(b,edge),p(b,edge,zb),p(a,edge,za)].flat()).fill(shade);
-    body.poly([p(a,edge,za),p(b,edge,zb),p(b,edge,zb+2),p(a,edge,za+2)].flat()).fill(n%2?0xdfcba5:0xd1b98e);
+   const bottom=t=>t<=archStart||t>=archEnd?-12:-12+9*Math.sin(Math.PI*(t-archStart)/(archEnd-archStart));
+   // Build the mortar silhouette first so the openings remain genuinely transparent.
+   for(let n=0;n<28;n++){const a=start+(end-start)*n/28,b=start+(end-start)*(n+1)/28;body.poly([p(a,edge),p(b,edge),p(b,edge,bottom(b)),p(a,edge,bottom(a))].flat()).fill(side>0?0x704531:0x8c573b);}
+   // Brick tiles are clipped against the opening instead of covering it with water colour.
+   masonry(body,start,end,edge,-12,0,side,bottom,false);
+   for(let n=0;n<16;n++){
+    const u=n/16,v=(n+1)/16,a=archStart+(archEnd-archStart)*u,b=archStart+(archEnd-archStart)*v,za=bottom(a),zb=bottom(b);
+    body.poly([p(a,edge,za),p(b,edge,zb),p(b,edge,zb+2.25),p(a,edge,za+2.25)].flat()).fill(n%3===0?0xe2cba1:side>0?0xc7af84:0xd6c29a).stroke({color:0x8e7758,width:.35});
+    body.moveTo(...p(a,edge,za+2.25)).lineTo(...p(b,edge,zb+2.25)).stroke({color:0xeddcba,width:.4});
    }
+   // The central keystone projects slightly beyond the dressed arch.
+   const mid=(archStart+archEnd)/2,z=bottom(mid);body.poly([p(mid-.055,edge,z-.3),p(mid+.055,edge,z-.3),p(mid+.08,edge,z+3.1),p(mid-.08,edge,z+3.1)].flat()).fill(0xedd7ad).stroke({color:0x9b805d,width:.4});
   }
-  // Masonry joints use the same isometric direction as the deck.
-  for(let row=0;row<3;row++)for(let t=s.from+(row%2)*.13;t<s.to;t+=.3){const a=p(t,edge,-row*3),b=p(Math.min(s.to,t+.27),edge,-row*3);if(row===0)body.moveTo(...a).lineTo(...b).stroke({color:0x9b825e,width:.6});}
-  // The rear underside projects into the deck in screen space and must sit behind it.
+  // Cut-stone string course separates the brick spandrels from the parapet.
+  face(body,s.from,s.to,edge,-1.6,-.5,side>0?0xc7ae83:0xe1c99f);
   body.bridgeSide=side;add(body,'arches',side<0?-90001:-89999);
-  // Short segments let traffic sort against the parapet locally, including both axes.
   const count=Math.ceil(length/.32);
   for(let i=0;i<count;i++){
    const a=s.from+length*i/count,b=s.from+length*(i+1)/count,g=new Graphics();
-   g.poly([p(a,edge,1),p(b,edge,1),p(b,edge,5),p(a,edge,5)].flat()).fill(side>0?0xc6af86:0xd9c7a3).stroke({color:0x9c845d,width:.5});
-   g.moveTo(...p(a,edge,5)).lineTo(...p(b,edge,5)).stroke({color:0xeee0bb,width:1.5});
-   const q=p(a,edge,5);g.rect(Math.round(q[0])-1,Math.round(q[1])-1,2,2).fill(0xe6d4ad);
+   masonry(g,a,b,edge,.5,6.5,side);
+   // Limestone plinth, stepped cornice and a visible top surface.
+   face(g,a,b,edge,.5,1.5,side>0?0xbfa176:0xd7be92);face(g,a,b,edge,6.1,7,0xc5ab80);
+   g.poly([p(a,edge,7),p(b,edge,7),p(b,edge-side*.065,8),p(a,edge-side*.065,8)].flat()).fill(0xe5cfaa);
+   g.moveTo(...p(a,edge-side*.065,8)).lineTo(...p(b,edge-side*.065,8)).stroke({color:0xf1dfbd,width:.7});
+   // Recessed stone medallions repeat over brick panels, like house facade details.
+   if(i%2===0){const mid=(a+b)/2;g.poly([p(mid-.055,edge,3.9),p(mid,edge,5.1),p(mid+.055,edge,3.9),p(mid,edge,2.7)].flat()).fill(side>0?0xc7aa7b:0xe0c79d).stroke({color:0x825b3e,width:.4});const q=p(mid,edge,3.9);g.rect(Math.round(q[0]),Math.round(q[1]),1,1).fill(0x9b754c);}
    add(g,'parapet',((a+b)/2+edge)*16);
   }
-  for(const t of [s.from,s.to]){const g=new Graphics(),q=p(t,edge);g.poly([p(t-.12,edge,0),p(t+.12,edge,0),p(t+.12,edge,6),p(t-.12,edge,6)].flat()).fill(0xcbb58c);g.moveTo(...p(t-.14,edge,6)).lineTo(...p(t+.14,edge,6)).stroke({color:0xefdfb7,width:2});add(g,'abutment',(t+edge)*16);}
+  for(const t of [s.from,s.to]){
+   const g=new Graphics();masonry(g,t-.12,t+.12,edge,0,10.5,side);
+   face(g,t-.14,t+.14,edge,1,2,0xd1b78a);face(g,t-.16,t+.16,edge,9.5,10.8,0xc9af82);
+   g.poly([p(t-.17,edge,10.8),p(t+.17,edge,10.8),p(t+.17,edge-side*.13,12),p(t-.17,edge-side*.13,12)].flat()).fill(0xe6d1a9);
+   const q=p(t,edge-side*.06,13);g.circle(q[0],q[1],1.25).fill(0xe2cda3);
+   add(g,'abutment',(t+edge)*16);
+  }
  }
 }
